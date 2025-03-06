@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Nunito:400,700&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'SterlingDisplay';
+            src: url('assets/fonts/SterlingDisplayRoman/SterlingDisplayRoman.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        [type=checkbox], [type=radio] {
+            border-color: #832729 !important;
+            color: #832729 !important;
+        }
+
+        [multiple]:focus, [type="date"]:focus, [type="email"]:focus, [type="text"]:focus, select:focus, textarea:focus {
+            border-color: #832729 !important;
+            --tw-ring-color: #832729 !important;
+        }
+
+        .error {
+            color: red;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .input-error {
+            border-color: red !important;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'nunito': ['nunito', 'sans-serif'],
+                        'sterlingdisplay': ['SterlingDisplay', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-nunito bg-center bg-no-repeat bg-cover" style="background-image: url('assets/images/form_bg.png');" >
+
+<!-- Form -->
+ <div class="relative">
+<div id="popup" class="fixed bg-[#80808047] top-0 w-full  h-[100vh] z-10 flex justify-center items-center">
+    
+<div class="max-w-[450px] relative md:mx-auto bg-transprant  rounded-xl p-4 md:p-8 my-16 mx-4" >
+
+
+    <div style="background: rgb(237,218,221);
+background: radial-gradient(circle, rgba(237,218,221,1) 0%, rgba(255,255,255,1) 100%); background-position:right bottom" class="min-w-[100%] h-full min-h-[200px] shadow-lg shadow-indigo-500/40 z-[-10] left-0 rounded-md absolute bottom-0"></div>
+    <!-- -->
+<p class="text-[#832729] md:mt-0 mt-10 text-[25px] text-center font-[nunito] underline">Heartiest Congratulations!</p>
+ <p class="text-[18px] font-[nunito] text-center my-5 text-[#000000]">You can access your Jewellery Checklist from <br>
+ your phone downloads. </p>  
+
+ <p class="text-[18px] font-[nunito] text-center my-5 text-[#000000]">For any queries do reach out to your <br>
+ <a href="https://stores.tanishq.co.in/"><span class="text-[#832729] underline">Nearest Tanishq</span> </p></a>
+ <img src="../assets/images/rivaah_logo.png" alt="" class="h-auto max-w-[30%] md:max-w-[30%] mb-2 mt-5 block ml-auto mr-auto "> 
+</div>
+
+</div>
+</div>
+
+
+</body>
+</html>
