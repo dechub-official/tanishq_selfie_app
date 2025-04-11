@@ -380,7 +380,7 @@ public class GSheetUserDetailsUtil {
                     }
                 }
 
-                event.put("completedEvent", event.get("completedEvents").toString().trim().length()>1);
+                event.put("completedEvent", event.get("completedEvents").toString().trim().length() > 1);
 
                 events.add(event);
             }
@@ -389,6 +389,28 @@ public class GSheetUserDetailsUtil {
         return events;
     }
 
+    public List<storeCodeDataDTO> getStoresByRegion(String regionSheetName) throws Exception {
+        List<storeCodeDataDTO> stores = new ArrayList<>();
+        final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+        Sheets service = getSheetService(httpTransport);
+
+        String range = regionSheetName + "!A2:A"; // Only first column (Store Code), skip header
+        ValueRange response = service.spreadsheets().values()
+                .get(sheetId3, range)
+                .execute();
+
+        List<List<Object>> values = response.getValues();
+        if (values != null && !values.isEmpty()) {
+            for (List<Object> row : values) {
+                if (!row.isEmpty() && row.get(0) != null && !row.get(0).toString().trim().isEmpty()) {
+                    storeCodeDataDTO dto = new storeCodeDataDTO();
+                    dto.setStoreCode(row.get(0).toString().trim());
+                    stores.add(dto);
+                }
+            }
+        }
+        return stores;
+    }
     public Map<String, Object> getDataFromSheet(String storeCode) throws Exception {
         final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         Sheets service = getSheetService(httpTransport);

@@ -118,6 +118,11 @@ public class EventsController {
         return tanishqPageService.getAllCompletedEvents(storeCodeDataDTO.getStoreCode());
     }
 
+    @GetMapping("/getStoresByRegion/{region}")
+    public List<storeCodeDataDTO> getStoresByRegion(@PathVariable String region) {
+        return tanishqPageService.getStoresByRegion(region);
+    }
+
     @PostMapping("/updateSaleOfAnEvent")
     public ResponseDataDTO updateSaleOfAnEvent(@RequestParam String eventCode,@RequestParam String sale){
         return tanishqPageService.updateSaleOfAnEvent(eventCode,sale);

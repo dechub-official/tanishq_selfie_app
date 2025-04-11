@@ -108,7 +108,7 @@ public class TanishqPageService {
                 "north1a", "north1b",
                 "north2", "north3",
                 "south1", "south2a", "south3",
-                "west1a", "west1b", "west2", "west3","test"
+                "west1a", "west1b", "west2", "west3","test","north1","west1","south2","north4"
         ));
 
         boolean isCodePresent = codeList.contains(storeCode.toLowerCase());
@@ -429,6 +429,38 @@ public class TanishqPageService {
     public CompletedEventsResponseDTO getAllCompletedEvents(String code) {
         CompletedEventsResponseDTO completedEventsResponseDTO = new CompletedEventsResponseDTO();
         try{
+            if(code.equalsIgnoreCase("North1")||
+                    code.equalsIgnoreCase("North2")||
+                    code.equalsIgnoreCase("North3")||
+                    code.equalsIgnoreCase("North4")||
+                    code.equalsIgnoreCase("South1")||
+                    code.equalsIgnoreCase("South2")||
+                    code.equalsIgnoreCase("South3")||
+                    code.equalsIgnoreCase("East1")||
+                    code.equalsIgnoreCase("East2")||
+                    code.equalsIgnoreCase("West1")||
+                    code.equalsIgnoreCase("West2")||
+                    code.equalsIgnoreCase("West3")){
+
+                List<storeCodeDataDTO> codes = gSheetUserDetailsUtil.getStoresByRegion(code);
+                List<Map<String, Object>> combinedEvents = new ArrayList<>();
+
+                for(storeCodeDataDTO store : codes){
+                    List<Map<String, Object>> events = gSheetUserDetailsUtil.getCompletedEventDetails(store.getStoreCode());
+                    combinedEvents.addAll(events);
+                }
+
+                if(!combinedEvents.isEmpty()){
+                    completedEventsResponseDTO.setStatus(true);
+                    completedEventsResponseDTO.setMessage("fetched events");
+                    completedEventsResponseDTO.setEventData(combinedEvents);
+                    return completedEventsResponseDTO;
+                } else {
+                    completedEventsResponseDTO.setStatus(false);
+                    completedEventsResponseDTO.setMessage("fetching failed");
+                    return completedEventsResponseDTO;
+                }
+            }
             List<Map<String, Object>> completedEventsDataDTOS = gSheetUserDetailsUtil.getCompletedEventDetails(code);
             if(completedEventsDataDTOS.size()>0){
                 completedEventsResponseDTO.setStatus(true);
@@ -445,6 +477,16 @@ public class TanishqPageService {
             completedEventsResponseDTO.setEventData("error"+e.getMessage());
         }
         return completedEventsResponseDTO;
+    }
+
+
+    public List<storeCodeDataDTO> getStoresByRegion(String region) {
+        try {
+            return gSheetUserDetailsUtil.getStoresByRegion(region);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
     }
 
     public List<?> getInvitedMember(String eventId) {
