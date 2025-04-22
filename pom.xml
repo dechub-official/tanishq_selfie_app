@@ -10,7 +10,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.dechub</groupId>
-	<artifactId>selfie-18-03-2025-1</artifactId>
+	<artifactId>selfie-15-04-2025-1</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>tanishq</name>
 	<description>project for store tanishq</description>
@@ -111,6 +111,11 @@
 			<groupId>io.github.millij</groupId>
 			<artifactId>poi-object-mapper</artifactId>
 			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml-schemas</artifactId>
+			<version>4.1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
