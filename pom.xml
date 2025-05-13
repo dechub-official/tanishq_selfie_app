@@ -10,7 +10,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.dechub</groupId>
-	<artifactId>selfie-15-04-2025-1</artifactId>
+	<artifactId>selfie-09-05-2025-1</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>tanishq</name>
 	<description>project for store tanishq</description>
@@ -46,6 +46,12 @@
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.opencsv</groupId>
+			<artifactId>opencsv</artifactId>
+			<version>5.7.1</version>
+		</dependency>
+
 
 		<dependency>
 			<groupId>com.google.apis</groupId>

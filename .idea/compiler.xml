@@ -7,7 +7,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="tanishq_selfie_app" />
+        <module name="selfie-15-04-2025-1" />
         <module name="selfie-01-05-2024-1" />
       </profile>
     </annotationProcessing>
@@ -15,6 +15,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="selfie-01-05-2024-1" options="-parameters" />
+      <module name="selfie-15-04-2025-1" options="-parameters" />
       <module name="tanishq_selfie_app" options="-parameters" />
     </option>
   </component>
