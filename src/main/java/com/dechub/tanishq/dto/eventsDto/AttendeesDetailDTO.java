@@ -14,9 +14,15 @@ import org.springframework.web.multipart.MultipartFile;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AttendeesDetailDTO {
     private String id;
+    private String eventId;
+    private String eventType;
     private String name;
+    private String storeCode;
+    private String region;
+    private String rsoName;
     private String phone;
     private String like;
+    private String createdAt;
     private boolean firstTimeAtTanishq;
 
     private MultipartFile file;

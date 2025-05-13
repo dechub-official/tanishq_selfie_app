@@ -1,11 +1,19 @@
 package com.dechub.tanishq.dto.eventsDto;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
 public class EventsDetailDTO {
     private String storeCode;
+    private String region;
     private String id;
     private String eventType;
     private String eventSubType;
@@ -21,9 +29,14 @@ public class EventsDetailDTO {
     private String completedEventsDriveLink;
     private String community;
     private String location;
-
+    private boolean isAttendeesUploaded;
     private String name;
     private String contact;
+    private Integer sale;
+    private Integer advance;
+    private Integer ghsOrRga;
+    private Integer gmb;
+    private MultipartFile file;
 
     public String getName() {
         return name;
@@ -53,7 +66,6 @@ public class EventsDetailDTO {
         isSingleCustomer = singleCustomer;
     }
 
-    private MultipartFile file;
 
     public MultipartFile getFile() {
         return file;

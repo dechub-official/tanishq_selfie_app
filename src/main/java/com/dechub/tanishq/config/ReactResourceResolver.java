@@ -88,7 +88,7 @@ public class ReactResourceResolver implements ResourceResolver {
             // Handle requests for assets inside checklist folder
             return eventsAssets;
         }
-         else if (requestPath.startsWith("create")) {
+        else if (requestPath.startsWith("create")) {
             return createIndex;
         } else if (requestPath.startsWith("form")) {
             return formIndex;
@@ -101,18 +101,18 @@ public class ReactResourceResolver implements ResourceResolver {
         }else if (requestPath.startsWith("verify")) {
             return verifyIndex;
         }
-         else if (requestPath.startsWith("selfie")) {
+        else if (requestPath.startsWith("selfie")) {
             return index;
         }
-         else if(requestPath.startsWith("globalAssets")){
-             return globalAssets;
+        else if(requestPath.startsWith("globalAssets")){
+            return globalAssets;
         }
 
-         else if (requestPath.startsWith("assets")) {
+        else if (requestPath.startsWith("assets")) {
             // Handle requests for assets inside checklist folder
             return checklistAssets;
         }
-         else {
+        else {
             return globalPageIndex;
         }
     }
