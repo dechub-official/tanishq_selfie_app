@@ -1,0 +1,859 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, minimum-scale=1.0, initial-scale=1, shrink-to-fit=no"
+    />
+    <link
+      rel="shortcut icon"
+      href="./globalAssets/images/favicon.ico"
+      type="image/x-icon"
+    />
+    <title>Celebrate</title>
+
+    <link rel="stylesheet" href="./globalAssets/css/bootstrap.min.css" type="text/css"/>
+    <link rel="stylesheet" href="./globalAssets/css/swiper.min.css" type="text/css"/>
+    <link rel="stylesheet" href="./globalAssets/css/style.css" type="text/css"/>
+    <style>
+      :root {
+        --brand: #802527;
+      }
+      .gradient__title {
+        background: var(--brand);
+        background-image: -webkit-linear-gradient(to right, #802527, #641618);
+        background-image: linear-gradient(to right, #802527, #641618);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .fs-18 {
+        font-size: 1.125rem;
+      }
+      .scroll__btn {
+        border: 2px solid #832729;
+        background-color: rgba(255, 244, 244, 0.44);
+        bottom: -3.5rem;
+      }
+      .scroll__btn svg {
+        animation: jumpInfinite 1.5s infinite;
+        position: relative;
+      }
+      @keyframes jumpInfinite {
+        0% {
+          top: 0;
+        }
+        50% {
+          top: 0.5rem;
+        }
+        100% {
+          top: 0;
+        }
+      }
+
+      @media (min-width: 768px) {
+        .position-absolute-md {
+          position: absolute;
+        }
+        .grid__card .explore__btn {
+          bottom: 5%;
+          left: 50%;
+          transform: translateX(-50%);
+          width: auto;
+          white-space: nowrap;
+        }
+      }
+      @media (max-width: 991px) {
+      }
+      @media (max-width: 767px) {
+        .hero__banner {
+          min-height: 400px;
+        }
+        .scroll__btn {
+          bottom: -2.5rem;
+        }
+        .grid__wrapper {
+          margin-top: -4rem;
+        }
+        .grid__card {
+          border: 1px solid #641618;
+          border-radius: 0.75rem;
+          background-color: var(--white);
+        }
+        .grid__card .thumbnail {
+          width: 5rem !important;
+          height: 5rem;
+          border-radius: 0.5rem;
+          object-fit: cover;
+        }
+        .grid__card .explore__btn {
+          backdrop-filter: none;
+          background: transparent;
+          color: var(--brand);
+          width: 100%;
+          justify-content: space-between;
+          padding: 0% !important;
+        }
+        .grid__card .explore__btn .icon {
+          box-shadow: none;
+          background: transparent;
+          border: 1px solid var(--brand);
+        }
+        .grid__card .explore__btn .icon svg path {
+          stroke: var(--brand);
+        }
+      }
+      @media (max-width: 575px) {
+        .hero__title {
+          font-size: 1.5rem !important;
+        }
+      }
+
+      .celebrateSwiper img {
+        width: 276px;
+        border: 2px solid var(--white);
+        border-radius: 0.625rem;
+        opacity: 0.6;
+      }
+      .celebrateSwiper .swiper-slide-active img {
+        opacity: 1;
+      }
+      .celebrateSwiper .swiper-slide {
+        width: auto;
+      }
+      .control__btn {
+        width: 4rem;
+        height: 4rem;
+        background: var(--brand);
+      }
+      .control__btn:hover,
+      .control__btn:focus,
+      .control__btn:active {
+        background: #832729;
+      }
+      .control__btn::after {
+        font-size: 0.875rem;
+        color: var(--white);
+      }
+      .celebrateSwiperPrev {
+        left: -10rem;
+      }
+      .celebrateSwiperNext {
+        right: -10rem;
+      }
+
+      .celebrate__nav {
+        display: flex;
+        height: 60px;
+        justify-content: center;
+        margin-top: 10px;
+        z-index: 1;
+        background: linear-gradient(to right, #832729, #631517);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow-x: auto;
+      }
+
+      .celebrate__nav .nav-link {
+        height: 50px;
+        white-space: nowrap;
+        border-radius: 3rem;
+        display: flex;
+        color: #efefef;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .celebrate__nav .nav-link.active {
+        background: linear-gradient(to right, #f2e7e9, #d9bdbe);
+        box-shadow: 0 4px 8px rgba(11, 11, 11, 0.2);
+        color: #631517;
+        font-weight: 600;
+      }
+      .celebrate__tab__content .tab-pane {
+        display: block;
+        opacity: 0;
+        visibility: hidden;
+        height: 0;
+      }
+      .celebrate__tab__content .tab-pane.show {
+        opacity: 1;
+        visibility: visible;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <!-- header wrapper start -->
+      <header class="position-relative">
+        <div class="container-fluid mx-auto px-0" style="max-width: 1920">
+          <img
+            src="./globalAssets/celebrate/hero-banner.webp"
+            alt="Let’s Celebrate with Tanishq"
+            class="img-fluid w-100 hero__banner object-fit-cover d-none d-md-block"
+            width="1920"
+            height="674"
+          />
+          <img
+            src="./globalAssets/celebrate/hero-banner-mobile.png"
+            alt="Let’s Celebrate with Tanishq"
+            class="img-fluid w-100 object-fit-cover d-md-none"
+            width="400"
+            height="350"
+          />
+          <div
+            class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center"
+          >
+            <div class="container text-center">
+              <div
+                class="d-inline-block p-4 position-relative"
+                style="background-color: rgba(255, 207, 208, 0.5)"
+              >
+                <h1
+                  class="display-4 hero__title text-center fw-semibold ff-fraunces gradient__title"
+                >
+                  Let’s Celebrate with Tanishq
+                </h1>
+                <p class="fs-18 text-dark fw-medium">Choose the features</p>
+                <a
+                  href="#explore"
+                  class="scroll__btn p-md-3 p-2 rounded-pill d-inline-flex flex-column gap-3 text-center position-absolute start-50 translate-midddle-x top-auto"
+                >
+                  <span
+                    class="icon rounded-circle d-block mx-auto"
+                    style="width: 10px; height: 10px; background-color: #832729"
+                  ></span>
+                  <svg
+                    width="15"
+                    height="24"
+                    viewBox="0 0 15 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M7.98893 1.06462C7.87349 0.832065 7.7105 0.71579 7.49998 0.71579C7.28946 0.71579 7.12648 0.832065 7.01103 1.06462L7.01103 20.1823C6.14858 18.9988 5.10616 18.0824 3.88379 17.4334C3.09943 17.0169 2.32526 16.7427 1.56128 16.6108C1.52732 16.6108 1.49337 16.6056 1.45941 16.5952C1.42885 16.5882 1.40508 16.5848 1.38811 16.5848C1.20814 16.5848 1.11816 16.7514 1.11816 17.0846C1.11816 17.2824 1.13854 17.4108 1.17928 17.4698C1.22003 17.5288 1.3134 17.5757 1.45941 17.6104C1.78538 17.659 2.11983 17.7492 2.46278 17.8811C3.55612 18.249 4.53063 18.8582 5.38629 19.7086C6.24195 20.5589 6.85654 21.5499 7.23004 22.6814C7.28097 22.8306 7.37095 22.9053 7.49998 22.9053C7.62901 22.9053 7.71899 22.8306 7.76992 22.6814C8.14343 21.5499 8.75801 20.5589 9.61367 19.7086C10.4693 18.8582 11.4438 18.249 12.5372 17.8811C12.8801 17.7666 13.2061 17.6764 13.5151 17.6104C13.6781 17.5757 13.7799 17.5288 13.8207 17.4698C13.8614 17.4108 13.8818 17.2824 13.8818 17.0846C13.8818 16.734 13.7918 16.5587 13.6119 16.5587C13.5643 16.5587 13.3606 16.609 13.0007 16.7097C10.9634 17.2269 9.2928 18.3844 7.98893 20.1823L7.98893 1.06462Z"
+                      fill="url(#paint0_linear_392_167)"
+                      stroke="url(#paint1_linear_392_167)"
+                    />
+                    <defs>
+                      <linearGradient
+                        id="paint0_linear_392_167"
+                        x1="7.49998"
+                        y1="0.71579"
+                        x2="7.49998"
+                        y2="22.9053"
+                        gradientUnits="userSpaceOnUse"
+                      >
+                        <stop stop-color="#802527" />
+                        <stop offset="1" stop-color="#641618" />
+                      </linearGradient>
+                      <linearGradient
+                        id="paint1_linear_392_167"
+                        x1="7.49998"
+                        y1="0.71579"
+                        x2="7.49998"
+                        y2="22.9053"
+                        gradientUnits="userSpaceOnUse"
+                      >
+                        <stop stop-color="#802527" />
+                        <stop offset="1" stop-color="#641618" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!--.container-->
+      </header>
+      <!-- header wrapper end -->
+
+      <!-- grid wrapper start -->
+      <div
+        class="pb-5 pt-md-5 position-relative z-3 grid__wrapper"
+        id="explore"
+      >
+        <div class="container py-lg-5">
+          <div class="row g-3 g-md-4 justify-content-center">
+            <div class="col-lg-4 col-md-6">
+              <div class="grid__card position-relative">
+                <img
+                  src="./globalAssets/celebrate/grid-card-frame.svg"
+                  alt="Frame Image"
+                  class="img-fluid w-100 frame d-none d-md-block"
+                />
+                <div
+                  class="position-absolute-md top-0 start-0 w-100 h-100 p-2 d-flex d-md-block gap-4 align-items-center"
+                >
+                  <img
+                    src="./globalAssets/celebrate/Wedding-Checklist.png"
+                    alt="Wedding Checklist"
+                    class="img-fluid w-100 thumbnail"
+                  />
+                  <div class="col">
+                    <a
+                      href="https://celebrations.tanishq.co.in/checklist"
+                      target="_blank"
+                      class="btn btn-primary explore__btn ff-fraunces fs-5 fw-normal rounded-pill gap-3 px-4 py-3 border-0 position-absolute-md"
+                      aria-label="Wedding Checklist"
+                    >
+                      <span>Wedding Checklist</span>
+                      <span
+                        class="icon d-inline-flex rounded-circle justify-content-center align-items-center"
+                      >
+                        <svg
+                          width="21"
+                          height="20"
+                          viewBox="0 0 21 20"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M8 5L13 10L8 15"
+                            stroke="white"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          ></path>
+                        </svg>
+                      </span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+              <div class="grid__card position-relative">
+                <img
+                  src="./globalAssets/celebrate/grid-card-frame.svg"
+                  alt="Frame Image"
+                  class="img-fluid w-100 frame d-none d-md-block"
+                />
+                <div
+                  class="position-absolute-md top-0 start-0 w-100 h-100 p-2 d-flex d-md-block gap-4 align-items-center"
+                >
+                  <img
+                    src="./globalAssets/celebrate/Take-Selfi.png"
+                    alt="Take Selfi"
+                    class="img-fluid w-100 thumbnail"
+                  />
+                  <div class="col">
+                    <a
+                      href="https://celebrations.tanishq.co.in/selfie"
+                      target="_blank"
+                      class="btn btn-primary explore__btn ff-fraunces fs-5 fw-normal rounded-pill gap-3 px-4 py-3 border-0 position-absolute-md"
+                      aria-label="Take Selfi"
+                    >
+                      <span>Take Selfi</span>
+                      <span
+                        class="icon d-inline-flex rounded-circle justify-content-center align-items-center"
+                      >
+                        <svg
+                          width="21"
+                          height="20"
+                          viewBox="0 0 21 20"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M8 5L13 10L8 15"
+                            stroke="white"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          ></path>
+                        </svg>
+                      </span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+              <div class="grid__card position-relative">
+                <img
+                  src="./globalAssets/celebrate/grid-card-frame.svg"
+                  alt="Frame Image"
+                  class="img-fluid w-100 frame d-none d-md-block"
+                />
+                <div
+                  class="position-absolute-md top-0 start-0 w-100 h-100 p-2 d-flex d-md-block gap-4 align-items-center"
+                >
+                  <img
+                    src="./globalAssets/celebrate/Create-Event.png"
+                    alt="Create Event"
+                    class="img-fluid w-100 thumbnail"
+                  />
+                  <div class="col">
+                    <a
+                      href="https://celebrations.tanishq.co.in/events"
+                      target="_blank"
+                      class="btn btn-primary explore__btn ff-fraunces fs-5 fw-normal rounded-pill gap-3 px-4 py-3 border-0 position-absolute-md"
+                      aria-label="Create Event"
+                    >
+                      <span>Create Event</span>
+                      <span
+                        class="icon d-inline-flex rounded-circle justify-content-center align-items-center"
+                      >
+                        <svg
+                          width="21"
+                          height="20"
+                          viewBox="0 0 21 20"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M8 5L13 10L8 15"
+                            stroke="white"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          ></path>
+                        </svg>
+                      </span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!--.row-->
+        </div>
+        <!--.container-->
+      </div>
+      <!-- grid wrapper end -->
+
+      <!-- Tab products wrapper start -->
+      <div class="py-4">
+        <div class="container pt-md-4">
+          <h2 class="ff-fraunces fw-semibold fs-1 gradient__title text-center">
+            Choose My Celebration
+          </h2>
+
+          <div class="d-flex justify-content-center mt-4 mt-xl-5">
+            <ul
+              class="nav nav-pills celebrate__nav d-inline-flex flex-nowrap border gap-lg-3 rounded-pill p-1 mb-4"
+              id="pills-tab"
+              role="tablist"
+            >
+              <li class="nav-item" role="presentation">
+                <a
+                  href="javascript:void(0)"
+                  class="nav-link px-3 px-sm-4 py-3 rounded-pill position-relative"
+                  id="pills-occasionTab-tab"
+                  data-bs-toggle="pill"
+                  data-bs-target="#pills-occasionTab"
+                  type="button"
+                  role="tab"
+                  aria-controls="pills-occasionTab"
+                  aria-selected="true"
+                  >Wedding Checklist</a
+                >
+              </li>
+              <li class="nav-item" role="presentation">
+                <a
+                  href="javascript:void(0)"
+                  class="nav-link px-3 px-sm-4 py-3 rounded-pill position-relative active"
+                  id="pills-budgetTab-tab"
+                  data-bs-toggle="pill"
+                  data-bs-target="#pills-budgetTab"
+                  type="button"
+                  role="tab"
+                  aria-controls="pills-budgetTab"
+                  aria-selected="false"
+                  >Take Selfi</a
+                >
+              </li>
+              <li class="nav-item" role="presentation">
+                <a
+                  href="javascript:void(0)"
+                  class="nav-link px-3 px-sm-4 py-3 rounded-pill position-relative"
+                  id="pills-giftTab-tab"
+                  data-bs-toggle="pill"
+                  data-bs-target="#pills-giftTab"
+                  type="button"
+                  role="tab"
+                  aria-controls="pills-giftTab"
+                  aria-selected="false"
+                  >Create Events</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div
+            class="tab-content celebrate__tab__content position-relative pt-4 pt-md-5"
+            id="pills-tabContent"
+          >
+            <div
+              class="tab-pane fade"
+              id="pills-occasionTab"
+              role="tabpanel"
+              aria-labelledby="pills-occasionTab-tab"
+              tabindex="0"
+            >
+              <div class="row g-4 align-items-center">
+                <div class="col-lg-6 order-lg-2 d-flex justify-content-center">
+                  <div class="d-flex" style="width: 276px">
+                    <div class="swiper celebrateSwiper w-100">
+                      <div class="swiper-wrapper">
+                        <div class="swiper-slide">
+                          <img
+                            src="./globalAssets/celebrate/Wedding-Checklist-02.png"
+                            alt="Wedding Checklist"
+                            class="img-fluid"
+                            width="276"
+                            height="428"
+                          />
+                        </div>
+                        <div class="swiper-slide">
+                          <img
+                            src="./globalAssets/celebrate/Wedding-Checklist-01.png"
+                            alt="Wedding Checklist"
+                            class="img-fluid"
+                            width="276"
+                            height="428"
+                          />
+                        </div>
+                        <div class="swiper-slide">
+                          <img
+                            src="./globalAssets/celebrate/Wedding-Checklist-03.png"
+                            alt="Wedding Checklist"
+                            class="img-fluid"
+                            width="276"
+                            height="428"
+                          />
+                        </div>
+                      </div>
+                      <div
+                        class="d-flex justify-content-between position-absolute top-50 translate-midddle-y z-3 w-100"
+                      >
+                        <button
+                          class="swiper-button-prev celebrateSwiperPrev control__btn btn d-flex justify-content-center align-items-center rounded-circle"
+                        ></button>
+                        <button
+                          class="swiper-button-next celebrateSwiperNext control__btn btn d-flex justify-content-center align-items-center rounded-circle"
+                        ></button>
+                      </div>
+                      <!-- Navigation Buttons -->
+                      <div
+                        class="swiper-pagination celebrateSwiperPagination"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-6 order-lg-1 text-center text-lg-start">
+                  <h3
+                    class="ff-fraunces fw-semibold display-4 gradient__title mb-3"
+                  >
+                    Wedding Checklist
+                  </h3>
+                  <p class="text-dark fw-medium mb-4">
+                    Tanishq's Dream Wedding Checklist simplifies wedding
+                    planning with personalized recommendations for cultural
+                    events like Mehendi, Haldi, and Sangeet. Get inspired by
+                    curated attire and jewelry suggestions to create an elegant,
+                    unforgettable celebration.
+                  </p>
+                  <a
+                    href="https://celebrations.tanishq.co.in/selfie"
+                    class="btn btn-primary explore__btn ff-fraunces small fw-semibold rounded-pill gap-3 px-4 border-0"
+                    aria-label="Match Now"
+                  >
+                    <span>Match Now</span>
+                    <span
+                      class="icon d-inline-flex rounded-circle justify-content-center align-items-center"
+                    >
+                      <svg
+                        width="21"
+                        height="20"
+                        viewBox="0 0 21 20"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M8 5L13 10L8 15"
+                          stroke="white"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </a>
+                </div>
+              </div>
+            </div>
+            <!--trendingNew-->
+
+            <div
+              class="tab-pane fade show active"
+              id="pills-budgetTab"
+              role="tabpanel"
+              aria-labelledby="pills-budgetTab-tab"
+              tabindex="0"
+            >
+              <div class="row g-4 align-items-center">
+                <div
+                  class="col-lg-6 order-lg-2 d-flex justify-content-center align-items-center"
+                >
+                  <div class="" style="width: 276px">
+                    <div class="d-flex">
+                      <div class="swiper celebrateSwiper w-100">
+                        <div class="swiper-wrapper">
+                          <div class="swiper-slide">
+                            <img
+                              src="./globalAssets/celebrate/Take-Selfi-02.png"
+                              alt="Take Selfi"
+                              class="img-fluid"
+                              width="276"
+                              height="428"
+                            />
+                          </div>
+                          <div class="swiper-slide">
+                            <img
+                              src="./globalAssets/celebrate/Take-Selfi-01.png"
+                              alt="Take Selfi"
+                              class="img-fluid"
+                              width="276"
+                              height="428"
+                            />
+                          </div>
+                          <div class="swiper-slide">
+                            <img
+                              src="./globalAssets/celebrate/Take-Selfi-03.png"
+                              alt="Take Selfi"
+                              class="img-fluid"
+                              width="276"
+                              height="428"
+                            />
+                          </div>
+                        </div>
+                        <div
+                          class="d-flex justify-content-between position-absolute top-50 translate-midddle-y z-3 w-100"
+                        >
+                          <button
+                            class="swiper-button-prev celebrateSwiperPrev control__btn btn d-flex justify-content-center align-items-center rounded-circle"
+                          ></button>
+                          <button
+                            class="swiper-button-next celebrateSwiperNext control__btn btn d-flex justify-content-center align-items-center rounded-circle"
+                          ></button>
+                        </div>
+                        <!-- Navigation Buttons -->
+                        <div
+                          class="swiper-pagination celebrateSwiperPagination"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-6 order-lg-1 text-center text-lg-start">
+                  <h3
+                    class="ff-fraunces fw-semibold display-4 gradient__title mb-3"
+                  >
+                    Take Selfi
+                  </h3>
+                  <p class="text-dark fw-medium mb-4">
+                    Capture a festive selfie with the Tanishq Selfie feature in
+                    just a few steps: Click "Capture Now", take a well-lit
+                    selfie, choose a festival-themed frame, choose the filter If
+                    needed, and share your festive photo on social media or with
+                    others!
+                  </p>
+                  <a
+                    href="https://celebrations.tanishq.co.in/selfie"
+                    class="btn btn-primary explore__btn ff-fraunces small fw-semibold rounded-pill gap-3 px-4 border-0"
+                    aria-label="Capture Now"
+                  >
+                    <span>Capture Now</span>
+                    <span
+                      class="icon d-inline-flex rounded-circle justify-content-center align-items-center"
+                    >
+                      <svg
+                        width="21"
+                        height="20"
+                        viewBox="0 0 21 20"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M8 5L13 10L8 15"
+                          stroke="white"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </a>
+                </div>
+              </div>
+            </div>
+            <!--budgetTab-->
+
+            <div
+              class="tab-pane fade"
+              id="pills-giftTab"
+              role="tabpanel"
+              aria-labelledby="pills-giftTab-tab"
+              tabindex="0"
+            >
+              <div class="row g-4 align-items-center">
+                <div
+                  class="col-lg-6 order-lg-2 d-flex justify-content-center align-items-center"
+                >
+                  <div class="" style="width: 276px">
+                    <div class="d-flex">
+                      <div class="swiper celebrateSwiper w-100">
+                        <div class="swiper-wrapper">
+                          <div class="swiper-slide">
+                            <img
+                              src="./globalAssets/celebrate/Create-Events-02.png"
+                              alt="Create Events"
+                              class="img-fluid"
+                              width="276"
+                              height="428"
+                            />
+                          </div>
+                          <div class="swiper-slide">
+                            <img
+                              src="./globalAssets/celebrate/Create-Events-01.png"
+                              alt="Create Events"
+                              class="img-fluid"
+                              width="276"
+                              height="428"
+                            />
+                          </div>
+                          <div class="swiper-slide">
+                            <img
+                              src="./globalAssets/celebrate/Create-Events-03.png"
+                              alt="Create Events"
+                              class="img-fluid"
+                              width="276"
+                              height="428"
+                            />
+                          </div>
+                        </div>
+                        <div
+                          class="d-flex justify-content-between position-absolute top-50 translate-midddle-y z-3 w-100"
+                        >
+                          <button
+                            class="swiper-button-prev celebrateSwiperPrev control__btn btn d-flex justify-content-center align-items-center rounded-circle"
+                          ></button>
+                          <button
+                            class="swiper-button-next celebrateSwiperNext control__btn btn d-flex justify-content-center align-items-center rounded-circle"
+                          ></button>
+                        </div>
+                        <!-- Navigation Buttons -->
+                        <div
+                          class="swiper-pagination celebrateSwiperPagination"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-6 order-lg-1 text-center text-lg-start">
+                  <h3
+                    class="ff-fraunces fw-semibold display-4 gradient__title mb-3"
+                  >
+                    Create Events
+                  </h3>
+                  <p class="text-dark fw-medium mb-4">
+                    Tanishq store events are designed to build stronger
+                    relationships with customers, providing a seamless and
+                    memorable shopping experience while reflecting the brand's
+                    commitment to innovation and customer satisfaction.
+                  </p>
+                  <a
+                    href="https://celebrations.tanishq.co.in/selfie"
+                    class="btn btn-primary explore__btn ff-fraunces small fw-semibold rounded-pill gap-3 px-4 border-0"
+                    aria-label="Create Now"
+                  >
+                    <span>Create Now</span>
+                    <span
+                      class="icon d-inline-flex rounded-circle justify-content-center align-items-center"
+                    >
+                      <svg
+                        width="21"
+                        height="20"
+                        viewBox="0 0 21 20"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M8 5L13 10L8 15"
+                          stroke="white"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </a>
+                </div>
+              </div>
+            </div>
+            <!--tryIt-->
+          </div>
+          <!--.tab-content-->
+        </div>
+        <!--.container-->
+      </div>
+      <!-- Tab products wrapper end -->
+    </main>
+
+    <!-- JS: All Vendors -->
+    <script src="./globalAssets/js/jQuery.min.js"></script>
+    <script src="./globalAssets/js/bootstrap.bundle.min.js"></script>
+    <script src="./globalAssets/js/swiper.min.js"></script>
+
+    <script>
+      const celebrateSwiper = new Swiper(".celebrateSwiper", {
+        // Optional parameters
+        // slidesPerView: 1,
+        // loop: true,
+        loop: true,
+        slidesPerView: "auto",
+        effect: "cards",
+        centeredSlides: true,
+        initialSlide: 1,
+
+        breakpoints: {
+          768: {
+            slidesPerView: 1,
+            cardsEffect: {
+              perSlideOffset: 20,
+              slideShadows: false,
+              perSlideRotate: 8, // Rotation of cards in degrees
+            },
+          },
+          0: {
+            slidesPerView: 1.5,
+            centeredSlides: true,
+            spaceBetween: 30,
+            cardsEffect: {
+              perSlideOffset: 10,
+              slideShadows: false,
+              perSlideRotate: 2, // Rotation of cards in degrees
+            },
+          },
+        },
+        spaceBetween: 0,
+
+        // centeredSlidesBounds: true,
+        pagination: {
+          el: ".celebrateSwiperPagination",
+          clickable: true,
+        },
+
+        // Navigation arrows
+        navigation: {
+          nextEl: ".celebrateSwiperNext",
+          prevEl: ".celebrateSwiperPrev",
+        },
+      });
+    </script>
+  </body>
+</html>

@@ -24,8 +24,10 @@ D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\eventsD
 D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\eventsDto\UserSession.java
 D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\gsheet\ExcelEventsUtil.java
 D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\util\APIResponseBuilder.java
+D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\config\WebConfig.java
 D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\eventsDto\EventsUser.java
 D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\gdrive\GoogleDriveService.java
+D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\rivaahDto\BookAppointmentDTO.java
 D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\controller\TanishqPageController.java
 D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\ExcelStoreDTO.java
 D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\eventsDto\InviteesDetailDTO.java
@@ -41,4 +43,5 @@ D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\rivaahD
 D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\eventsDto\EventsDetailDTO.java
 D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\eventsDto\EventsLoginResponseDTO.java
 D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\eventsDto\CompletedEventsResponseDTO.java
+D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\controller\PageController.java
 D:\Ayush_Project\tanishq_selfie_app\src\main\java\com\dechub\tanishq\util\ResponseDataDTO.java

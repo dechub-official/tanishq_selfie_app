@@ -2599,27 +2599,80 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
     }
 
 
+//    public boolean updateDrivelink(String eventId, String link) {
+//        try {
+//            // Get the values in the Id column
+//            String range = "Sheet1" + "!" + "B" + ":" + "B";
+//            final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+//            Sheets service = getSheetService(httpTransport);
+//            ValueRange response = service.spreadsheets().values()
+//                    .get(sheetId4, range)
+//                    .execute();
+//
+//            List<List<Object>> values = response.getValues();
+//            if (values == null || values.isEmpty()) {
+//                System.out.println("No data found.");
+//                return false;
+//            }
+//
+//            // Search for the eventId in the column
+//            int rowIndex = -1;
+//            for (int i = 0; i < values.size(); i++) {
+//                if (values.get(i).size() >0 && values.get(i).get(0).equals(eventId)) {
+//                    rowIndex = i + 1; // +1 because rows are 1-indexed in Google Sheets
+//                    break;
+//                }
+//            }
+//
+//            if (rowIndex == -1) {
+//                System.out.println("Event ID not found.");
+//                return false;
+//            }
+//            System.out.println("Row Index in sheet: "+rowIndex);
+//            // Update the Link column with the new value
+//            String linkCell = "Sheet1" + "!" + "N" + rowIndex;
+//            ValueRange body = new ValueRange()
+//                    .setValues(Arrays.asList(Arrays.asList(link)));
+//            BatchUpdateValuesRequest batchUpdateValuesRequest = new BatchUpdateValuesRequest()
+//                    .setValueInputOption("RAW")
+//                    .setData(Arrays.asList(
+//                            new ValueRange().setRange(linkCell).setValues(Arrays.asList(Arrays.asList(link)))
+//                    ));
+//
+//            service.spreadsheets().values()
+//                    .batchUpdate(sheetId4, batchUpdateValuesRequest)
+//                    .execute();
+//
+//            System.out.println("Row updated successfully.");
+//            return true;
+//        } catch (Exception e) {
+//            System.out.println("Row update failed: " + e.getMessage());
+//            return false;
+//        }
+//    }
+
     public boolean updateDrivelink(String eventId, String link) {
         try {
-            // Get the values in the Id column
-            String range = "Sheet1" + "!" + "B" + ":" + "B";
+            // Get the values in the Id column (now column D)
+            String range = "Sheet1!D:D"; // Column D for event ID
             final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
             Sheets service = getSheetService(httpTransport);
+
             ValueRange response = service.spreadsheets().values()
-                    .get(sheetId4, range)
+                    .get(SheetId11, range) // Use the new sheet ID
                     .execute();
 
             List<List<Object>> values = response.getValues();
             if (values == null || values.isEmpty()) {
-                System.out.println("No data found.");
+                System.out.println("No data found in Id column.");
                 return false;
             }
 
-            // Search for the eventId in the column
+            // Search for the eventId in the Id column
             int rowIndex = -1;
             for (int i = 0; i < values.size(); i++) {
-                if (values.get(i).size() >0 && values.get(i).get(0).equals(eventId)) {
-                    rowIndex = i + 1; // +1 because rows are 1-indexed in Google Sheets
+                if (values.get(i).size() > 0 && values.get(i).get(0).toString().trim().equalsIgnoreCase(eventId.trim())) {
+                    rowIndex = i + 1; // 1-based index for Sheets
                     break;
                 }
             }
@@ -2628,28 +2681,33 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
                 System.out.println("Event ID not found.");
                 return false;
             }
-            System.out.println("Row Index in sheet: "+rowIndex);
-            // Update the Link column with the new value
-            String linkCell = "Sheet1" + "!" + "N" + rowIndex;
+
+            System.out.println("Row Index in sheet: " + rowIndex);
+
+            // Update the Drive link in column U
+            String driveLinkCell = "Sheet1!M" + rowIndex;
             ValueRange body = new ValueRange()
                     .setValues(Arrays.asList(Arrays.asList(link)));
+
             BatchUpdateValuesRequest batchUpdateValuesRequest = new BatchUpdateValuesRequest()
                     .setValueInputOption("RAW")
                     .setData(Arrays.asList(
-                            new ValueRange().setRange(linkCell).setValues(Arrays.asList(Arrays.asList(link)))
+                            new ValueRange().setRange(driveLinkCell).setValues(body.getValues())
                     ));
 
             service.spreadsheets().values()
-                    .batchUpdate(sheetId4, batchUpdateValuesRequest)
+                    .batchUpdate(SheetId11, batchUpdateValuesRequest)
                     .execute();
 
-            System.out.println("Row updated successfully.");
+            System.out.println("Drive link updated successfully.");
             return true;
+
         } catch (Exception e) {
-            System.out.println("Row update failed: " + e.getMessage());
+            System.out.println("Drive link update failed: " + e.getMessage());
             return false;
         }
     }
+
 
 
     public boolean uploadXlsxToGoogleSheet(MultipartFile file, String eventId,String sheetId) throws Exception {
@@ -3410,5 +3468,31 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
         }
 
         return storeIds;
+    }
+
+    public boolean insertBAPSheetData(List<Object> row) {
+        try {
+            final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+            Sheets service = getSheetService(httpTransport);
+
+            ValueRange valueRange = new ValueRange().setValues(Collections.singletonList(row));
+            AppendValuesResponse response = service.spreadsheets().values()
+                    .append(sheetId4, "Sheet1", valueRange)
+                    .setValueInputOption("RAW")
+                    .setInsertDataOption("INSERT_ROWS")
+                    .setIncludeValuesInResponse(true)
+                    .execute();
+
+            if (response.getUpdates() != null && response.getUpdates().getUpdatedRows() > 0) {
+                System.out.println("BAP excel updated successfully");
+                return true;
+            } else {
+                System.out.println("BAP excel update failed");
+                return false;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

@@ -1327,6 +1327,7 @@ package com.dechub.tanishq.service;
 
 import com.dechub.tanishq.dto.*;
 import com.dechub.tanishq.dto.eventsDto.*;
+import com.dechub.tanishq.dto.rivaahDto.BookAppointmentDTO;
 import com.dechub.tanishq.dto.rivaahDto.RivaahAllDetailsDTO;
 import com.dechub.tanishq.dto.rivaahDto.RivaahDTO;
 import com.dechub.tanishq.dto.rivaahDto.RivaahImagesDTO;
@@ -1340,15 +1341,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -1359,9 +1363,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.stream.Collectors;
 import org.springframework.util.ResourceUtils;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+
+import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -1407,9 +1410,39 @@ public class TanishqPageService {
     @Autowired
     private UserSession userSession;
 
+    @Value("${book.appoitment.api.username}")
+    private String bookAnAppoitmentUsername;
+    @Value("${book.appoitment.api.password}")
+    private String bookAnAppoitmentPassword;
+
+    @Value("${book.appoitment.api.url}")
+    public String bookAnAppoitmentUrl;
+
+    @Value("${book.appointment.api.url}")
+    public String bookAnAppointmentUrl;
+
+    private final RestTemplateBuilder restTemplateBuilder;
+    public RestTemplate restTemplate;
+
+
 
 
     private static final Logger log = LoggerFactory.getLogger(TanishqPageService.class);
+
+    @Autowired
+    public TanishqPageService(RestTemplateBuilder restTemplateBuilder) {
+        this.restTemplateBuilder = restTemplateBuilder;
+    }
+
+
+    @PostConstruct
+    public void init() {
+        this.restTemplate = restTemplateBuilder
+                .build();
+    }
+
+
+
     @Scheduled(fixedDelayString = "${dechub.scheduler.fixedDelay}")
     public void fetchData(){
         log.info("fetching details from Google sheet triggered");
@@ -2657,9 +2690,124 @@ public class TanishqPageService {
     }
 
 
-    public StoreEventSummaryDTO processSingleStoreCode(String storeCode, LocalDate startDate, LocalDate endDate) throws Exception {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+//    public StoreEventSummaryDTO processSingleStoreCode(String storeCode, LocalDate startDate, LocalDate endDate) throws Exception {
+//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+//
+//        CompletedEventsResponseDTO eventsResponse = getAllCompletedEventsWithRetry(storeCode);
+//        Object rawData = eventsResponse.getEventData();
+//
+//        List<Map<String, Object>> events = new ArrayList<>();
+//        if (rawData instanceof List<?>) {
+//            events = ((List<?>) rawData).stream()
+//                    .filter(e -> e instanceof Map)
+//                    .map(e -> (Map<String, Object>) e)
+//                    .collect(Collectors.toList());
+//        }
+//
+//        List<Map<String, Object>> filteredEvents = events.stream()
+//                .filter(event -> {
+//                    if (startDate == null || endDate == null) return true;
+//                    Object dateObj = event.get("eventDate");
+//                    if (dateObj == null) return false;
+//                    try {
+//                        LocalDate eventDate = LocalDate.parse(dateObj.toString(), formatter);
+//                        return !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
+//                    } catch (Exception ex) {
+//                        return false;
+//                    }
+//                })
+//                .collect(Collectors.toList());
+//
+//        int storeEventCount = filteredEvents.size();
+//        int storeInvitees = 0;
+//        int storeAttendees = 0;
+//        double storeAdvance = 0;
+//        double storeGhsOrRga = 0;
+//        double storeSale = 0;
+//
+//        for (Map<String, Object> event : filteredEvents) {
+//            storeInvitees += parseInt(event.get("Invitees"));
+//            storeAttendees += parseInt(event.get("Attendees"));
+//            storeAdvance += parseDouble(event.get("advance"));
+//            storeGhsOrRga += parseDouble(event.get("ghs/rga"));
+//            storeSale += parseDouble(event.get("sale"));
+//        }
+//
+//        return new StoreEventSummaryDTO(
+//                storeCode, storeEventCount, storeInvitees, storeAttendees,
+//                storeAdvance, storeGhsOrRga, storeSale
+//        );
+//    }
 
+//    public StoreEventSummaryDTO processSingleStoreCode(String storeCode, LocalDate startDate, LocalDate endDate) throws Exception {
+//        DateTimeFormatter fallbackFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+//
+//        CompletedEventsResponseDTO eventsResponse = getAllCompletedEventsWithRetry(storeCode);
+//        Object rawData = eventsResponse.getEventData();
+//
+//        List<Map<String, Object>> events = new ArrayList<>();
+//        if (rawData instanceof List<?>) {
+//            events = ((List<?>) rawData).stream()
+//                    .filter(e -> e instanceof Map)
+//                    .map(e -> (Map<String, Object>) e)
+//                    .collect(Collectors.toList());
+//        }
+//
+//        List<Map<String, Object>> filteredEvents = events.stream()
+//                .filter(event -> {
+//                    Object dateObj = event.get("eventDate");
+//                    if (dateObj == null) {
+//                        System.out.println("Missing eventDate in event: " + event);
+//                        return false;
+//                    }
+//
+//                    try {
+//                        String dateStr = dateObj.toString();
+//                        LocalDate eventDate;
+//
+//                        if (dateStr.contains("T")) {
+//                            eventDate = LocalDateTime.parse(dateStr).toLocalDate(); // ISO_LOCAL_DATE_TIME
+//                        } else {
+//                            eventDate = LocalDate.parse(dateStr, fallbackFormatter);
+//                        }
+//
+//                        return (startDate == null || !eventDate.isBefore(startDate)) &&
+//                                (endDate == null || !eventDate.isAfter(endDate));
+//
+//                    } catch (Exception ex) {
+//                        System.out.println("Failed to parse eventDate: " + dateObj + " | Event: " + event);
+//                        return false;
+//                    }
+//                })
+//                .collect(Collectors.toList());
+//
+//        int storeEventCount = filteredEvents.size();
+//        int storeInvitees = 0;
+//        int storeAttendees = 0;
+//        double storeAdvance = 0;
+//        double storeGhsOrRga = 0;
+//        double storeSale = 0;
+//
+//        for (Map<String, Object> event : filteredEvents) {
+//            storeInvitees += parseInt(event.get("Invitees"));
+//            storeAttendees += parseInt(event.get("Attendees"));
+//            storeAdvance += parseDouble(event.get("advance"));
+//            storeGhsOrRga += parseDouble(event.get("ghs/rga"));
+//            storeSale += parseDouble(event.get("sale"));
+//        }
+//
+//        return new StoreEventSummaryDTO(
+//                storeCode,
+//                storeEventCount,
+//                storeInvitees,
+//                storeAttendees,
+//                storeAdvance,
+//                storeGhsOrRga,
+//                storeSale
+//        );
+//    }
+
+    public StoreEventSummaryDTO processSingleStoreCode(String storeCode, LocalDate startDate, LocalDate endDate) throws Exception {
         CompletedEventsResponseDTO eventsResponse = getAllCompletedEventsWithRetry(storeCode);
         Object rawData = eventsResponse.getEventData();
 
@@ -2674,11 +2822,11 @@ public class TanishqPageService {
         List<Map<String, Object>> filteredEvents = events.stream()
                 .filter(event -> {
                     if (startDate == null || endDate == null) return true;
-                    Object dateObj = event.get("eventDate");
+                    Object dateObj = event.get("StartDate"); // Use StartDate instead of eventDate
                     if (dateObj == null) return false;
                     try {
-                        LocalDate eventDate = LocalDate.parse(dateObj.toString(), formatter);
-                        return !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
+                        LocalDate eventDate = parseFlexibleDate(dateObj.toString());
+                        return eventDate != null && !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
                     } catch (Exception ex) {
                         return false;
                     }
@@ -2706,5 +2854,99 @@ public class TanishqPageService {
         );
     }
 
+    private LocalDate parseFlexibleDate(String dateStr) {
+        try {
+            return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        } catch (DateTimeParseException e1) {
+            try {
+                return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+            } catch (DateTimeParseException e2) {
+                return null;
+            }
+        }
+    }
+
+
+//    public ResponseDataDTO appointment(BookAppointmentDTO bookAppointmentDTO,boolean isVisitStore) {
+//        ResponseDataDTO responseDataDTO = new ResponseDataDTO();
+//        bookAppointmentDTO.setBrand("Tanishq");
+//
+//        try {
+//
+//            HttpHeaders headers = new HttpHeaders();
+//            headers.setBasicAuth(bookAnAppoitmentUsername,bookAnAppoitmentPassword);
+//            headers.add("PartnerId", "Ecomm");
+//            headers.setContentType(MediaType.APPLICATION_JSON);
+//
+//            HttpEntity<BookAppointmentDTO> entity = new HttpEntity<>(bookAppointmentDTO, headers);
+//            ResponseEntity<String> response = restTemplate.exchange(bookAnAppointmentUrl, HttpMethod.POST, entity, String.class);
+//
+//            if (response.getBody() != null) {
+//                responseDataDTO.setStatus(true);
+//                responseDataDTO.setMessage("Success");
+//                responseDataDTO.setResult(response.getBody());
+//            } else {
+//                responseDataDTO.setMessage("Failed to book appointment");
+//            }
+//
+//        } catch (Exception e) {
+//            responseDataDTO.setMessage("Error: " + e.getMessage());
+//        }
+//        return responseDataDTO;
+//    }
+
+    public ResponseDataDTO appointment(BookAppointmentDTO bookAppointmentDTO, boolean isVisitStore) {
+        ResponseDataDTO responseDataDTO = new ResponseDataDTO();
+
+        try {
+            bookAppointmentDTO.setBrand("Tanishq");
+
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBasicAuth(bookAnAppoitmentUsername, bookAnAppoitmentPassword);
+            headers.add("PartnerId", "Ecomm");
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<BookAppointmentDTO> entity = new HttpEntity<>(bookAppointmentDTO, headers);
+            ResponseEntity<String> response = restTemplate.exchange(
+                    bookAnAppointmentUrl,
+                    HttpMethod.POST,
+                    entity,
+                    String.class
+            );
+
+            // Save to Google Sheet
+            List<Object> row = Arrays.asList(
+                    bookAppointmentDTO.getStoreCode(),
+                    bookAppointmentDTO.getStoreName(),
+                    bookAppointmentDTO.getAppointmentDate(),
+                    bookAppointmentDTO.getAppointmentTime(),
+                    bookAppointmentDTO.getFirstName(),
+                    bookAppointmentDTO.getLastName(),
+                    bookAppointmentDTO.getPhone(),
+                    bookAppointmentDTO.getEmailId(),
+                    bookAppointmentDTO.getTicketType()
+            );
+            boolean dataAdded = gSheetUserDetailsUtil.insertBAPSheetData(row);
+
+            if (response.getBody() != null) {
+                responseDataDTO.setStatus(true);
+                if (dataAdded) {
+                    responseDataDTO.setMessage("Success");
+                } else {
+                    responseDataDTO.setMessage("Success, but failed to save data in sheet");
+                }
+                responseDataDTO.setResult(response.getBody());
+            } else {
+                responseDataDTO.setMessage("Failed to book appointment");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace(); // Recommended during debugging
+            responseDataDTO.setMessage("Error: " + e.getMessage());
+        }
+
+        return responseDataDTO;
+    }
 }
 

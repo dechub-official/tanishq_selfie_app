@@ -29,11 +29,14 @@ com\dechub\tanishq\dto\eventsDto\QrResponseDTO.class
 com\dechub\tanishq\service\TanishqPageService.class
 com\dechub\tanishq\dto\eventsDto\AttendeesDetailDTO.class
 com\dechub\tanishq\dto\rivaahDto\RivaahAllDetailsDTO.class
+com\dechub\tanishq\config\WebConfig.class
 com\dechub\tanishq\controller\RivahController.class
 com\dechub\tanishq\controller\TanishqPageController.class
+com\dechub\tanishq\config\WebMvcConfig.class
 com\dechub\tanishq\dto\BrideDetailsDTO.class
 com\dechub\tanishq\dto\eventsDto\storeCodeDataDTO.class
 com\dechub\tanishq\gsheet\GSheetUserDetailsUtil.class
+com\dechub\tanishq\dto\rivaahDto\BookAppointmentDTO.class
 com\dechub\tanishq\gsheet\GSheetUserDetailsUtil$1.class
 com\dechub\tanishq\dto\eventsDto\ApiResponse.class
 com\dechub\tanishq\dto\rivaahDto\RivaahDTO.class

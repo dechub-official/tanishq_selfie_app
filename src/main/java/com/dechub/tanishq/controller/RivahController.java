@@ -1,5 +1,6 @@
 package com.dechub.tanishq.controller;
 
+import com.dechub.tanishq.dto.rivaahDto.BookAppointmentDTO;
 import com.dechub.tanishq.dto.rivaahDto.RivaahAllDetailsDTO;
 import com.dechub.tanishq.dto.rivaahDto.RivaahDTO;
 import com.dechub.tanishq.dto.rivaahDto.RivaahImagesDTO;
@@ -71,5 +72,12 @@ public class RivahController {
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseDataDTO);
     }
+
+    @PostMapping("/bookAnAppointment")
+    public ResponseEntity<ResponseDataDTO> bookAnAppointment(@RequestBody BookAppointmentDTO bookAppointmentDTO) {
+        ResponseDataDTO response = tanishqPageService.appointment(bookAppointmentDTO, true);
+        return ResponseEntity.ok(response);
+    }
+
 
 }

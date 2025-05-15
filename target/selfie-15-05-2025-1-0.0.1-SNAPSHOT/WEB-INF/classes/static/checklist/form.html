@@ -1,0 +1,295 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Nunito:400,700&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'SterlingDisplay';
+            src: url('assets/fonts/SterlingDisplayRoman/SterlingDisplayRoman.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        [type=checkbox], [type=radio] {
+            border-color: #832729 !important;
+            color: #832729 !important;
+        }
+
+        [multiple]:focus, [type="date"]:focus, [type="email"]:focus, [type="text"]:focus, select:focus, textarea:focus {
+            border-color: #832729 !important;
+            --tw-ring-color: #832729 !important;
+        }
+
+        .error {
+            color: red;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .input-error {
+            border-color: red !important;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'nunito': ['nunito', 'sans-serif'],
+                        'sterlingdisplay': ['SterlingDisplay', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-nunito bg-center bg-no-repeat bg-cover" style="background-image: url('assets/images/form_bg.png');" >
+    <div class="w-full md:flex hidden top-[5%] md:m-0  md:px-10 px-2 py-0 justify-center">
+        <!-- <img src="./assets/images/landing_page_logo.png" class="scale-[0.7] translate-x-[-5%]" width="100px" alt=""> -->
+            <img src="./assets/images/rivaah_logo.png" class="scale-[0.5] " alt="">
+    </div>
+<!-- Form -->
+ <div class="relative">
+<!-- <div id="popup" class="fixed bg-[#80808047] top-0 w-full hidden h-[100vh] z-10 flex justify-center items-center">
+    
+<div class="max-w-[450px] relative md:mx-auto bg-transprant  rounded-xl p-4 md:p-8 my-16 mx-4" >
+
+<div onclick="closePopup()" class="absolute right-3 top-2 cursor-pointer border border-black rounded-md px-3 py-1">
+X
+    </div>
+    <div style="background: rgb(237,218,221);
+background: radial-gradient(circle, rgba(237,218,221,1) 0%, rgba(255,255,255,1) 100%); background-position:right bottom" class="min-w-[100%] h-full min-h-[200px] shadow-lg shadow-indigo-500/40 z-[-10] left-0 rounded-md absolute bottom-0"></div>
+   
+<p class="text-[#832729] md:mt-0 mt-10 text-[25px] text-center font-[nunito] underline">Heartiest Congratulations!</p>
+ <p class="text-[18px] font-[nunito] text-center my-5 text-[#000000]">You can access your Jewellery Checklist from <br>
+ your phone downloads. </p>  
+
+ <p class="text-[18px] font-[nunito] text-center my-5 text-[#000000]">For any queries do reach out to your <br>
+ <a href="https://stores.tanishq.co.in/"><span class="text-[#832729] underline">Nearest Tanishq</span> </p></a>
+ <img src="../assets/images/landing_page_logo.png" alt="" class="h-auto max-w-[30%] md:max-w-[20%] mb-2 mt-5 block ml-auto mr-auto "> 
+</div>
+
+</div> -->
+</div>
+<div class="max-w-4xl md:mx-auto shadow-lg shadow-indigo-500/40 rounded-xl p-4 md:p-8 my-16 mt-10 mx-4">
+    <img src="../assets/images/rivaah_logo.png" alt="" class="h-auto max-w-[30%] md:max-w-[20%] mb-8 block ml-auto mr-auto md:hidden">
+
+    <form class="" id="brideDetailsForm" name="contact-form">
+        
+        <div class="grid gap-4 md:grid-cols-2 md:gap-6">
+            <div class="flex items-center me-4">
+                <input id="sample_catalogue" type="checkbox" value="" class="w-4 h-4 bg-gray-100 border-gray-300 rounded" name="sample_catalogue" checked required>
+                <label for="sample_catalogue" class="ms-2 text-sm font-bold text-gray-900">Add Sample Tanishq Catalogue</label>
+            </div>
+
+            <!-- <input type="hidden" name="filePath" value=""> -->
+            <input type="hidden" name="brideType" id="brideType" value="">
+            <input type="hidden" name="brideEvent" id="brideEvent" value="">
+            <input type="hidden" name="filepath" id="filePath" value="">
+
+            <div class="flex items-center me-4">
+                <input id="request_customized" type="checkbox" value="" class="w-4 h-4 bg-gray-100 border-gray-300 rounded" name="follow_up" checked>
+                <label for="request_customized" class="ms-2 text-sm font-bold text-gray-900">Request for Customized Catalogue</label>
+            </div>
+        </div>
+        <br>
+        <h3 class="text-[25px] font-medium font-sterlingdisplay text-[#832729]">
+            Share my jewellery checklist to: 
+        </h3>
+        <br>
+
+        <div class="grid md:grid-cols-2 md:gap-6">
+            <div class="relative z-0 w-full mb-5 group">
+                <label for="name" class="block mb-2 text-sm font-bold text-gray-900">Name *</label>
+                <input type="text" id="brideName" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5" style="font-size: 0.75rem;" name="brideName" placeholder="Please enter name of person of contact" required/>
+                <div id="nameError" class="error">This field is required</div>
+            </div>
+
+            <div class="relative z-0 w-full mb-5 group">
+                <label for="phone" class="block mb-2 text-sm font-bold text-gray-900">Contact Number: *</label>
+                <input type="text" id="phone" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5" style="font-size: 0.75rem;" name="phone" placeholder="Collected to send SMS to link of checklist" required pattern="[0-9]{10}" title="Please enter a valid 10-digit phone number"/>
+                <div id="phoneError" class="error">Please enter a valid 10-digit phone number</div>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 md:gap-6">
+            <div class="relative z-0 w-full mb-5 group">
+                <label for="email" class="block mb-2 text-sm font-bold text-gray-900">Your E-mail ID *</label>
+                <input type="email" id="email" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5" style="font-size: 0.75rem;" name="email" placeholder="Backup copy to be sent on email" required/>
+                <div id="emailError" class="error">Please enter a valid email address</div>
+            </div>
+            <div class="relative z-0 w-full mb-5 group">
+                <label for="date" class="block mb-2 text-sm font-bold text-gray-900">Choose your wedding date : *</label>
+                <input type="date" id="date" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5" placeholder="Collected to send SMS to link of checklist" name="date" style="font-size: 0.75rem;" required/>
+                <div id="dateError" class="error">This field is required</div>
+            </div>
+        </div>
+
+        <!-- <br> -->
+        <div class=" md:grid-cols-3 md:gap-6 hidden" id="pin-div">
+            <div class="relative z-0 w-full mb-5 group">
+                <input type="text" id="zipCode" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5" placeholder="Enter your PIN Code" name="zipCode" style="font-size: 0.75rem;"  pattern="[0-9]{6}" title="Please enter a valid 6-digit PIN code"/>
+                <div id="pincodeError" class="error">Please enter a valid 6-digit PIN code</div>
+            </div>
+        </div>
+        <br>
+
+        <div class="flex items-center me-4">
+            <input id="follow_up" type="checkbox" onclick="togglePinDiv(this)" value="" class="w-4 h-4 bg-gray-100 border-gray-300 rounded" name="follow_up">
+            <label for="follow_up" class="ms-2 text-sm font-bold text-gray-900">Receive call from store for follow-up.</label>
+        </div>
+        <br>
+
+        <!-- <h3 class="text-[25px] font-medium font-sterlingdisplay text-[#832729]">
+            To be entered by store team:
+        </h3>
+        <br> -->
+
+        <!-- <div class="grid md:grid-cols-2 md:gap-6">
+            <div class="relative z-0 w-full mb-5 group">
+                <label for="store_code" class="block mb-2 text-sm font-bold text-gray-900">Store Code:* </label>
+                <input type="text" id="store_code" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5" style="font-size: 0.75rem;" name="store_code" placeholder="Please take from store" required/>
+                <div id="storeCodeError" class="error">This field is required</div>
+            </div>
+            <div class="relative z-0 w-full mb-5 group">
+                <label for="shopper_name" class="block mb-2 text-sm font-bold text-gray-900">Personal Shopper (RSO) name</label>
+                <input type="text" id="shopper_name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5" placeholder="Add Tanishq Salesperson’s name" name="shopper_name" style="font-size: 0.75rem;"/>
+                <div id="shopperNameError" class="error">This field is required</div>
+            </div>
+        </div> -->
+
+        <button type="button"  onclick="submitForm(event)" name="submit" class="text-white flex items-center gap-x-2 bg-[#832729] hover:bg-red-800 focus:ring-4 focus:outline-none font-bold rounded-lg text-sm w-full text-center sm:w-auto px-5 py-2.5 justify-center text-center">Submit & Download
+
+            <span id="loader" class="hidden  ">
+                <svg version="1.1" id="L9" width="25px"  height="25px" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+                viewBox="0 0 100 100" enable-background="new 0 0 0 0" xml:space="preserve">
+                  <path fill="#fff" d="M73,50c0-12.7-10.3-23-23-23S27,37.3,27,50 M30.9,50c0-10.5,8.5-19.1,19.1-19.1S69.1,39.5,69.1,50">
+                    <animateTransform 
+                       attributeName="transform" 
+                       attributeType="XML" 
+                       type="rotate"
+                       dur="1s" 
+                       from="0 50 50"
+                       to="360 50 50" 
+                       repeatCount="indefinite" />
+                </path>
+              </svg>
+            </span>
+        </button>
+    </form>
+    <footer class="">
+        <div>
+            <p class="text-sm sm:text-center text-[#832729] underline p-4 text-center">Note <br>
+                Please be advised that this checklist does not obligate you to make purchases from Tanishq
+Information will only be saved in our store’s system for quick review when you revisit, until your date of wedding</p> 
+        </div>
+        <div class="w-full max-w-screen-xl mx-auto p-2 md:py-4 text-center">
+            <span class="block text-sm text-gray-500">© <a href="#" class="hover:underline text-[#832729]">Titan Company Limited</a></span>
+        </div>
+    </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+
+<script>
+    const popup=document.getElementById("popup")
+   document.getElementById("brideType").value=localStorage.getItem("language")
+   document.getElementById("brideEvent").value=localStorage.getItem("eventName")
+   document.getElementById("filePath").value=localStorage.getItem("Image")
+ 
+    function closePopup(){
+        popup.style.display='none'
+        window.location.pathname="/"
+
+    }
+    function togglePinDiv(e) {
+        console.log(e.checked);
+        if(e.checked)
+       { 
+        document.getElementById('pin-div').classList.replace('hidden','grid')
+        document.getElementById('zipCode').setAttribute("required",'true')
+       }
+        else
+     {  document.getElementById('pin-div').classList.replace('grid','hidden')
+       document.getElementById('zipCode').removeAttribute("required")
+    }  
+    }
+
+    function submitForm(event) {
+        event.preventDefault();
+        if (!validateForm()) {
+            return;
+        }
+        const loader=document.getElementById("loader")
+            console.log(loader);
+            loader.classList.remove("hidden")
+        const form = document.getElementById('brideDetailsForm');
+        const formData = new FormData(form);
+
+        fetch('https://celebrations.tanishq.co.in/tanishq/selfie/brideDetails', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response =>response.blob())
+        .then(blob => {
+            if (blob) {
+
+                // document.getElementById('popup').classList.remove('hidden');
+                console.log(blob);
+                const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'output.jpg'; // File name you want to download
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            window.location.pathname="/thankyou.html"
+            } else {
+             
+            }
+            loader.classList.add("hidden")
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            loader.classList.add("hidden")
+        });
+    }
+  
+function validateForm() {
+        let isValid = true;
+        const fields = [
+            { id: 'brideName', errorId: 'nameError' },
+            { id: 'phone', errorId: 'phoneError' },
+            { id: 'email', errorId: 'emailError' },
+            { id: 'date', errorId: 'dateError' },
+            { id: 'zipCode', errorId: 'pincodeError' },
+           
+        ];
+
+        fields.forEach(field => {
+            const input = document.getElementById(field.id);
+            const error = document.getElementById(field.errorId);
+            if (!input.checkValidity()) {
+                input.classList.add('input-error');
+                error.style.display = 'block';
+              
+                isValid = false;
+            } else {
+                input.classList.remove('input-error');
+                error.style.display = 'none';
+            }
+        });
+
+      
+
+        return isValid;
+    }
+</script>
+</body>
+</html>

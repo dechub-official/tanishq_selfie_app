@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Nunito:400,700&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+        font-family: 'SterlingDisplay';
+        src: url('assets/fonts/SterlingDisplayRoman/SterlingDisplayRoman.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+        }
+
+    </style>
+    <script>
+        tailwind.config = {
+          theme: {
+            extend: {
+                fontFamily: {
+                'nunito': ['nunito', 'sans-serif'],
+                 'sterlingdisplay' : ['SterlingDisplay', 'sans-serif'],
+                },
+            }
+          }
+        }
+      </script>
+</head>
+    <body class="font-nunito bg-center bg-no-repeat bg-cover" style="background-image: url('assets/images/Landing_bg.png');" >
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="flex justify-center md:justify-end">
+            <img src="./assets/images/landing_page_image1.png" alt="" class="h-auto max-w-[80%]">
+            </div>
+            <div class="flex flex-col gap-8 items-center text-center md:justify-center md:items-start md:text-left">
+                <img src="./assets/images/landing_page_logo.png" alt="" class="h-auto max-w-[50%] md:max-w-[20%] ">
+                <p class="text-[50px] font-medium font-sterlingdisplay text-[#000]">
+                    My Dream <br> Wedding Checklist
+                </p>
+            </div>
+        </div>
+        <br>
+        <!-- <div>
+            <p class="text-sm sm:text-center text-[#832729] p-4 text-center">Disclaimer: Information will only be saved in our store’s system for quick review when you revisit, until your date of wedding</p> 
+        </div> -->
+        <br>
+        <footer class="">
+            <div class="w-full max-w-screen-xl mx-auto p-2 md:py-4 flex justify-center items-center">
+                <span class="block text-sm text-gray-500">© <a href="#" class="hover:underline text-[#832729]">Titan Company Limited</a></span>
+            </div>
+        </footer>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+    </body>
+
+</html>
