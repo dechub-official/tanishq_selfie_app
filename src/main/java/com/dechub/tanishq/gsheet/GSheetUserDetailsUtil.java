@@ -2108,7 +2108,7 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
             if (updatedRows > 0) {
                 System.out.println("id"+eventsDetailDTO.getId());
                 System.out.println("type "+eventsDetailDTO.getEventType());
-                String imageResponse = generateQrCodeWithEventType(eventsDetailDTO.getId(),eventsDetailDTO.getEventType());
+                String imageResponse = generateQrCodeWithEventLocation(eventsDetailDTO.getId(),eventsDetailDTO.getLocation());
                 if (imageResponse.equals("error")) {
                     qrResponseDTO.setStatus(false);
                     qrResponseDTO.setQrData("error in generating qr code");
@@ -2155,11 +2155,11 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
         }
 
     }
-    public String generateQrCodeWithEventType(String eventId, String eventType)  {
+    public String generateQrCodeWithEventLocation(String eventId, String eventLocation)  {
         try {
             // Generate QR code
             String qrCodeText;
-            if (eventType.equalsIgnoreCase("HOME VISITS AND REACH OUTS")){
+            if (eventLocation.equalsIgnoreCase("customer's house")){
                 qrCodeText = "https://celebrations.tanishq.co.in/events/customer/" + eventId +"?ishome=true";
             }
             else {
@@ -2254,8 +2254,14 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
                 ValueRange body = new ValueRange()
                         .setValues(this.formInputAttendeesData(attendeesDetailDTO));
 
-                AppendValuesResponse appendValuesResponse = service.spreadsheets().values().append(sheetId5, "A2", body)
-                        .setValueInputOption("RAW").execute();
+//                AppendValuesResponse appendValuesResponse = service.spreadsheets().values().append(sheetId5, "A2", body)
+//                        .setValueInputOption("RAW").execute();
+
+                AppendValuesResponse appendValuesResponse = service.spreadsheets().values()
+                        .append(sheetId5, "A2:H2", body) // <-- updated range
+                        .setValueInputOption("RAW")
+                        .execute();
+
                 int resSize = appendValuesResponse.size();
                 if (resSize > 0) {
                     System.out.println("attendees details excel updated successfully");
@@ -2307,22 +2313,47 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
         res.add(item);
         return res;
     }
+//    private List<List<Object>> formInputAttendeesData(AttendeesDetailDTO attendeesDetailDTO) {
+//        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+//        LocalDateTime now = LocalDateTime.now();
+//
+//        List<List<Object>> res = new ArrayList<>();
+//        List<Object> item = new ArrayList<>();
+//        item.add(attendeesDetailDTO.getId());
+//        item.add(attendeesDetailDTO.getName());
+//        item.add(attendeesDetailDTO.getPhone());
+//        item.add(attendeesDetailDTO.getLike());
+//        item.add(attendeesDetailDTO.isFirstTimeAtTanishq());
+//        item.add(dtf.format(now));
+//        item.add(false);
+//        item.add(attendeesDetailDTO.getRsoName());
+//        res.add(item);
+//        return res;
+//    }
+
     private List<List<Object>> formInputAttendeesData(AttendeesDetailDTO attendeesDetailDTO) {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime now = LocalDateTime.now();
 
         List<List<Object>> res = new ArrayList<>();
         List<Object> item = new ArrayList<>();
-        item.add(attendeesDetailDTO.getId());
-        item.add(attendeesDetailDTO.getName());
-        item.add(attendeesDetailDTO.getPhone());
-        item.add(attendeesDetailDTO.getLike());
-        item.add(attendeesDetailDTO.isFirstTimeAtTanishq());
-        item.add(dtf.format(now));
-        item.add(false);
+
+        // Ensure non-null values in exact column order
+        item.add(attendeesDetailDTO.getId() != null ? attendeesDetailDTO.getId() : "");                      // 1. Event Id
+        item.add(attendeesDetailDTO.getName() != null ? attendeesDetailDTO.getName() : "");                  // 2. Name
+        item.add(attendeesDetailDTO.getPhone() != null ? attendeesDetailDTO.getPhone() : "");                // 3. Contact
+        item.add(attendeesDetailDTO.getLike() != null ? attendeesDetailDTO.getLike() : "");                  // 4. Like
+        item.add(attendeesDetailDTO.isFirstTimeAtTanishq());                                                 // 5. First Time (boolean defaults to false)
+        item.add(dtf.format(now));                                                                            // 6. Created At
+        item.add(false);                                                                                      // 7. isUploadedFromExcel
+        item.add(attendeesDetailDTO.getRsoName() != null ? attendeesDetailDTO.getRsoName() : "");            // 8. Rso Name
+
+        System.out.println("Final DATA ROW: " + item);  // Debug log
+
         res.add(item);
         return res;
     }
+
 
 //    private List<List<Object>> formInputAttendeesData(AttendeesDetailDTO dto) {
 //        List<List<Object>> values = new ArrayList<>();

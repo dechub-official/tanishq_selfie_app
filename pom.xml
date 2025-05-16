@@ -10,7 +10,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.dechub</groupId>
-	<artifactId>selfie-15-05-2025-1</artifactId>
+	<artifactId>selfie-15-05-2025-2</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>tanishq</name>
 	<description>project for store tanishq</description>

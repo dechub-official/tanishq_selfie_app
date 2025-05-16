@@ -1122,8 +1122,12 @@ import com.dechub.tanishq.util.ResponseDataDTO;
 import com.opencsv.CSVWriter;
 import lombok.extern.log4j.Log4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -1234,7 +1238,8 @@ public class EventsController {
                                               @RequestParam(name="phone",required = false) String phone,
                                               @RequestParam(name="like",required = false) String like,
                                               @RequestParam(name="firstTimeAtTanishq",required = false) boolean firstTimeAtTanishq,
-                                              @RequestParam(name="file",required = false) MultipartFile file){
+                                              @RequestParam(name="file",required = false) MultipartFile file,
+                                              @RequestParam(name = "rsoName",required = false) String rsoName){
 
         AttendeesDetailDTO attendeesDetailDTO = new AttendeesDetailDTO();
         attendeesDetailDTO.setId(eventId);
@@ -1243,6 +1248,7 @@ public class EventsController {
         attendeesDetailDTO.setName(name);
         attendeesDetailDTO.setFirstTimeAtTanishq(firstTimeAtTanishq);
         attendeesDetailDTO.setFile(file);
+        attendeesDetailDTO.setRsoName(rsoName);
         System.out.println(attendeesDetailDTO);
         return tanishqPageService.storeAttendeesData(attendeesDetailDTO);
     }
@@ -1990,6 +1996,15 @@ public class EventsController {
     }
 
 
+    @GetMapping("/download-event-report")
+    public ResponseEntity<InputStreamResource> downloadExcelFile() throws IOException {
+        ClassPathResource file = new ClassPathResource("static/EventAttendedRepository.xlsx");
 
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=EventAttendedRepository.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentLength(file.contentLength())
+                .body(new InputStreamResource(file.getInputStream()));
+    }
 
 }
