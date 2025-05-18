@@ -1359,6 +1359,7 @@ public class GSheetUserDetailsUtil {
     @Value("${google.sheet.dechub.events.details.id}")
     private String sheetId4;
 
+
     @Value("${google.sheet.dechub.events_attendees.details.id}")
     private String sheetId5;
 
@@ -3068,9 +3069,10 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
             return responseDataDTO;
         }
     }
+
     public String getNewPassword(String storeCode) {
         String sheetName = "Sheet3";
-        String range = sheetName + "!A:C";
+        String range = sheetName + "!A:D";
 
         try {
             final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
@@ -3098,11 +3100,11 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
     public ResponseDataDTO updateSaleOfAnEvent(String eventCode, String sale) throws Exception {
         final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         Sheets service = getSheetService(httpTransport);
-        String range = "Sheet1!B:R"; // Adjust if your sheet name is different
+        String range = "Sheet1!D:R"; // Adjust if your sheet name is different
 
         // Fetch existing data
         ValueRange response = service.spreadsheets().values()
-                .get(sheetId4, range)
+                .get(SheetId11, range)
                 .execute();
         List<List<Object>> values = response.getValues();
 
@@ -3125,11 +3127,11 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
         }
 
         // Update sale value in column R (index 17)
-        String updateRange = "Sheet1!R" + rowIndex;
+        String updateRange = "Sheet1!Q" + rowIndex;
         ValueRange body = new ValueRange().setValues(List.of(List.of(sale)));
 
         service.spreadsheets().values()
-                .update(sheetId4, updateRange, body)
+                .update(SheetId11, updateRange, body)
                 .setValueInputOption("RAW")
                 .execute();
         ResponseDataDTO responseDataDTO = new ResponseDataDTO();
@@ -3140,11 +3142,11 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
     public ResponseDataDTO updateAdvanceOfAnEvent(String eventCode, String advance) throws Exception {
         final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         Sheets service = getSheetService(httpTransport);
-        String range = "Sheet1!B:S"; // Adjust if your sheet name is different
+        String range = "Sheet1!B:R"; // Adjust if your sheet name is different
 
         // Fetch existing data
         ValueRange response = service.spreadsheets().values()
-                .get(sheetId4, range)
+                .get(SheetId11, range)
                 .execute();
         List<List<Object>> values = response.getValues();
 
@@ -3166,12 +3168,12 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
             throw new Exception("Event code not found.");
         }
 
-        // Update sale value in column S
-        String updateRange = "Sheet1!S" + rowIndex;
+        // Update sale value in column R
+        String updateRange = "Sheet1!R" + rowIndex;
         ValueRange body = new ValueRange().setValues(List.of(List.of(advance)));
 
         service.spreadsheets().values()
-                .update(sheetId4, updateRange, body)
+                .update(SheetId11, updateRange, body)
                 .setValueInputOption("RAW")
                 .execute();
         ResponseDataDTO responseDataDTO = new ResponseDataDTO();
@@ -3182,11 +3184,11 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
     public ResponseDataDTO updateGhsRgaOfAnEvent(String eventCode, String ghsRga) throws Exception {
         final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         Sheets service = getSheetService(httpTransport);
-        String range = "Sheet1!B:T"; // Adjust if your sheet name is different
+        String range = "Sheet1!B:S"; // Adjust if your sheet name is different
 
         // Fetch existing data
         ValueRange response = service.spreadsheets().values()
-                .get(sheetId4, range)
+                .get(SheetId11, range)
                 .execute();
         List<List<Object>> values = response.getValues();
 
@@ -3209,11 +3211,11 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
         }
 
         // Update sale value in column
-        String updateRange = "Sheet1!T" + rowIndex;
+        String updateRange = "Sheet1!S" + rowIndex;
         ValueRange body = new ValueRange().setValues(List.of(List.of(ghsRga)));
 
         service.spreadsheets().values()
-                .update(sheetId4, updateRange, body)
+                .update(SheetId11, updateRange, body)
                 .setValueInputOption("RAW")
                 .execute();
         ResponseDataDTO responseDataDTO = new ResponseDataDTO();
@@ -3225,11 +3227,11 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
     public ResponseDataDTO updateGmbOfAnEvent(String eventCode, String gmb) throws Exception {
         final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         Sheets service = getSheetService(httpTransport);
-        String range = "Sheet1!B:U"; // Adjust if your sheet name is different
+        String range = "Sheet1!B:T"; // Adjust if your sheet name is different
 
         // Fetch existing data
         ValueRange response = service.spreadsheets().values()
-                .get(sheetId4, range)
+                .get(SheetId11, range)
                 .execute();
         List<List<Object>> values = response.getValues();
 
@@ -3252,11 +3254,11 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
         }
 
         // Update sale value in column U
-        String updateRange = "Sheet1!U" + rowIndex;
+        String updateRange = "Sheet1!T" + rowIndex;
         ValueRange body = new ValueRange().setValues(List.of(List.of(gmb)));
 
         service.spreadsheets().values()
-                .update(sheetId4, updateRange, body)
+                .update(SheetId11, updateRange, body)
                 .setValueInputOption("RAW")
                 .execute();
         ResponseDataDTO responseDataDTO = new ResponseDataDTO();
