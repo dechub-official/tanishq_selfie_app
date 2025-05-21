@@ -2109,7 +2109,7 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
             if (updatedRows > 0) {
                 System.out.println("id"+eventsDetailDTO.getId());
                 System.out.println("type "+eventsDetailDTO.getEventType());
-                String imageResponse = generateQrCodeWithEventLocation(eventsDetailDTO.getId(),eventsDetailDTO.getLocation());
+                String imageResponse = generateQrCode(eventsDetailDTO.getId());
                 if (imageResponse.equals("error")) {
                     qrResponseDTO.setStatus(false);
                     qrResponseDTO.setQrData("error in generating qr code");
@@ -2156,37 +2156,37 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
         }
 
     }
-    public String generateQrCodeWithEventLocation(String eventId, String eventLocation)  {
-        try {
-            // Generate QR code
-            String qrCodeText;
-            if (eventLocation.equalsIgnoreCase("customer's house")){
-                qrCodeText = "https://celebrations.tanishq.co.in/events/customer/" + eventId +"?ishome=true";
-            }
-            else {
-                qrCodeText = "https://celebrations.tanishq.co.in/events/customer/" + eventId;
-            }
-            System.out.println("qr text "+qrCodeText);
-            BufferedImage qrCodeImage = generateQRCodeImage(qrCodeText);
-
-            // Convert QR code to byte array
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(qrCodeImage, "png", baos);
-            byte[] qrCodeBytes = baos.toByteArray();
-
-            // Encode the QR code data to Base64
-            String base64QrCode = Base64.getEncoder().encodeToString(qrCodeBytes);
-
-            // Set headers
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            return base64QrCode;
-        } catch (Exception e) {
-            return "error";
-        }
-
-    }
+//    public String generateQrCodeWithEventLocation(String eventId, String eventLocation)  {
+//        try {
+//            // Generate QR code
+//            String qrCodeText;
+//            if (eventLocation.equalsIgnoreCase("customer's house")){
+//                qrCodeText = "https://celebrations.tanishq.co.in/events/customer/" + eventId +"?ishome=true";
+//            }
+//            else {
+//                qrCodeText = "https://celebrations.tanishq.co.in/events/customer/" + eventId;
+//            }
+//            System.out.println("qr text "+qrCodeText);
+//            BufferedImage qrCodeImage = generateQRCodeImage(qrCodeText);
+//
+//            // Convert QR code to byte array
+//            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//            ImageIO.write(qrCodeImage, "png", baos);
+//            byte[] qrCodeBytes = baos.toByteArray();
+//
+//            // Encode the QR code data to Base64
+//            String base64QrCode = Base64.getEncoder().encodeToString(qrCodeBytes);
+//
+//            // Set headers
+//            HttpHeaders headers = new HttpHeaders();
+//            headers.setContentType(MediaType.APPLICATION_JSON);
+//
+//            return base64QrCode;
+//        } catch (Exception e) {
+//            return "error";
+//        }
+//
+//    }
     private BufferedImage generateQRCodeImage(String text) throws WriterException {
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
         BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 200, 200);

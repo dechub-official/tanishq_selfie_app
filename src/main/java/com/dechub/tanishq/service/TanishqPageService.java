@@ -1886,15 +1886,57 @@ public class TanishqPageService {
     }
 
     public ResponseDataDTO storeRivaahUser(String name, String contact) {
-        boolean status = gSheetUserDetailsUtil.insertRivaahUserDetails(name, contact);
         ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-        if(status){
-            responseDataDTO.setStatus(true);
-            responseDataDTO.setMessage("Successfully stored user details");
+
+        boolean status = gSheetUserDetailsUtil.insertRivaahUserDetails(name, contact);
+
+        // Create minimal DTO to call appointment()
+        BookAppointmentDTO bookAppointmentDTO = new BookAppointmentDTO();
+        String[] nameParts = name.trim().split("\\s+", 2);
+        String firstName = nameParts[0];
+        String lastName = nameParts.length > 1 ? nameParts[1] : "";
+
+        bookAppointmentDTO.setFirstName(firstName);
+        bookAppointmentDTO.setLastName(lastName);
+        bookAppointmentDTO.setPhone(contact);
+
+
+        if (!status) {
+            responseDataDTO.setStatus(false);
+            responseDataDTO.setMessage("User details storing failed");
             return responseDataDTO;
         }
-        responseDataDTO.setStatus(false);
-        responseDataDTO.setMessage("User details storing failed");
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBasicAuth(bookAnAppoitmentUsername, bookAnAppoitmentPassword);
+            headers.add("PartnerId", "Ecomm");
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<BookAppointmentDTO> entity = new HttpEntity<>(bookAppointmentDTO, headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    bookAnAppointmentUrl,
+                    HttpMethod.POST,
+                    entity,
+                    String.class
+            );
+
+            if (response.getBody() != null) {
+                responseDataDTO.setStatus(true);
+                responseDataDTO.setMessage("Successfully stored user details and booked appointment");
+                responseDataDTO.setResult(response.getBody());
+            } else {
+                responseDataDTO.setStatus(false);
+                responseDataDTO.setMessage("Stored user details, but failed to book appointment");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            responseDataDTO.setStatus(false);
+            responseDataDTO.setMessage("Error while booking appointment: " + e.getMessage());
+        }
+
         return responseDataDTO;
     }
 
@@ -2899,9 +2941,6 @@ public class TanishqPageService {
         ResponseDataDTO responseDataDTO = new ResponseDataDTO();
 
         try {
-            bookAppointmentDTO.setBrand("Tanishq");
-
-
             HttpHeaders headers = new HttpHeaders();
             headers.setBasicAuth(bookAnAppoitmentUsername, bookAnAppoitmentPassword);
             headers.add("PartnerId", "Ecomm");

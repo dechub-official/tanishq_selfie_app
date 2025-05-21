@@ -34,6 +34,8 @@ import lombok.Setter;
 
 
 public class BookAppointmentDTO {
+    private static final String DEFAULT_TICKET_TYPE = "Rivaah";
+    private static final String DEFAULT_BRAND = "Tanishq";
     @JsonProperty("BookingReferenceId")
     private String bookingReferenceId;
 
@@ -47,7 +49,7 @@ public class BookAppointmentDTO {
     private String stlocId;
 
     @JsonProperty("TicketType")
-    private String ticketType;
+    private String ticketType = DEFAULT_TICKET_TYPE;
 
     @JsonProperty("Collection")
     private String collection;
@@ -89,7 +91,7 @@ public class BookAppointmentDTO {
     private String emailId;
 
     @JsonProperty("Brand")
-    private String brand;
+    private String brand = DEFAULT_BRAND;
 
     @JsonProperty("City")
     private String city;
