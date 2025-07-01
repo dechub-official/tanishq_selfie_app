@@ -2912,11 +2912,17 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
             return false;
         }
     }
-    private List<List<Object>> formInputRivaahUserData(String name,String contact) {
+    private List<List<Object>> formInputRivaahUserData(String name, String contact) {
         List<List<Object>> res = new ArrayList<>();
         List<Object> item = new ArrayList<>();
-        item.add(name);
-        item.add(contact);
+
+        item.add(name);     // Column 1: Name
+        item.add(contact);  // Column 2: Contact
+
+        // Column 3: Created At
+        String createdAt = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        item.add(createdAt);
+
         res.add(item);
         return res;
     }
