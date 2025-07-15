@@ -1656,7 +1656,7 @@ public class GSheetUserDetailsUtil {
 //                .map(this::sanitizeHeader)
 //                .collect(Collectors.toList());
 //
-//// Iterate over rows and extract required columns
+    //// Iterate over rows and extract required columns
 //        for (int i = 1; i < values.size(); i++) { // Start from 1 to skip headers
 //            List<Object> row = values.get(i);
 //            if (row.size() > 0 && code.equalsIgnoreCase(row.get(0).toString())) {
@@ -1680,52 +1680,52 @@ public class GSheetUserDetailsUtil {
 //    }
 
 
-public List<Map<String, Object>> getCompletedEventDetails(String storeCode) throws Exception {
-    final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-    Sheets service = getSheetService(httpTransport);
+    public List<Map<String, Object>> getCompletedEventDetails(String storeCode) throws Exception {
+        final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+        Sheets service = getSheetService(httpTransport);
 
-    // Define the range assuming data is in columns A to T (20 columns)
-    String range = "Sheet1!A:T";
+        // Define the range assuming data is in columns A to T (20 columns)
+        String range = "Sheet1!A:T";
 
-    // Fetch data
-    ValueRange response = service.spreadsheets().values()
-            .get(SheetId11, range)
-            .execute();
+        // Fetch data
+        ValueRange response = service.spreadsheets().values()
+                .get(SheetId11, range)
+                .execute();
 
-    List<List<Object>> values = response.getValues();
-    List<Map<String, Object>> events = new ArrayList<>();
+        List<List<Object>> values = response.getValues();
+        List<Map<String, Object>> events = new ArrayList<>();
 
-    if (values == null || values.isEmpty()) {
-        System.out.println("No data found.");
-        return Collections.singletonList(Map.of("status", false));
-    }
-
-    // Extract and sanitize headers
-    List<String> headers = values.get(0).stream()
-            .map(Object::toString)
-            .map(this::sanitizeHeader) // if you want to clean headers like replacing spaces, etc.
-            .collect(Collectors.toList());
-
-    for (int i = 1; i < values.size(); i++) {
-        List<Object> row = values.get(i);
-        if (row.size() > 1 && storeCode.equalsIgnoreCase(row.get(1).toString())) { // Store Code is at index 1
-            Map<String, Object> event = new HashMap<>();
-
-            for (int j = 0; j < headers.size(); j++) {
-                event.put(headers.get(j), j < row.size() ? row.get(j) : "");
-            }
-
-            // Optional: derived field
-            Object completedEvents = event.getOrDefault("completedEvents", "");
-            event.put("completedEvent", completedEvents.toString().trim().length() > 1);
-
-            events.add(event);
+        if (values == null || values.isEmpty()) {
+            System.out.println("No data found.");
+            return Collections.singletonList(Map.of("status", false));
         }
-    }
 
-    System.out.println(events);
-    return events;
-}
+        // Extract and sanitize headers
+        List<String> headers = values.get(0).stream()
+                .map(Object::toString)
+                .map(this::sanitizeHeader) // if you want to clean headers like replacing spaces, etc.
+                .collect(Collectors.toList());
+
+        for (int i = 1; i < values.size(); i++) {
+            List<Object> row = values.get(i);
+            if (row.size() > 1 && storeCode.equalsIgnoreCase(row.get(1).toString())) { // Store Code is at index 1
+                Map<String, Object> event = new HashMap<>();
+
+                for (int j = 0; j < headers.size(); j++) {
+                    event.put(headers.get(j), j < row.size() ? row.get(j) : "");
+                }
+
+                // Optional: derived field
+                Object completedEvents = event.getOrDefault("completedEvents", "");
+                event.put("completedEvent", completedEvents.toString().trim().length() > 1);
+
+                events.add(event);
+            }
+        }
+
+        System.out.println(events);
+        return events;
+    }
 
 
     public List<storeCodeDataDTO> getStoresByRegion(String regionSheetName) throws Exception {
@@ -2156,7 +2156,7 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
         }
 
     }
-//    public String generateQrCodeWithEventLocation(String eventId, String eventLocation)  {
+    //    public String generateQrCodeWithEventLocation(String eventId, String eventLocation)  {
 //        try {
 //            // Generate QR code
 //            String qrCodeText;
@@ -3146,33 +3146,39 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
     public ResponseDataDTO updateAdvanceOfAnEvent(String eventCode, String advance) throws Exception {
         final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         Sheets service = getSheetService(httpTransport);
-        String range = "Sheet1!B:R"; // Adjust if your sheet name is different
 
-        // Fetch existing data
+        // ✅ Start range from D, where 'Id' (eventCode) is
+        String range = "Sheet1!D:R";  // D = Id, R = advance
         ValueRange response = service.spreadsheets().values()
                 .get(SheetId11, range)
                 .execute();
-        List<List<Object>> values = response.getValues();
 
+        List<List<Object>> values = response.getValues();
         if (values == null || values.isEmpty()) {
             throw new Exception("No data found in the sheet.");
         }
 
-        // Find row with matching eventCode in column B
         int rowIndex = -1;
 
         for (int i = 0; i < values.size(); i++) {
-            if (values.get(i).size() > 1 && eventCode.equalsIgnoreCase(values.get(i).get(0).toString())) { // Column B = index 1
-                rowIndex = i + 1; // Google Sheets is 1-based index
-                break;
+            List<Object> row = values.get(i);
+            if (row.size() > 0) {
+                String sheetEventCode = row.get(0).toString().trim(); // Because D is now index 0
+                if (eventCode.trim().equalsIgnoreCase(sheetEventCode)) {
+                    rowIndex = i + 1;
+                    System.out.println("✅ Matched eventCode in row: " + rowIndex);
+                    break;
+                }
             }
         }
 
         if (rowIndex == -1) {
-            throw new Exception("Event code not found.");
+            throw new Exception("Event code not found: " + eventCode);
         }
 
-        // Update sale value in column R
+        // ✅ Advance column is R = column 18 = index 17 in sheet
+        // But in this D:R range, R is at index 14 (0-based from D)
+        // So we directly update R column like this:
         String updateRange = "Sheet1!R" + rowIndex;
         ValueRange body = new ValueRange().setValues(List.of(List.of(advance)));
 
@@ -3180,94 +3186,104 @@ public List<Map<String, Object>> getCompletedEventDetails(String storeCode) thro
                 .update(SheetId11, updateRange, body)
                 .setValueInputOption("RAW")
                 .execute();
+
         ResponseDataDTO responseDataDTO = new ResponseDataDTO();
         responseDataDTO.setStatus(true);
-        responseDataDTO.setMessage("Advance updated successfully");
+        responseDataDTO.setMessage("✅ Advance updated successfully");
         return responseDataDTO;
     }
+
+
     public ResponseDataDTO updateGhsRgaOfAnEvent(String eventCode, String ghsRga) throws Exception {
         final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         Sheets service = getSheetService(httpTransport);
-        String range = "Sheet1!B:S"; // Adjust if your sheet name is different
 
-        // Fetch existing data
+        String range = "Sheet1!D:S";  // D = Id, S = ghs/rga
         ValueRange response = service.spreadsheets().values()
                 .get(SheetId11, range)
                 .execute();
-        List<List<Object>> values = response.getValues();
 
+        List<List<Object>> values = response.getValues();
         if (values == null || values.isEmpty()) {
             throw new Exception("No data found in the sheet.");
         }
 
-        // Find row with matching eventCode in column B
         int rowIndex = -1;
 
         for (int i = 0; i < values.size(); i++) {
-            if (values.get(i).size() > 1 && eventCode.equalsIgnoreCase(values.get(i).get(0).toString())) { // Column B = index 1
-                rowIndex = i + 1; // Google Sheets is 1-based index
-                break;
+            List<Object> row = values.get(i);
+            if (row.size() > 0) {
+                String sheetEventCode = row.get(0).toString().trim();
+                if (eventCode.trim().equalsIgnoreCase(sheetEventCode)) {
+                    rowIndex = i + 1;
+                    System.out.println("✅ Matched eventCode in row: " + rowIndex);
+                    break;
+                }
             }
         }
 
         if (rowIndex == -1) {
-            throw new Exception("Event code not found.");
+            throw new Exception("Event code not found: " + eventCode);
         }
 
-        // Update sale value in column
-        String updateRange = "Sheet1!S" + rowIndex;
+        String updateRange = "Sheet1!S" + rowIndex; // ghs/rga is in column S
         ValueRange body = new ValueRange().setValues(List.of(List.of(ghsRga)));
 
         service.spreadsheets().values()
                 .update(SheetId11, updateRange, body)
                 .setValueInputOption("RAW")
                 .execute();
+
         ResponseDataDTO responseDataDTO = new ResponseDataDTO();
         responseDataDTO.setStatus(true);
-        responseDataDTO.setMessage("GHS/RGA updated successfully");
+        responseDataDTO.setMessage("✅ GHS/RGA updated successfully");
         return responseDataDTO;
     }
+
 
     public ResponseDataDTO updateGmbOfAnEvent(String eventCode, String gmb) throws Exception {
         final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         Sheets service = getSheetService(httpTransport);
-        String range = "Sheet1!B:T"; // Adjust if your sheet name is different
 
-        // Fetch existing data
+        String range = "Sheet1!D:T";  // D = Id, T = gmb
         ValueRange response = service.spreadsheets().values()
                 .get(SheetId11, range)
                 .execute();
-        List<List<Object>> values = response.getValues();
 
+        List<List<Object>> values = response.getValues();
         if (values == null || values.isEmpty()) {
             throw new Exception("No data found in the sheet.");
         }
 
-        // Find row with matching eventCode in column B
         int rowIndex = -1;
 
         for (int i = 0; i < values.size(); i++) {
-            if (values.get(i).size() > 1 && eventCode.equalsIgnoreCase(values.get(i).get(0).toString())) { // Column B = index 1
-                rowIndex = i + 1; // Google Sheets is 1-based index
-                break;
+            List<Object> row = values.get(i);
+            if (row.size() > 0) {
+                String sheetEventCode = row.get(0).toString().trim();
+                if (eventCode.trim().equalsIgnoreCase(sheetEventCode)) {
+                    rowIndex = i + 1;
+                    System.out.println("✅ Matched eventCode in row: " + rowIndex);
+                    break;
+                }
             }
         }
 
         if (rowIndex == -1) {
-            throw new Exception("Event code not found.");
+            throw new Exception("Event code not found: " + eventCode);
         }
 
-        // Update sale value in column U
-        String updateRange = "Sheet1!T" + rowIndex;
+        String updateRange = "Sheet1!T" + rowIndex; // gmb is in column T
         ValueRange body = new ValueRange().setValues(List.of(List.of(gmb)));
 
         service.spreadsheets().values()
                 .update(SheetId11, updateRange, body)
                 .setValueInputOption("RAW")
                 .execute();
+
         ResponseDataDTO responseDataDTO = new ResponseDataDTO();
         responseDataDTO.setStatus(true);
-        responseDataDTO.setMessage("GMB updated successfully");
+        responseDataDTO.setMessage("✅ GMB updated successfully");
         return responseDataDTO;
     }
 
