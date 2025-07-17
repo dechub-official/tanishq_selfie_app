@@ -1144,7 +1144,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("events")
+@RequestMapping("/events")
 public class EventsController {
     @Autowired
     private GoogleDriveService googleServiceUtil;
@@ -1250,6 +1250,9 @@ public class EventsController {
         attendeesDetailDTO.setFile(file);
         attendeesDetailDTO.setRsoName(rsoName);
         System.out.println(attendeesDetailDTO);
+
+        attendeesDetailDTO.setBulkUpload(file != null && !file.isEmpty());
+
         return tanishqPageService.storeAttendeesData(attendeesDetailDTO);
     }
 

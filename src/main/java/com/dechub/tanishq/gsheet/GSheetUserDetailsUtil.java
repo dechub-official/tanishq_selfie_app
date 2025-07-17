@@ -2243,28 +2243,39 @@ public class GSheetUserDetailsUtil {
 
     public int insertSheetAttendeesData(AttendeesDetailDTO attendeesDetailDTO) {
         try {
-            if(attendeesDetailDTO.getFile()!=null&&!attendeesDetailDTO.getFile().isEmpty()){
+            if(attendeesDetailDTO.getFile()!=null && !attendeesDetailDTO.getFile().isEmpty()) {
                 int attendeesCount = excelEventsUtil.uploadExcelFile(attendeesDetailDTO.getFile());
-                log.info("attendeesCount "+attendeesCount);
-                boolean attendeesUpdated = uploadXlsxToGoogleSheet(attendeesDetailDTO.getFile(),attendeesDetailDTO.getId(),sheetId5);
+                log.info("attendeesCount " + attendeesCount);
+
+                boolean attendeesUpdated = uploadXlsxToGoogleSheet(attendeesDetailDTO.getFile(), attendeesDetailDTO.getId(), sheetId5);
+
+                // Optional: handle Rivaah insert per row in Excel if needed
+
                 return attendeesCount;
-            }else{
+            } else {
                 final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
                 Sheets service = getSheetService(httpTransport);
 
                 ValueRange body = new ValueRange()
                         .setValues(this.formInputAttendeesData(attendeesDetailDTO));
 
-//                AppendValuesResponse appendValuesResponse = service.spreadsheets().values().append(sheetId5, "A2", body)
-//                        .setValueInputOption("RAW").execute();
-
                 AppendValuesResponse appendValuesResponse = service.spreadsheets().values()
-                        .append(sheetId5, "A2:H2", body) // <-- updated range
+                        .append(sheetId5, "A2:H2", body)
                         .setValueInputOption("RAW")
                         .execute();
 
                 int resSize = appendValuesResponse.size();
+
                 if (resSize > 0) {
+                    // ✅ Insert into Rivaah sheet
+                    boolean rivaahInserted = insertRivaahUserFromEvent(
+                            attendeesDetailDTO.getName(),
+                            attendeesDetailDTO.getPhone(),
+                            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                            "event"
+                    );
+                    log.info("Rivaah Sheet Inserted: " + rivaahInserted);
+
                     System.out.println("attendees details excel updated successfully");
                     return 1;
                 } else {
@@ -2278,6 +2289,7 @@ public class GSheetUserDetailsUtil {
             return 0;
         }
     }
+
     public boolean insertSheetInviteesData(InviteesDetailDTO inviteesDetailDTO) {
         try {
             final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
@@ -3548,4 +3560,29 @@ public class GSheetUserDetailsUtil {
             return false;
         }
     }
-}
+            public boolean insertRivaahUserFromEvent(String name, String contact, String createdAt, String source) {
+                try {
+                    final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+                    Sheets service = getSheetService(httpTransport);
+
+                    ValueRange body = new ValueRange()
+                            .setValues(Collections.singletonList(Arrays.asList(
+                                    name,
+                                    contact,
+                                    createdAt,
+                                    source
+                            )));
+
+                    AppendValuesResponse response = service.spreadsheets().values()
+                            .append(sheetId9, "Sheet2!A2", body)  // 👈 write to Sheet2 tab
+                            .setValueInputOption("RAW")
+                            .execute();
+
+                    return response.getUpdates().getUpdatedRows() > 0;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            }
+
+    }

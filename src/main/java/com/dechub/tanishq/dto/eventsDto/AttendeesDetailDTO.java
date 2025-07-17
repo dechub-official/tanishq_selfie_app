@@ -27,4 +27,7 @@ public class AttendeesDetailDTO {
 
     private MultipartFile file;
 
+    private boolean bulkUpload;
+    private boolean fromQrCode;
+
 }

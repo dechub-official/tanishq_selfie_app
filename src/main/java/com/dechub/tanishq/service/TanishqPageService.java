@@ -338,7 +338,8 @@
 //    }
 //    public ResponseDataDTO storeAttendeesData(AttendeesDetailDTO attendeesDetailDTO)  {
 //        ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-//        int isDone = gSheetUserDetailsUtil.insertSheetAttendeesData(attendeesDetailDTO);
+//        int isDone = gSheetUserDetailsUtil.
+//        insertSheetAttendeesData(attendeesDetailDTO);
 //        if(isDone>0){
 //            boolean updated = gSheetUserDetailsUtil.updateAttendees(attendeesDetailDTO.getId(),isDone);
 //            if(updated){
@@ -1349,6 +1350,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -1695,20 +1697,57 @@ public class TanishqPageService {
         }
         return imageResponse;
     }
-    public ResponseDataDTO storeAttendeesData(AttendeesDetailDTO attendeesDetailDTO)  {
+    public ResponseDataDTO storeAttendeesData(AttendeesDetailDTO attendeesDetailDTO) {
         ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-        int isDone = gSheetUserDetailsUtil.insertSheetAttendeesData(attendeesDetailDTO);
-        if(isDone>0){
-            boolean updated = gSheetUserDetailsUtil.updateAttendees(attendeesDetailDTO.getId(),isDone);
-            if(updated){
+
+        int isDone = gSheetUserDetailsUtil.insertSheetAttendeesData(attendeesDetailDTO); // store in attendees sheet
+
+        if (isDone > 0) {
+            try {
+                // ✅ Only first name
+                String firstName = attendeesDetailDTO.getName().trim();
+
+                // Create DTO with only first name and contact
+                BookAppointmentDTO dto = new BookAppointmentDTO();
+                dto.setFirstName(firstName);  // ✅ Only first name
+                dto.setPhone(attendeesDetailDTO.getPhone());  // ✅ Contact
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setBasicAuth(bookAnAppoitmentUsername, bookAnAppoitmentPassword);
+                headers.add("PartnerId", "Ecomm");
+                headers.setContentType(MediaType.APPLICATION_JSON);
+
+                HttpEntity<BookAppointmentDTO> entity = new HttpEntity<>(dto, headers);
+
+                ResponseEntity<String> response = restTemplate.exchange(
+                        bookAnAppointmentUrl,
+                        HttpMethod.POST,
+                        entity,
+                        String.class
+                );
+
+                if (response.getBody() != null) {
+                    responseDataDTO.setStatus(true);
+                    responseDataDTO.setMessage("Stored attendees data and sent to Titan successfully");
+                    responseDataDTO.setResult(response.getBody());
+                } else {
+                    responseDataDTO.setStatus(true);
+                    responseDataDTO.setMessage("Stored attendees data, but failed to send to Titan");
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
                 responseDataDTO.setStatus(true);
+                responseDataDTO.setMessage("Stored attendees data, but error sending to Titan: " + e.getMessage());
             }
-        }else{
+        } else {
             responseDataDTO.setStatus(false);
-            responseDataDTO.setMessage("storing failed");
+            responseDataDTO.setMessage("Failed to store attendees data");
         }
+
         return responseDataDTO;
     }
+
 
 //    public ResponseEntity<ApiResponse<String>> storeAttendeesData(AttendeesDetailDTO attendeesDetailDTO) {
 //        try {
