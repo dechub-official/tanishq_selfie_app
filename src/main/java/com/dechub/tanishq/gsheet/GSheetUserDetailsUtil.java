@@ -2277,7 +2277,7 @@ public class GSheetUserDetailsUtil {
                     log.info("Rivaah Sheet Inserted: " + rivaahInserted);
 
                     System.out.println("attendees details excel updated successfully");
-                    return 1;
+                    return appendValuesResponse.getUpdates().getUpdatedRows(); // returns actual number of rows added
                 } else {
                     System.out.println("attendees details excel updated failed");
                     return 0;

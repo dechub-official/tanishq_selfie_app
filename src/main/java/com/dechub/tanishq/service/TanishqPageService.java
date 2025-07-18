@@ -336,6 +336,7 @@
 //        }
 //        return imageResponse;
 //    }
+
 //    public ResponseDataDTO storeAttendeesData(AttendeesDetailDTO attendeesDetailDTO)  {
 //        ResponseDataDTO responseDataDTO = new ResponseDataDTO();
 //        int isDone = gSheetUserDetailsUtil.
@@ -1701,16 +1702,21 @@ public class TanishqPageService {
         ResponseDataDTO responseDataDTO = new ResponseDataDTO();
 
         int isDone = gSheetUserDetailsUtil.insertSheetAttendeesData(attendeesDetailDTO); // store in attendees sheet
+        responseDataDTO.setResult(isDone); // send count to frontend
 
         if (isDone > 0) {
+            // ✅ UPDATE attendees count in Rivaah Sheet (Sheet1)
+            boolean updated = gSheetUserDetailsUtil.updateAttendees(attendeesDetailDTO.getId(), isDone);
+            log.info("Updated attendees count in Rivaah Sheet? => " + updated);
+
             try {
                 // ✅ Only first name
                 String firstName = attendeesDetailDTO.getName().trim();
 
                 // Create DTO with only first name and contact
                 BookAppointmentDTO dto = new BookAppointmentDTO();
-                dto.setFirstName(firstName);  // ✅ Only first name
-                dto.setPhone(attendeesDetailDTO.getPhone());  // ✅ Contact
+                dto.setFirstName(firstName);
+                dto.setPhone(attendeesDetailDTO.getPhone());
 
                 HttpHeaders headers = new HttpHeaders();
                 headers.setBasicAuth(bookAnAppoitmentUsername, bookAnAppoitmentPassword);
@@ -1740,6 +1746,7 @@ public class TanishqPageService {
                 responseDataDTO.setStatus(true);
                 responseDataDTO.setMessage("Stored attendees data, but error sending to Titan: " + e.getMessage());
             }
+
         } else {
             responseDataDTO.setStatus(false);
             responseDataDTO.setMessage("Failed to store attendees data");
