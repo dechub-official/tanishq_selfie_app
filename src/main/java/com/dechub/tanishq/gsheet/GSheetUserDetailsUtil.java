@@ -2054,7 +2054,7 @@ public class GSheetUserDetailsUtil {
                     return qrResponseDTO;
                 }
             } else {
-                eventsDetailDTO.setInvitees(1);
+                eventsDetailDTO.setInvitees(0); // ✅
                 InviteesDetailDTO inviteesDetailDTO = new InviteesDetailDTO();
                 inviteesDetailDTO.setName(eventsDetailDTO.getName());
                 inviteesDetailDTO.setEventId(eventsDetailDTO.getId());
