@@ -2054,18 +2054,29 @@ public class GSheetUserDetailsUtil {
                     return qrResponseDTO;
                 }
             } else {
-                eventsDetailDTO.setInvitees(0); // ✅
-                InviteesDetailDTO inviteesDetailDTO = new InviteesDetailDTO();
-                inviteesDetailDTO.setName(eventsDetailDTO.getName());
-                inviteesDetailDTO.setEventId(eventsDetailDTO.getId());
-                inviteesDetailDTO.setContact(eventsDetailDTO.getContact());
-                boolean inviteesUpdated = insertSheetInviteesData(inviteesDetailDTO);
-                if(!inviteesUpdated){
-                    qrResponseDTO.setStatus(false);
-                    qrResponseDTO.setQrData("Invitees sheet update failed");
-                    return qrResponseDTO;
+                int inviteeCount = 0;
+                boolean hasCustomer = eventsDetailDTO.getName() != null && !eventsDetailDTO.getName().trim().isEmpty()
+                        && eventsDetailDTO.getContact() != null && !eventsDetailDTO.getContact().trim().isEmpty();
+
+                if (hasCustomer) {
+                    inviteeCount = 1;
+
+                    InviteesDetailDTO inviteesDetailDTO = new InviteesDetailDTO();
+                    inviteesDetailDTO.setName(eventsDetailDTO.getName());
+                    inviteesDetailDTO.setEventId(eventsDetailDTO.getId());
+                    inviteesDetailDTO.setContact(eventsDetailDTO.getContact());
+
+                    boolean inviteesUpdated = insertSheetInviteesData(inviteesDetailDTO);
+                    if (!inviteesUpdated) {
+                        qrResponseDTO.setStatus(false);
+                        qrResponseDTO.setQrData("Invitees sheet update failed");
+                        return qrResponseDTO;
+                    }
                 }
+
+                eventsDetailDTO.setInvitees(inviteeCount);
             }
+
 
             // Initialize row data with empty values for each column
             int totalColumns = 20; // Adjust this based on the total number of columns
