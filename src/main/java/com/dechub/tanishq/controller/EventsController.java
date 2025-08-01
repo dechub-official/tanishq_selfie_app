@@ -1838,7 +1838,7 @@ public class EventsController {
                 "StoreCode", "Id", "EventType", "EventSubType", "EventName", "RSO",
                 "StartDate", "StartTime", "Description", "Image", "Invitees", "Attendees",
                 "createdAt", "completedEvent", "Community", "location",
-                "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb"
+                "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb", "completedEvents"
         );
 
         writer.writeNext(headers.toArray(new String[0]));
@@ -1881,7 +1881,7 @@ public class EventsController {
                 "StoreCode", "Id", "EventType", "EventSubType", "EventName", "RSO",
                 "StartDate", "StartTime", "Description", "Image", "Invitees", "Attendees",
                 "createdAt", "completedEvent", "Community", "location",
-                "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb"
+                "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb", "completedEvents"
         );
 
         writer.writeNext(headers.toArray(new String[0]));
@@ -1924,7 +1924,7 @@ public class EventsController {
                 "StoreCode", "Id", "EventType", "EventSubType", "EventName", "RSO",
                 "StartDate", "StartTime", "Description", "Image", "Invitees", "Attendees",
                 "createdAt", "completedEvent", "Community", "location",
-                "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb"
+                "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb", "completedEvents"
         );
 
         writer.writeNext(headers.toArray(new String[0]));
@@ -1968,7 +1968,7 @@ public class EventsController {
                 "StoreCode", "Id", "EventType", "EventSubType", "EventName", "RSO",
                 "StartDate", "StartTime", "Description", "Image", "Invitees", "Attendees",
                 "createdAt", "completedEvent", "Community", "location",
-                "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb"
+                "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb", "completedEvents"
         );
 
         writer.writeNext(headers.toArray(new String[0]));
@@ -2009,5 +2009,5 @@ public class EventsController {
                 .contentLength(file.contentLength())
                 .body(new InputStreamResource(file.getInputStream()));
     }
-
 }
+
