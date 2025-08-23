@@ -1370,32 +1370,33 @@ public class EventsController {
     }
 
     @PostMapping("/uploadCompletedEvents")
-    public ResponseDataDTO uploadFiles(@RequestParam("files") List<MultipartFile> files, @RequestParam("eventId") String eventId) {
+    public ResponseDataDTO uploadFiles(@RequestParam("files") List<MultipartFile> files,
+                                       @RequestParam("eventId") String eventId) {
         ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-        ExecutorService executor = Executors.newFixedThreadPool(Math.min(files.size(), 10)); // Limit concurrent threads
+        ExecutorService executor = Executors.newFixedThreadPool(Math.min(files.size(), 10));
         List<CompletableFuture<Boolean>> uploadFutures = new ArrayList<>();
 
         try {
+            // ✅ get folder link first
+            String folderLink = googleServiceUtil.getFolderLinkForEvent(eventId);
+
             for (MultipartFile file : files) {
                 CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
                     try {
-                        // Validate file type
                         if (!isAllowedFileType(file.getOriginalFilename())) {
                             return false;
                         }
 
-                        // Save file to a temporary location
                         java.io.File tempFile = java.io.File.createTempFile("upload-", file.getOriginalFilename());
                         file.transferTo(tempFile);
 
-                        // Upload file to Google Drive
-                        String fileLink = googleServiceUtil.uploadFileToDrive(tempFile, eventId, file.getContentType());
+                        // ✅ upload each file (but ignore individual file link)
+                        googleServiceUtil.uploadFileToDrive(tempFile, eventId, file.getContentType());
 
-                        // Clean up temporary file
                         tempFile.delete();
 
-                        // Update Google Sheet with file link
-                        return gSheetUserDetailsUtil.updateDrivelink(eventId, fileLink);
+                        // ✅ update Google Sheet with only the folder link
+                        return gSheetUserDetailsUtil.updateDrivelink(eventId, folderLink);
                     } catch (Exception e) {
                         e.printStackTrace();
                         return false;
@@ -1405,12 +1406,10 @@ public class EventsController {
                 uploadFutures.add(future);
             }
 
-            // Wait for all uploads to complete
             List<Boolean> results = uploadFutures.stream()
                     .map(CompletableFuture::join)
                     .collect(Collectors.toList());
 
-            // Check if all files were uploaded successfully
             boolean allSuccess = results.stream().allMatch(result -> result);
             responseDataDTO.setStatus(allSuccess);
             responseDataDTO.setMessage(allSuccess ? "All files uploaded successfully." : "Some files failed to upload.");
@@ -1446,6 +1445,7 @@ public class EventsController {
         }
         return filename.substring(lastDotIndex + 1).toLowerCase();
     }
+
 
     @PostMapping("/changePassword")
     private ResponseDataDTO changePassword(@RequestParam String storeCode,@RequestParam String oldPassword,@RequestParam String newPassword){
