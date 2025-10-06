@@ -1450,6 +1450,7 @@ public class EventsController {
         return filename.substring(lastDotIndex + 1).toLowerCase();
     }
 
+
     @PostMapping("/changePassword")
     private ResponseDataDTO changePassword(@RequestParam String storeCode,@RequestParam String oldPassword,@RequestParam String newPassword){
         return tanishqPageService.changePasswordForEventManager(storeCode,oldPassword,newPassword);
