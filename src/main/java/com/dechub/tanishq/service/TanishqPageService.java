@@ -1467,6 +1467,11 @@ public class TanishqPageService {
         EventsLoginResponseDTO responseDataDTO = new EventsLoginResponseDTO();
         String correctPassword = gSheetUserDetailsUtil.getNewPassword(storeCode);
 
+        // 🔹 Debug logs
+        System.out.println("DEBUG - StoreCode input: [" + storeCode + "]");
+        System.out.println("DEBUG - Password provided: [" + password + "]");
+        System.out.println("DEBUG - Password from sheet: [" + correctPassword + "]");
+
         List<String> codeList = new ArrayList<>(Arrays.asList(
                 "east1", "east2",
                 "north1a", "north1b",
@@ -1700,61 +1705,29 @@ public class TanishqPageService {
     }
     public ResponseDataDTO storeAttendeesData(AttendeesDetailDTO attendeesDetailDTO) {
         ResponseDataDTO responseDataDTO = new ResponseDataDTO();
+        try {
+            int isDone = gSheetUserDetailsUtil.insertSheetAttendeesData(attendeesDetailDTO); // store in attendees sheet
+            responseDataDTO.setResult(isDone); // send count to frontend
 
-        int isDone = gSheetUserDetailsUtil.insertSheetAttendeesData(attendeesDetailDTO); // store in attendees sheet
-        responseDataDTO.setResult(isDone); // send count to frontend
-
-        if (isDone > 0) {
-            // ✅ UPDATE attendees count in Rivaah Sheet (Sheet1)
-            boolean updated = gSheetUserDetailsUtil.updateAttendees(attendeesDetailDTO.getId(), isDone);
-            log.info("Updated attendees count in Rivaah Sheet? => " + updated);
-
-            try {
-                // ✅ Only first name
-                String firstName = attendeesDetailDTO.getName().trim();
-
-                // Create DTO with only first name and contact
-                BookAppointmentDTO dto = new BookAppointmentDTO();
-                dto.setFirstName(firstName);
-                dto.setPhone(attendeesDetailDTO.getPhone());
-
-                HttpHeaders headers = new HttpHeaders();
-                headers.setBasicAuth(bookAnAppoitmentUsername, bookAnAppoitmentPassword);
-                headers.add("PartnerId", "Ecomm");
-                headers.setContentType(MediaType.APPLICATION_JSON);
-
-                HttpEntity<BookAppointmentDTO> entity = new HttpEntity<>(dto, headers);
-
-                ResponseEntity<String> response = restTemplate.exchange(
-                        bookAnAppointmentUrl,
-                        HttpMethod.POST,
-                        entity,
-                        String.class
-                );
-
-                if (response.getBody() != null) {
-                    responseDataDTO.setStatus(true);
-                    responseDataDTO.setMessage("Stored attendees data and sent to Titan successfully");
-                    responseDataDTO.setResult(response.getBody());
-                } else {
-                    responseDataDTO.setStatus(true);
-                    responseDataDTO.setMessage("Stored attendees data, but failed to send to Titan");
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (isDone > 0) {
+                boolean updated = gSheetUserDetailsUtil.updateAttendees(attendeesDetailDTO.getId(), isDone);
+                log.info("Updated attendees count in Event Sheet? => " + updated);
                 responseDataDTO.setStatus(true);
-                responseDataDTO.setMessage("Stored attendees data, but error sending to Titan: " + e.getMessage());
+                responseDataDTO.setMessage("Stored attendees data successfully (only in Attendees & Event Sheet)");
+            } else {
+                responseDataDTO.setStatus(false);
+                responseDataDTO.setMessage("Failed to store attendees data");
             }
-
-        } else {
+        } catch (IllegalArgumentException iae) {
+            // validation failures (bad phone) end up here
             responseDataDTO.setStatus(false);
-            responseDataDTO.setMessage("Failed to store attendees data");
+            responseDataDTO.setMessage(iae.getMessage());
+        } catch (Exception e) {
+            responseDataDTO.setStatus(false);
+            responseDataDTO.setMessage("Error: " + e.getMessage());
         }
-
         return responseDataDTO;
     }
-
 
 //    public ResponseEntity<ApiResponse<String>> storeAttendeesData(AttendeesDetailDTO attendeesDetailDTO) {
 //        try {

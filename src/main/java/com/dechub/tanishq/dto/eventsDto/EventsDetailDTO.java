@@ -37,6 +37,9 @@ public class EventsDetailDTO {
     private Integer ghsOrRga;
     private Integer gmb;
     private MultipartFile file;
+    private boolean diamondAwareness;
+    private boolean ghsFlag;
+
 
     public String getName() {
         return name;
@@ -201,5 +204,19 @@ public class EventsDetailDTO {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public boolean isDiamondAwareness() {
+        return diamondAwareness;
+    }
+    public void setDiamondAwareness(boolean diamondAwareness) {
+        this.diamondAwareness = diamondAwareness;
+    }
+
+    public boolean isGhsFlag() {
+        return ghsFlag;
+    }
+    public void setGhsFlag(boolean ghsFlag) {
+        this.ghsFlag = ghsFlag;
     }
 }

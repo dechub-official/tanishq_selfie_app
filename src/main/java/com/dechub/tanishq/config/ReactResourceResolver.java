@@ -14,11 +14,13 @@ public class ReactResourceResolver implements ResourceResolver {
     private static final String REACT_DIR = "/static/";
     private static final String REACT_STATIC_DIR = "static";
     private static final String CHECKLIST_DIR = "checklist/";
+    private static final String QR_DIR = "qr/";
 
     private static final String GLOBAL_DIR = "globalPage/";
 
     private static final String CHECKLIST_ASSESTS_DIR = "assets";
     private static final String GLOBAL_ASSESTS_DIR = "globalAssets";
+    private static final String QR_ASSESTS_DIR = "assets";
 
 
     private Resource index = new ClassPathResource(REACT_DIR + "index.html");
@@ -32,6 +34,7 @@ public class ReactResourceResolver implements ResourceResolver {
 
     private Resource eventsIndex = new ClassPathResource(REACT_DIR +"events.html");
     private Resource globalPageIndex = new ClassPathResource(REACT_DIR +GLOBAL_DIR+"celebrate.html");
+    private Resource grPageIndex = new ClassPathResource(REACT_DIR +QR_DIR+"index.html");
 
     // Add resources for assets (images, CSS, JS, etc.)
     private Resource checklistAssets = new ClassPathResource(REACT_DIR + CHECKLIST_DIR + "assets/");
@@ -40,6 +43,8 @@ public class ReactResourceResolver implements ResourceResolver {
     private List<String> rootStaticFiles = Arrays.asList(
             "asset-manifest.json", "logo.png", "manifest.json", "robots.txt"
     );
+    private Resource qrAssets = new ClassPathResource(REACT_DIR + QR_DIR + "assets/");
+
 
     @Override
     public Resource resolveResource(
@@ -82,6 +87,11 @@ public class ReactResourceResolver implements ResourceResolver {
         }else if (requestPath.startsWith(GLOBAL_ASSESTS_DIR)) {
             return new ClassPathResource(REACT_DIR +GLOBAL_DIR +requestPath);
         }
+        else if (requestPath.startsWith("qr/assets")) {
+            System.out.println("qr-assets" +REACT_DIR  + requestPath);
+            return new ClassPathResource(REACT_DIR + requestPath);
+
+        }
         else if (requestPath.startsWith("checklist")) {
             return checklistIndex;
         }else if (requestPath.startsWith("lol")) {
@@ -108,10 +118,14 @@ public class ReactResourceResolver implements ResourceResolver {
             return globalAssets;
         }
 
+        else if (requestPath.startsWith("qr")) {
+            return grPageIndex;
+        }
         else if (requestPath.startsWith("assets")) {
             // Handle requests for assets inside checklist folder
             return checklistAssets;
         }
+
         else {
             return globalPageIndex;
         }

@@ -12,8 +12,10 @@ import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 
@@ -42,16 +44,22 @@ public class GoogleDriveService {
     }
 
     private Credential getCredentials(NetHttpTransport HTTP_TRANSPORT) throws Exception {
-        java.io.File keyFile = new java.io.File(filePath);
-        if (!keyFile.exists()) {
-            throw new Exception("Keys file Not found: " + filePath);
+        // This now correctly loads the file from src/main/resources
+        // The 'filePath' variable is injected by @Value and contains "classpath:your-file.p12"
+        ClassPathResource resource = new ClassPathResource(filePath.replace("classpath:", ""));
+
+        InputStream keyFileStream = resource.getInputStream();
+
+        if (keyFileStream == null) {
+            throw new Exception("Keys file Not found in classpath: " + filePath);
         }
-        // This uses your .p12 file as requested. It is recommended to switch to a JSON key later.
+
+        // This uses your .p12 file as requested.
         return new GoogleCredential.Builder()
                 .setTransport(HTTP_TRANSPORT)
                 .setJsonFactory(JSON_FACTORY)
                 .setServiceAccountId(serviceAccountEmail)
-                .setServiceAccountPrivateKeyFromP12File(keyFile)
+                .setServiceAccountPrivateKeyFromP12File(keyFileStream) // <-- Use the InputStream
                 .setServiceAccountScopes(SCOPES).build();
     }
 
@@ -72,14 +80,15 @@ public class GoogleDriveService {
 
         FileContent mediaContent = new FileContent(mimeType, file);
 
-        File uploadedFile = driveService.files().create(fileMetadata, mediaContent)
-                .setSupportsAllDrives(true) // <-- IMPORTANT: Required for Shared Drives
-                .setFields("id, webViewLink")
+        driveService.files().create(fileMetadata, mediaContent)
+                .setSupportsAllDrives(true)
+                .setFields("id") // we don’t need webViewLink now
                 .execute();
 
-        System.out.println("File uploaded to Shared Drive. Link: " + uploadedFile.getWebViewLink());
-        return uploadedFile.getWebViewLink();
+        // ✅ Instead of returning the file link, return the folder link
+        return getFolderLink(subFolderId);
     }
+
 
     /**
      * Finds a subfolder by name within a parent folder/drive, or creates it if it doesn't exist.
@@ -112,4 +121,14 @@ public class GoogleDriveService {
             return result.getFiles().get(0).getId();
         }
     }
+    public String getFolderLink(String folderId) {
+        return "https://drive.google.com/drive/folders/" + folderId;
+    }
+    public String getFolderLinkForEvent(String eventId) throws Exception {
+        Drive driveService = getDriveService();
+        String subFolderId = findOrCreateFolder(eventId, parentFolderId, driveService);
+        return getFolderLink(subFolderId);
+    }
+
+
 }

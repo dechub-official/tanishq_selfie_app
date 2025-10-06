@@ -10,14 +10,12 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.dechub</groupId>
-	<artifactId>selfie-21-08-2025-3</artifactId>
+	<artifactId>selfie-06-10-2025-2</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>tanishq</name>
 	<description>project for store tanishq</description>
 	<packaging>war</packaging>
 	<properties>
-		<!--		<java.version>8</java.version>-->
-		<!--		<java.version>11</java.version>-->
 	</properties>
 	<dependencies>
 
@@ -42,10 +40,10 @@
 			<version>1.20.0</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml -->
-		<dependency>
-			<groupId>org.apache.poi</groupId>
-			<artifactId>poi-ooxml</artifactId>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.apache.poi</groupId>-->
+<!--			<artifactId>poi-ooxml</artifactId>-->
+<!--		</dependency>-->
 		<dependency>
 			<groupId>com.opencsv</groupId>
 			<artifactId>opencsv</artifactId>
@@ -181,5 +179,4 @@
             </plugin>
         </plugins>
 	</build>
-
 </project>

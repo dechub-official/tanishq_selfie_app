@@ -1198,7 +1198,10 @@ public class EventsController {
             @RequestParam(value = "sale", required = false) Integer sale,
             @RequestParam(value = "advance", required = false) Integer advance,
             @RequestParam(value = "ghsOrRga", required = false) Integer ghsOrRga,
-            @RequestParam(value = "gmb", required = false) Integer gmb
+            @RequestParam(value = "gmb", required = false) Integer gmb,
+            @RequestParam(value = "diamondAwareness", required = false, defaultValue = "false") boolean diamondAwareness,
+            @RequestParam(value = "ghsFlag", required = false, defaultValue = "false") boolean ghsFlag
+
 
     ) {
         EventsDetailDTO eventsDetailDTO = new EventsDetailDTO();
@@ -1228,6 +1231,8 @@ public class EventsController {
         eventsDetailDTO.setAdvance(advance);
         eventsDetailDTO.setGhsOrRga(ghsOrRga);
         eventsDetailDTO.setGmb(gmb);
+        eventsDetailDTO.setDiamondAwareness(diamondAwareness);
+        eventsDetailDTO.setGhsFlag(ghsFlag);
 
         return tanishqPageService.storeEventsDetails(eventsDetailDTO);
     }
@@ -1255,35 +1260,6 @@ public class EventsController {
 
         return tanishqPageService.storeAttendeesData(attendeesDetailDTO);
     }
-
-
-//
-//    @PostMapping("/attendees")
-//    public ResponseEntity<ApiResponse<String>> storeAttendeesData(
-//            @RequestParam(name = "id", required = false) String id,
-//            @RequestParam(name = "eventId", required = false) String eventId,
-//            @RequestParam(name = "eventType", required = false) String eventType,
-//            @RequestParam(name = "name", required = false) String name,
-//            @RequestParam(name = "storeCode", required = false) String storeCode,
-//            @RequestParam(name = "region", required = false) String region,
-//            @RequestParam(name = "rsoName", required = false) String rsoName,
-//            @RequestParam(name = "phone", required = false) String phone,
-//            @RequestParam(name = "like", required = false) String like,
-//            @RequestParam(name = "createdAt", required = false) String createdAt,
-//            @RequestParam(name = "firstTimeAtTanishq", required = false) boolean firstTimeAtTanishq,
-//            @RequestParam(name = "file", required = false) MultipartFile file) {
-//
-//        AttendeesDetailDTO attendeesDetailDTO = new AttendeesDetailDTO();
-//        attendeesDetailDTO.setId(id);
-//        attendeesDetailDTO.setEventId(eventId);
-//        attendeesDetailDTO.setEventType(eventType);
-//        attendeesDetailDTO.setName(name);
-//        attendeesDetailDTO.setStoreCode(storeCode);
-//        attendeesDetailDTO.setRegion(region);
-//        attendeesDetailDTO.setRsoName(rsoName);
-//        attendeesDetailDTO.setPhone(phone);
-//        attendeesDetailDTO.setLike(like);
-//        attendeesDetailDTO.setCreatedAt(createdAt);
 //        attendeesDetailDTO.setFirstTimeAtTanishq(firstTimeAtTanishq);
 //        attendeesDetailDTO.setFile(file);
 //
@@ -1321,6 +1297,35 @@ public class EventsController {
 //            attendeesDetailDTO.setFile(file);
 //
 //            return tanishqPageService.storeAttendeesData(attendeesDetailDTO);
+
+
+//
+//    @PostMapping("/attendees")
+//    public ResponseEntity<ApiResponse<String>> storeAttendeesData(
+//            @RequestParam(name = "id", required = false) String id,
+//            @RequestParam(name = "eventId", required = false) String eventId,
+//            @RequestParam(name = "eventType", required = false) String eventType,
+//            @RequestParam(name = "name", required = false) String name,
+//            @RequestParam(name = "storeCode", required = false) String storeCode,
+//            @RequestParam(name = "region", required = false) String region,
+//            @RequestParam(name = "rsoName", required = false) String rsoName,
+//            @RequestParam(name = "phone", required = false) String phone,
+//            @RequestParam(name = "like", required = false) String like,
+//            @RequestParam(name = "createdAt", required = false) String createdAt,
+//            @RequestParam(name = "firstTimeAtTanishq", required = false) boolean firstTimeAtTanishq,
+//            @RequestParam(name = "file", required = false) MultipartFile file) {
+//
+//        AttendeesDetailDTO attendeesDetailDTO = new AttendeesDetailDTO();
+//        attendeesDetailDTO.setId(id);
+//        attendeesDetailDTO.setEventId(eventId);
+//        attendeesDetailDTO.setEventType(eventType);
+//        attendeesDetailDTO.setName(name);
+//        attendeesDetailDTO.setStoreCode(storeCode);
+//        attendeesDetailDTO.setRegion(region);
+//        attendeesDetailDTO.setRsoName(rsoName);
+//        attendeesDetailDTO.setPhone(phone);
+//        attendeesDetailDTO.setLike(like);
+//        attendeesDetailDTO.setCreatedAt(createdAt);
 //
 //        } catch (Exception e) {
 //            e.printStackTrace();
@@ -1368,34 +1373,34 @@ public class EventsController {
         response.setResult(list);
         return ResponseEntity.ok(response);
     }
-
     @PostMapping("/uploadCompletedEvents")
-    public ResponseDataDTO uploadFiles(@RequestParam("files") List<MultipartFile> files, @RequestParam("eventId") String eventId) {
+    public ResponseDataDTO uploadFiles(@RequestParam("files") List<MultipartFile> files,
+                                       @RequestParam("eventId") String eventId) {
         ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-        ExecutorService executor = Executors.newFixedThreadPool(Math.min(files.size(), 10)); // Limit concurrent threads
+        ExecutorService executor = Executors.newFixedThreadPool(Math.min(files.size(), 10));
         List<CompletableFuture<Boolean>> uploadFutures = new ArrayList<>();
 
         try {
+            // ✅ get folder link first
+            String folderLink = googleServiceUtil.getFolderLinkForEvent(eventId);
+
             for (MultipartFile file : files) {
                 CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
                     try {
-                        // Validate file type
                         if (!isAllowedFileType(file.getOriginalFilename())) {
                             return false;
                         }
 
-                        // Save file to a temporary location
                         java.io.File tempFile = java.io.File.createTempFile("upload-", file.getOriginalFilename());
                         file.transferTo(tempFile);
 
-                        // Upload file to Google Drive
-                        String fileLink = googleServiceUtil.uploadFileToDrive(tempFile, eventId, file.getContentType());
+                        // ✅ upload each file (but ignore individual file link)
+                        googleServiceUtil.uploadFileToDrive(tempFile, eventId, file.getContentType());
 
-                        // Clean up temporary file
                         tempFile.delete();
 
-                        // Update Google Sheet with file link
-                        return gSheetUserDetailsUtil.updateDrivelink(eventId, fileLink);
+                        // ✅ update Google Sheet with only the folder link
+                        return gSheetUserDetailsUtil.updateDrivelink(eventId, folderLink);
                     } catch (Exception e) {
                         e.printStackTrace();
                         return false;
@@ -1405,12 +1410,10 @@ public class EventsController {
                 uploadFutures.add(future);
             }
 
-            // Wait for all uploads to complete
             List<Boolean> results = uploadFutures.stream()
                     .map(CompletableFuture::join)
                     .collect(Collectors.toList());
 
-            // Check if all files were uploaded successfully
             boolean allSuccess = results.stream().allMatch(result -> result);
             responseDataDTO.setStatus(allSuccess);
             responseDataDTO.setMessage(allSuccess ? "All files uploaded successfully." : "Some files failed to upload.");

@@ -1338,6 +1338,9 @@ import javax.imageio.ImageIO;
 
 import java.io.ByteArrayOutputStream;
 import java.util.stream.Collectors;
+import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.Row.MissingCellPolicy;
+
 
 
 @Component
@@ -1398,6 +1401,9 @@ public class GSheetUserDetailsUtil {
 
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS);
+    // at top of class (near other fields)
+    private static final java.util.regex.Pattern TEN_DIGITS = java.util.regex.Pattern.compile("^\\d{10}$");
+
 
     public ArrayList<ExcelStoreDTO> getData(){
         try{
@@ -2080,7 +2086,7 @@ public class GSheetUserDetailsUtil {
 
 
             // Initialize row data with empty values for each column
-            int totalColumns = 20; // Adjust this based on the total number of columns
+            int totalColumns = 23; // Adjust this based on the total number of columns
             List<Object> rowData = new ArrayList<>(Collections.nCopies(totalColumns, ""));
 
             // Column mapping according to the sheet
@@ -2104,6 +2110,9 @@ public class GSheetUserDetailsUtil {
             rowData.set(17, eventsDetailDTO.getAdvance() != null ? eventsDetailDTO.getAdvance() : 0);
             rowData.set(18, eventsDetailDTO.getGhsOrRga() != null ? eventsDetailDTO.getGhsOrRga() : 0);
             rowData.set(19, eventsDetailDTO.getGmb() != null ? eventsDetailDTO.getGmb() : 0);
+
+            rowData.set(21, eventsDetailDTO.isDiamondAwareness());
+            rowData.set(22, eventsDetailDTO.isGhsFlag());
 
 
 
@@ -2253,21 +2262,33 @@ public class GSheetUserDetailsUtil {
         return res;
     }
 
-
     public int insertSheetAttendeesData(AttendeesDetailDTO attendeesDetailDTO) {
         try {
-            if(attendeesDetailDTO.getFile()!=null && !attendeesDetailDTO.getFile().isEmpty()) {
+            if (attendeesDetailDTO.getFile() != null && !attendeesDetailDTO.getFile().isEmpty()) {
                 int attendeesCount = excelEventsUtil.uploadExcelFile(attendeesDetailDTO.getFile());
                 log.info("attendeesCount " + attendeesCount);
 
-                boolean attendeesUpdated = uploadXlsxToGoogleSheet(attendeesDetailDTO.getFile(), attendeesDetailDTO.getId(), sheetId5);
+                boolean attendeesUpdated = uploadXlsxToGoogleSheet(
+                        attendeesDetailDTO.getFile(),
+                        attendeesDetailDTO.getId(),
+                        sheetId5
+                );
 
-                // Optional: handle Rivaah insert per row in Excel if needed
-
+                // Bulk path returns the number of rows parsed from Excel
                 return attendeesCount;
+
             } else {
+                // Single-row path: validate phone before appending
                 final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
                 Sheets service = getSheetService(httpTransport);
+
+                String phone = attendeesDetailDTO.getPhone() == null ? "" : attendeesDetailDTO.getPhone().trim();
+                if (!TEN_DIGITS.matcher(phone).matches()) {
+                    // surface a clear validation error to the service/controller layer
+                    throw new IllegalArgumentException("Phone must be exactly 10 digits");
+                }
+                // keep the sanitized value
+                attendeesDetailDTO.setPhone(phone);
 
                 ValueRange body = new ValueRange()
                         .setValues(this.formInputAttendeesData(attendeesDetailDTO));
@@ -2277,42 +2298,48 @@ public class GSheetUserDetailsUtil {
                         .setValueInputOption("RAW")
                         .execute();
 
-                int resSize = appendValuesResponse.size();
+                int updated = appendValuesResponse.getUpdates() != null
+                        ? appendValuesResponse.getUpdates().getUpdatedRows()
+                        : 0;
 
-                if (resSize > 0) {
-                    // ✅ Insert into Rivaah sheet
-                    boolean rivaahInserted = insertRivaahUserFromEvent(
-                            attendeesDetailDTO.getName(),
-                            attendeesDetailDTO.getPhone(),
-                            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-                            "event"
-                    );
-                    log.info("Rivaah Sheet Inserted: " + rivaahInserted);
-
-                    System.out.println("attendees details excel updated successfully");
-                    return appendValuesResponse.getUpdates().getUpdatedRows(); // returns actual number of rows added
+                if (updated > 0) {
+                    System.out.println("Attendees details sheet updated successfully");
+                    return updated;
                 } else {
-                    System.out.println("attendees details excel updated failed");
+                    System.out.println("Attendees details sheet update failed");
                     return 0;
                 }
             }
 
+        } catch (IllegalArgumentException iae) {
+            // Re-throw so TanishqPageService.storeAttendeesData() can return a clean message
+            throw iae;
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
         }
     }
 
+
     public boolean insertSheetInviteesData(InviteesDetailDTO inviteesDetailDTO) {
         try {
             final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
             Sheets service = getSheetService(httpTransport);
 
+            // ✅ minimal addition: strict 10-digit phone validation
+            String phone = inviteesDetailDTO.getContact() == null ? "" : inviteesDetailDTO.getContact().trim();
+            if (!TEN_DIGITS.matcher(phone).matches()) {
+                throw new IllegalArgumentException("Contact must be exactly 10 digits");
+            }
+            inviteesDetailDTO.setContact(phone);
+
             ValueRange body = new ValueRange()
                     .setValues(this.formInputInviteesData(inviteesDetailDTO));
 
-            AppendValuesResponse appendValuesResponse = service.spreadsheets().values().append(sheetId6, "A2", body)
+            AppendValuesResponse appendValuesResponse = service.spreadsheets().values()
+                    .append(sheetId6, "A2", body)
                     .setValueInputOption("RAW").execute();
+
             int resSize = appendValuesResponse.size();
             if (resSize > 0) {
                 System.out.println("invitees details excel updated successfully");
@@ -2326,6 +2353,7 @@ public class GSheetUserDetailsUtil {
             return false;
         }
     }
+
     private List<List<Object>> formInputInviteesData(InviteesDetailDTO inviteesDetailDTO) {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
         LocalDateTime now = LocalDateTime.now();
@@ -2784,58 +2812,105 @@ public class GSheetUserDetailsUtil {
 
     private List<List<Object>> readXlsxFile(MultipartFile file) throws IOException {
         List<List<Object>> data = new ArrayList<>();
-        Workbook workbook = new XSSFWorkbook(file.getInputStream());
-        Sheet sheet = workbook.getSheetAt(0);
 
-        // Start from the second row (index 1) to skip the header
-        for (int i = 1; i < sheet.getPhysicalNumberOfRows(); i++) {
-            Row row = sheet.getRow(i);
-            List<Object> rowData = new ArrayList<>();
-            for (Cell cell : row) {
-                switch (cell.getCellType()) {
-                    case STRING:
-                        rowData.add(cell.getStringCellValue());
-                        break;
-                    case NUMERIC:
-                        rowData.add(cell.getNumericCellValue());
-                        break;
-                    case BOOLEAN: // Handle boolean cells
-                        rowData.add(cell.getBooleanCellValue());
-                        break;
-                    // Add other cases as needed
-                    default:
-                        rowData.add("");
-                }
+        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            DataFormatter formatter = new DataFormatter(); // returns cell text as seen in Excel
+
+            // figure out how many columns based on the header row so each row has consistent width
+            int headerCols = 0;
+            Row header = sheet.getRow(0);
+            if (header != null) {
+                headerCols = header.getLastCellNum(); // includes blanks at end
             }
-            data.add(rowData);
+
+            // Start from the second row (index 1) to skip the header
+            for (int r = 1; r <= sheet.getLastRowNum(); r++) {
+                Row row = sheet.getRow(r);
+                if (row == null) continue;
+
+                List<Object> rowData = new ArrayList<>();
+
+                // read as many cells as header columns (fallback to row's last cell count if header missing)
+                int lastCell = headerCols > 0 ? headerCols : row.getLastCellNum();
+                if (lastCell < 0) lastCell = 0;
+
+                for (int c = 0; c < lastCell; c++) {
+                    // CREATE_NULL_AS_BLANK prevents NPEs and keeps columns aligned
+                    Cell cell = row.getCell(c, MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                    String text = formatter.formatCellValue(cell).trim(); // <- no .0 or scientific notation
+                    rowData.add(text);
+                }
+
+                data.add(rowData);
+            }
         }
 
-        workbook.close();
         return data;
     }
+    private List<List<Object>> addDateTimeAndEventIdToData(
+            List<List<Object>> data, String eventId, boolean attendees) {
 
-    private List<List<Object>> addDateTimeAndEventIdToData(List<List<Object>> data, String eventId,boolean attendees) {
         LocalDateTime now = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String dateTime = now.format(formatter);
 
         List<List<Object>> newData = new ArrayList<>();
-        if(attendees){
-            // Add data rows with the required columns and default values
-            for (List<Object> row : data) {
+
+        if (attendees) {
+            // Expected columns in XLSX: 0: Name, 1: Phone, 2: Like, 3: FirstTime (YES/NO/true/false/1/0)
+            for (int i = 0; i < data.size(); i++) {
+                List<Object> row = data.get(i);
+
+                String name       = safeString(row, 0);
+                String phone      = safeString(row, 1);        // ← use as-is (no normalization)
+                String like       = safeString(row, 2);
+                String firstRaw   = safeString(row, 3);
+                boolean firstTime = parseBooleanLenient(firstRaw);
+
+                // Skip trailing blank rows cleanly
+                if (name.isEmpty() && phone.isEmpty() && like.isEmpty() && firstRaw.isEmpty()) {
+                    continue;
+                }
+
+                // Strict: exactly 10 digits, nothing else
+                if (!TEN_DIGITS.matcher(phone).matches()) {
+                    throw new IllegalArgumentException("Row " + (i + 2) + ": phone must be exactly 10 digits");
+                }
+
                 List<Object> newRow = new ArrayList<>();
-                newRow.add(eventId); // Event ID
-                newRow.add(row.size() > 0 ? row.get(0) : ""); // Name
-                newRow.add(row.size() > 1 ? row.get(1) : ""); // Contact
-                newRow.add(row.size() > 2 ? row.get(2) : ""); // Like
-                newRow.add(row.size() > 3 ? row.get(3) : ""); // First time
-                newRow.add(dateTime); // Created At
-                newRow.add(true); // isUploadedFromExcel
+                newRow.add(eventId);   // Event ID
+                newRow.add(name);      // Name
+                newRow.add(phone);     // Phone (exactly 10 digits)
+                newRow.add(like);      // Like
+                newRow.add(firstTime); // First time (boolean)
+                newRow.add(dateTime);  // Created At
+                newRow.add(true);      // isUploadedFromExcel
+
                 newData.add(newRow);
             }
-        }else{
-            // Add data rows with timestamp and eventId
-            for (List<Object> row : data) {
+        } else {
+            // ✅ minimal addition for invitees from Excel
+            for (int i = 0; i < data.size(); i++) {
+                List<Object> row = data.get(i);
+
+                // keep original structure; just validate/normalize phone in col 1
+                String name  = safeString(row, 0);
+                String phone = safeString(row, 1);
+
+                // skip fully blank lines
+                if (name.isEmpty() && phone.isEmpty()) {
+                    continue;
+                }
+
+                // strict 10-digit requirement
+                if (!TEN_DIGITS.matcher(phone).matches()) {
+                    throw new IllegalArgumentException("Row " + (i + 2) + ": contact must be exactly 10 digits");
+                }
+
+                // normalize the phone back into the row (trimmed)
+                row.set(1, phone);
+
                 List<Object> newRow = new ArrayList<>(row);
                 newRow.add(dateTime);
                 newRow.add(eventId);
@@ -2843,8 +2918,18 @@ public class GSheetUserDetailsUtil {
             }
         }
 
-
         return newData;
+    }
+    private String safeString(List<Object> row, int index) {
+        if (row == null || index < 0 || index >= row.size()) return "";
+        Object v = row.get(index);
+        return v == null ? "" : v.toString().trim();
+    }
+
+    private boolean parseBooleanLenient(String s) {
+        if (s == null) return false;
+        String v = s.trim().toLowerCase();
+        return v.equals("true") || v.equals("yes") || v.equals("y") || v.equals("1");
     }
 
     private boolean uploadToGoogleSheets(List<List<Object>> data, String sheetId) throws Exception {
@@ -3573,29 +3658,29 @@ public class GSheetUserDetailsUtil {
             return false;
         }
     }
-            public boolean insertRivaahUserFromEvent(String name, String contact, String createdAt, String source) {
-                try {
-                    final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-                    Sheets service = getSheetService(httpTransport);
+    public boolean insertRivaahUserFromEvent(String name, String contact, String createdAt, String source) {
+        try {
+            final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+            Sheets service = getSheetService(httpTransport);
 
-                    ValueRange body = new ValueRange()
-                            .setValues(Collections.singletonList(Arrays.asList(
-                                    name,
-                                    contact,
-                                    createdAt,
-                                    source
-                            )));
+            ValueRange body = new ValueRange()
+                    .setValues(Collections.singletonList(Arrays.asList(
+                            name,
+                            contact,
+                            createdAt,
+                            source
+                    )));
 
-                    AppendValuesResponse response = service.spreadsheets().values()
-                            .append(sheetId9, "Sheet2!A2", body)  // 👈 write to Sheet2 tab
-                            .setValueInputOption("RAW")
-                            .execute();
+            AppendValuesResponse response = service.spreadsheets().values()
+                    .append(sheetId9, "Sheet2!A2", body)  // 👈 write to Sheet2 tab
+                    .setValueInputOption("RAW")
+                    .execute();
 
-                    return response.getUpdates().getUpdatedRows() > 0;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return false;
-                }
-            }
-
+            return response.getUpdates().getUpdatedRows() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
+
+}
