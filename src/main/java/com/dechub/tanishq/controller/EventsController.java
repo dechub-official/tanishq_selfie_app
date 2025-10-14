@@ -1708,17 +1708,6 @@ public class EventsController {
         }
     }
 
-//    @GetMapping("/ceeStores")
-//    public ResponseEntity<?> getStoresByCee(@RequestParam String ceeUsername) {
-//        try {
-//            List<String> stores = tanishqPageService.fetchStoresByCee(ceeUsername);
-//            return ResponseEntity.ok(stores);
-//        } catch (IOException e) {
-//            return ResponseEntity.internalServerError().body("Error fetching data from sheet");
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
 
     @GetMapping("/ceeStores")
     public ResponseEntity<?> getStoresByCee(

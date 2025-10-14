@@ -6,6 +6,7 @@ import java.util.Map;
 public class EventsLoginResponseDTO {
     private boolean status;
     private Map<String, Object>  storeData;
+    private String message;
 
     public EventsLoginResponseDTO() {}
 
@@ -29,4 +30,6 @@ public class EventsLoginResponseDTO {
     public void setStoreData(Map<String, Object>  storeData) {
         this.storeData = storeData;
     }
+    public String getMessage() { return message; }   // ← NEW
+    public void setMessage(String message) { this.message = message; }  // ← NEW
 }

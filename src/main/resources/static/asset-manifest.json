@@ -1,8 +1,9 @@
 {
   "files": {
     "main.css": "/static/css/main.39fd591b.css",
-    "main.js": "/static/js/main.a5487936.js",
+    "main.js": "/static/js/main.69d68b31.js",
     "static/js/787.4bcca08e.chunk.js": "/static/js/787.4bcca08e.chunk.js",
+    "static/media/Sachin.png": "/static/media/Sachin.350db4850887a80ec1f9.png",
     "static/media/exchange.png": "/static/media/exchange.d3e203058d258c6af583.png",
     "static/media/Valentine.png": "/static/media/Valentine.fde04b4b11f6fdca7257.png",
     "static/media/bgImg.png": "/static/media/bgImg.f1ed0dd2cf05a58315ca.png",
@@ -15,18 +16,18 @@
     "static/media/diwali.jpg": "/static/media/diwali.fa2dcfa0f2b57e9cbac7.jpg",
     "static/media/welcomebg.png": "/static/media/welcomebg.25ad6fbb2b96e17d4802.png",
     "static/media/hyderbad.jpg": "/static/media/hyderbad.3119d1de0a78306de350.jpg",
-    "static/media/Christmas.png": "/static/media/Christmas.1c7bbf8a4e0858b28ebd.png",
     "static/media/hyderbad.png": "/static/media/hyderbad.80194f433cedbe4b44ed.png",
     "static/media/Aadi.png": "/static/media/Aadi.e930ffed9d2d41c1c7b1.png",
     "static/media/diwali.png": "/static/media/diwali.7fb9ac540e9b743ff147.png",
+    "static/media/Sachin.jpg": "/static/media/Sachin.cec7931fb714ac021f96.jpg",
     "static/media/WelcomeScreenText.png": "/static/media/WelcomeScreenText.6ea02d5a771f1e8f4e72.png",
     "index.html": "/index.html",
     "main.39fd591b.css.map": "/static/css/main.39fd591b.css.map",
-    "main.a5487936.js.map": "/static/js/main.a5487936.js.map",
+    "main.69d68b31.js.map": "/static/js/main.69d68b31.js.map",
     "787.4bcca08e.chunk.js.map": "/static/js/787.4bcca08e.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.39fd591b.css",
-    "static/js/main.a5487936.js"
+    "static/js/main.69d68b31.js"
   ]
 }

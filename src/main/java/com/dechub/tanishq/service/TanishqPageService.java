@@ -1366,6 +1366,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.stream.Collectors;
 import org.springframework.util.ResourceUtils;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Callable;
+import java.util.Objects;
+
 
 import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
@@ -1373,9 +1377,9 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 
-
 @Component
 public class TanishqPageService {
+
 
 
     @Value("${dechub.bride.upload.dir}")
@@ -1427,10 +1431,9 @@ public class TanishqPageService {
     private final RestTemplateBuilder restTemplateBuilder;
     public RestTemplate restTemplate;
 
-
-
-
     private static final Logger log = LoggerFactory.getLogger(TanishqPageService.class);
+    private final Map<String, String> passwordCache = new ConcurrentHashMap<>();
+
 
     @Autowired
     public TanishqPageService(RestTemplateBuilder restTemplateBuilder) {
@@ -1442,73 +1445,100 @@ public class TanishqPageService {
     public void init() {
         this.restTemplate = restTemplateBuilder
                 .build();
-    }
-
-
-
-    @Scheduled(fixedDelayString = "${dechub.scheduler.fixedDelay}")
-    public void fetchData(){
-        log.info("fetching details from Google sheet triggered");
-        ArrayList<ExcelStoreDTO> lst = gSheetUserDetailsUtil.getData();
-        if(lst != null){
-            log.info("fetched details from Google sheet result store count: " + lst.size());
-            if(lst.size() > 0){
-                this.storeList = lst;
-                log.info("fetched details from Google sheet assigned to main data");
-            }else{
-                log.info("fetched details from Google sheet result got Empty size 0");
-            }
-        }else{
-            log.info("fetched details from Google sheet result got Empty");
+        try {
+            passwordCache.clear();
+            passwordCache.putAll(gSheetUserDetailsUtil.loadAllStorePasswords());
+            log.info("Password cache warmed with {} entries", passwordCache.size());
+        } catch (Exception e) {
+            log.warn("Could not warm password cache at startup: {}", e.getMessage());
         }
+
     }
+
 
     public EventsLoginResponseDTO eventsLogin(String storeCode, String password) throws Exception {
-        EventsLoginResponseDTO responseDataDTO = new EventsLoginResponseDTO();
-        String correctPassword = gSheetUserDetailsUtil.getNewPassword(storeCode);
+        EventsLoginResponseDTO response = new EventsLoginResponseDTO();
 
-        // 🔹 Debug logs
-        System.out.println("DEBUG - StoreCode input: [" + storeCode + "]");
-        System.out.println("DEBUG - Password provided: [" + password + "]");
-        System.out.println("DEBUG - Password from sheet: [" + correctPassword + "]");
+        // Normalize inputs
+        String code = storeCode == null ? "" : storeCode.trim();
+        String pwd  = password == null ? "" : password;
 
-        List<String> codeList = new ArrayList<>(Arrays.asList(
+        // Region/manager codes (kept in lowercase for compatibility)
+        Set<String> codeList = new HashSet<>(Arrays.asList(
                 "east1", "east2",
                 "north1a", "north1b",
                 "north2", "north3",
                 "south1", "south2a", "south3",
-                "west1a", "west1b", "west2", "west3","test","north1","west1","south2","north4"
+                "west1a", "west1b", "west2", "west3",
+                "test", "north1", "west1", "south2", "north4"
         ));
 
-        boolean isCodePresent = codeList.contains(storeCode.toLowerCase());
-        if(!password.equals(correctPassword)){
-            responseDataDTO.setStatus(false);
-            return responseDataDTO;
-        }
-        if(isCodePresent && password.equals(correctPassword)){
-            System.out.println("login successful");
-            Map<String, Object> details = new HashMap<>();
-            details.put("manager", storeCode.toUpperCase());
-            responseDataDTO.setStoreData(details);
-            responseDataDTO.setStatus(true);
-            return responseDataDTO;
-        }else{
-//            String divisionName = this.getDivisionDirectory(storeCode);
-            List<ExcelStoreDTO> result = this.storeList.stream().filter(i -> i.getStoreCode().toUpperCase().equals(storeCode)).collect(Collectors. toList());
+        // 1️⃣ Check password from cache first (case-insensitive key)
+        String correctPassword = passwordCache.get(code.toUpperCase());
 
-            if( result.get(0).getStoreCode() == null){
-                responseDataDTO.setStatus(false);
-                return responseDataDTO;
+        if (correctPassword == null) {
+            // before:
+            // correctPassword = getWithRetry(() -> gSheetUserDetailsUtil.getNewPassword(code), 3, 400);
+
+            // after:
+            final String codeUpper = code.toUpperCase();
+            correctPassword = getWithRetry(() -> gSheetUserDetailsUtil.getNewPassword(codeUpper), 3, 400);
+            if (correctPassword != null) {
+                passwordCache.put(codeUpper, correctPassword);
             }
-
-            Map<String, Object> details = gSheetUserDetailsUtil.getDataFromSheet(storeCode);
-            System.out.println("login successful");
-            responseDataDTO.setStoreData(details);
-            responseDataDTO.setStatus(true);
-            return responseDataDTO;
         }
 
+
+
+        // 3️⃣ Handle service issues
+        if (correctPassword == null) {
+            response.setStatus(false);
+            response.setMessage("Service temporarily unavailable. Please try again.");
+            return response;
+        }
+
+        // 4️⃣ Password mismatch
+        if (!Objects.equals(pwd, correctPassword)) {
+            response.setStatus(false);
+            response.setMessage("Invalid credentials.");
+            return response;
+        }
+
+        // 5️⃣ Region manager login
+        if (codeList.contains(code.toLowerCase())) {
+            Map<String, Object> details = new HashMap<>();
+            details.put("manager", code.toUpperCase());
+            response.setStoreData(details);
+            response.setStatus(true);
+            return response;
+        }
+
+        // 6️⃣ Regular store login
+        Map<String, Object> details = gSheetUserDetailsUtil.getDataFromSheet(code.toUpperCase());
+        if (details == null || details.isEmpty()) {
+            details = new HashMap<>();
+            details.put("storeCode", code.toUpperCase());
+        }
+
+        response.setStoreData(details);
+        response.setStatus(true);
+        return response;
     }
+
+
+    // small local retry helper – no external impact
+    private <T> T getWithRetry(Callable<T> task, int attempts, long backoffMs) {
+        int n = 0; long wait = backoffMs;
+        while (true) {
+            try { return task.call(); }
+            catch (Exception ex) {
+                if (++n >= attempts) return null;
+                try { Thread.sleep(wait); } catch (InterruptedException ignored) {}
+                wait *= 2;
+            }
+        }
+    }
+
     public boolean containsIgnoreCase(String str, String searchStr) {
         if (str == null || searchStr == null) {
             return false;
@@ -1582,6 +1612,37 @@ public class TanishqPageService {
         }
         return responseDataDTO;
     }
+    @Scheduled(fixedDelayString = "${dechub.scheduler.fixedDelay}")
+    public void fetchData(){
+        log.info("fetching details from Google sheet triggered");
+        ArrayList<ExcelStoreDTO> lst = gSheetUserDetailsUtil.getData();
+        if(lst != null){
+            log.info("fetched details from Google sheet result store count: " + lst.size());
+            if(lst.size() > 0){
+                this.storeList = lst;
+                log.info("fetched details from Google sheet assigned to main data");
+            }else{
+                log.info("fetched details from Google sheet result got Empty size 0");
+            }
+        }else{
+            log.info("fetched details from Google sheet result got Empty");
+        }
+    }
+    // 🔹 Periodically refresh password cache (every 10 minutes)
+
+    @Scheduled(fixedDelayString = "PT10M", initialDelayString = "PT2M")// 10 minutes
+    public void refreshPasswordCache() {
+        try {
+            Map<String, String> fresh = gSheetUserDetailsUtil.loadAllStorePasswords();
+            passwordCache.clear();
+            passwordCache.putAll(fresh);
+            log.info("✅ Password cache refreshed: {}", passwordCache.size());
+        } catch (Exception e) {
+            log.warn("⚠️ Password cache refresh failed: {}", e.getMessage());
+            // keep the old cache – safer than clearing on error
+        }
+    }
+
 
     // public ResponseDataDTO saveVideo(MultipartFile file) {
     //     ResponseDataDTO responseDataDTO = new ResponseDataDTO();
@@ -1851,6 +1912,7 @@ public class TanishqPageService {
                 for(storeCodeDataDTO store : codes){
                     List<Map<String, Object>> events = gSheetUserDetailsUtil.getCompletedEventDetails(store.getStoreCode());
                     combinedEvents.addAll(events);
+                   // Thread.sleep(200);
                 }
 
                 if(!combinedEvents.isEmpty()){
@@ -2500,20 +2562,20 @@ public class TanishqPageService {
 
     public CompletedEventsResponseDTO getAllCompletedEventsWithBackoff(String storeCode) throws Exception {
         int maxRetries = 5;
-        int backoff = 1000; // 1 second
-
+        long wait = 500; // start 0.5s
         for (int attempt = 1; attempt <= maxRetries; attempt++) {
-            return getAllCompletedEvents(storeCode);
+            try {
+                return getAllCompletedEvents(storeCode);
+            } catch (Exception ex) {
+                if (attempt == maxRetries) throw ex;
+                Thread.sleep(wait);
+                wait = Math.min(wait * 2, 5000); // cap at 5s
+            }
         }
-
-        throw new RuntimeException("Max retry attempts reached for store: " + storeCode);
+        throw new RuntimeException("Unreachable");
     }
 
 
-    //    public StoreSummaryWrapperDTO fetchStoreSummariesByRbmParallel(String rbmUsername, LocalDate startDate, LocalDate endDate) throws Exception {
-//        List<String> storeCodes = fetchStoresByAbm(rbmUsername);
-//        return processStoreCodesInParallel(storeCodes, startDate, endDate);
-//    }
     public StoreSummaryWrapperDTO fetchStoreSummariesByAbmParallel(String abmUsername, LocalDate startDate, LocalDate endDate) throws Exception {
         List<String> storeCodes = fetchStoresByAbm(abmUsername);
         return processStoreCodesInParallel(storeCodes, startDate, endDate);
@@ -2523,106 +2585,6 @@ public class TanishqPageService {
         List<String> storeCodes = fetchStoresByCee(ceeUsername);
         return processStoreCodesInParallel(storeCodes, startDate, endDate);
     }
-
-//    private StoreSummaryWrapperDTO processStoreCodesInParallel(List<String> storeCodes, LocalDate startDate, LocalDate endDate) throws Exception {
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-//
-//        List<StoreEventSummaryDTO> summaries = Collections.synchronizedList(new ArrayList<>());
-//
-//        AtomicInteger totalEvents = new AtomicInteger(0);
-//        AtomicInteger totalInvitees = new AtomicInteger(0);
-//        AtomicInteger totalAttendees = new AtomicInteger(0);
-//        DoubleAdder totalAdvance = new DoubleAdder();
-//        DoubleAdder totalGhsOrRga = new DoubleAdder();
-//        DoubleAdder totalSale = new DoubleAdder();
-//
-//        ExecutorService executor = Executors.newFixedThreadPool(4);
-//        List<Future<?>> futures = new ArrayList<>();
-//
-//        for (String storeCode : storeCodes) {
-//            futures.add(executor.submit(() -> {
-//                try {
-//                    CompletedEventsResponseDTO eventsResponse = getAllCompletedEventsWithRetry(storeCode);
-//                    Object rawData = eventsResponse.getEventData();
-//
-//                    List<Map<String, Object>> events = new ArrayList<>();
-//                    if (rawData instanceof List<?>) {
-//                        events = ((List<?>) rawData).stream()
-//                                .filter(e -> e instanceof Map)
-//                                .map(e -> (Map<String, Object>) e)
-//                                .collect(Collectors.toList());
-//                    }
-//
-//                    List<Map<String, Object>> filteredEvents = events.stream()
-//                            .filter(event -> {
-//                                if (startDate == null || endDate == null) return true;
-//                                Object dateObj = event.get("eventDate");
-//                                if (dateObj == null) return false;
-//                                try {
-//                                    LocalDate eventDate = LocalDate.parse(dateObj.toString(), formatter);
-//                                    return !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
-//                                } catch (Exception e) {
-//                                    return false;
-//                                }
-//                            })
-//                            .collect(Collectors.toList());
-//
-//                    int storeEventCount = filteredEvents.size();
-//                    int storeInvitees = 0;
-//                    int storeAttendees = 0;
-//                    double storeAdvance = 0;
-//                    double storeGhsOrRga = 0;
-//                    double storeSale = 0;
-//
-//                    for (Map<String, Object> event : filteredEvents) {
-//                        storeInvitees += parseInt(event.get("Invitees"));
-//                        storeAttendees += parseInt(event.get("Attendees"));
-//                        storeAdvance += parseDouble(event.get("advance"));
-//                        storeGhsOrRga += parseDouble(event.get("ghs/rga"));
-//                        storeSale += parseDouble(event.get("sale"));
-//                    }
-//
-//                    totalEvents.addAndGet(storeEventCount);
-//                    totalInvitees.addAndGet(storeInvitees);
-//                    totalAttendees.addAndGet(storeAttendees);
-//                    totalAdvance.add(storeAdvance);
-//                    totalGhsOrRga.add(storeGhsOrRga);
-//                    totalSale.add(storeSale);
-//
-//                    summaries.add(new StoreEventSummaryDTO(
-//                            storeCode, storeEventCount, storeInvitees, storeAttendees,
-//                            storeAdvance, storeGhsOrRga, storeSale
-//                    ));
-//
-//                } catch (Exception e) {
-//                    System.err.println("Error processing store " + storeCode + ": " + e.getMessage());
-//                    summaries.add(new StoreEventSummaryDTO(storeCode, 0, 0, 0, 0, 0, 0));
-//                }
-//            }));
-//        }
-//
-//        for (Future<?> future : futures) {
-//            try {
-//                future.get();
-//            } catch (Exception e) {
-//                e.printStackTrace();
-//            }
-//        }
-//
-//        executor.shutdown();
-//
-//        StoreEventSummaryDTO total = new StoreEventSummaryDTO(
-//                "TOTAL",
-//                totalEvents.get(),
-//                totalInvitees.get(),
-//                totalAttendees.get(),
-//                totalAdvance.sum(),
-//                totalGhsOrRga.sum(),
-//                totalSale.sum()
-//        );
-//
-//        return new StoreSummaryWrapperDTO(summaries, total);
-//    }
 
     private StoreSummaryWrapperDTO processStoreCodesInParallel(List<String> storeCodes, LocalDate startDate, LocalDate endDate) throws Exception {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");

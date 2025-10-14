@@ -9,6 +9,7 @@
         <outputRelativeToContentRoot value="true" />
         <module name="selfie-15-04-2025-1" />
         <module name="selfie-01-05-2024-1" />
+        <module name="selfie-26-08-2025-1" />
       </profile>
     </annotationProcessing>
   </component>
@@ -16,6 +17,7 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="selfie-01-05-2024-1" options="-parameters" />
       <module name="selfie-15-04-2025-1" options="-parameters" />
+      <module name="selfie-26-08-2025-1" options="-parameters" />
       <module name="tanishq_selfie_app" options="-parameters" />
     </option>
   </component>

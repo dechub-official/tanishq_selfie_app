@@ -1295,6 +1295,10 @@ import com.dechub.tanishq.dto.rivaahDto.ProductDetailDTO;
 import com.dechub.tanishq.dto.rivaahDto.RivaahAllDetailsDTO;
 import com.dechub.tanishq.dto.rivaahDto.RivaahDTO;
 import com.dechub.tanishq.dto.rivaahDto.RivaahImagesDTO;
+import com.google.api.client.http.HttpBackOffIOExceptionHandler;
+import com.google.api.client.http.HttpBackOffUnsuccessfulResponseHandler;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.util.ExponentialBackOff;
 import com.google.api.services.sheets.v4.model.BatchUpdateValuesRequest;
 import com.dechub.tanishq.util.APIResponseBuilder;
 import com.dechub.tanishq.util.CommonConstants;
@@ -1340,6 +1344,8 @@ import java.io.ByteArrayOutputStream;
 import java.util.stream.Collectors;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row.MissingCellPolicy;
+import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import java.util.concurrent.Callable;
 
 
 
@@ -1391,6 +1397,7 @@ public class GSheetUserDetailsUtil {
     private String serviceAccount;
 
     private static final Logger log = LoggerFactory.getLogger(APIResponseBuilder.class);
+    private static final Object SHEETS_RATE_LOCK = new Object();
 
 
     @Autowired
@@ -1457,10 +1464,13 @@ public class GSheetUserDetailsUtil {
     private List<List<Object>> getSheetData() throws Exception {
         final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         Sheets service = getSheetService(httpTransport);
-        ValueRange response = service.spreadsheets().values().get(sheetId3, sheetRange).execute();
+        ValueRange response = execWithBackoff(
+                () -> service.spreadsheets().values().get(sheetId3, sheetRange).execute(),
+                6
+        );
         return response.getValues();
-
     }
+
     private Object formInputForLanguages(List<Object> store, int index){
         ArrayList<String> res = new ArrayList<>();
         try{
@@ -1694,9 +1704,10 @@ public class GSheetUserDetailsUtil {
         String range = "Sheet1!A:T";
 
         // Fetch data
-        ValueRange response = service.spreadsheets().values()
-                .get(SheetId11, range)
-                .execute();
+        ValueRange response = execWithBackoff(
+                () -> service.spreadsheets().values().get(SheetId11, range).execute(),
+                6
+        );
 
         List<List<Object>> values = response.getValues();
         List<Map<String, Object>> events = new ArrayList<>();
@@ -1740,9 +1751,11 @@ public class GSheetUserDetailsUtil {
         Sheets service = getSheetService(httpTransport);
 
         String range = regionSheetName + "!A2:A"; // Only first column (Store Code), skip header
-        ValueRange response = service.spreadsheets().values()
-                .get(sheetId3, range)
-                .execute();
+        ValueRange response = execWithBackoff(
+                () -> service.spreadsheets().values().get(sheetId3, range).execute(),
+                6
+        );
+
 
         List<List<Object>> values = response.getValues();
         if (values != null && !values.isEmpty()) {
@@ -1779,7 +1792,7 @@ public class GSheetUserDetailsUtil {
 
         for (int i = 1; i < values.size(); i++) {
             List<Object> row = values.get(i);
-            if (row.size() > 0 && row.get(0).equals(storeCode)) {
+            if (row.size() > 0 && row.get(0).toString().equalsIgnoreCase(storeCode)) {
                 return createDataMap(headers, row);
             }
         }
@@ -2233,9 +2246,22 @@ public class GSheetUserDetailsUtil {
     }
 
     private Sheets getSheetService(NetHttpTransport transport) throws Exception {
-        return new Sheets.Builder(transport, JSON_FACTORY, this.getCred(transport)).build();
-    }
+        final Credential cred = this.getCred(transport);
 
+        // Wrap credential to add timeouts + Google built-in backoff handlers
+        HttpRequestInitializer init = request -> {
+            cred.initialize(request);
+            request.setConnectTimeout(60_000); // 60s
+            request.setReadTimeout(60_000);    // 60s
+            ExponentialBackOff backoff = new ExponentialBackOff();
+            request.setUnsuccessfulResponseHandler(new HttpBackOffUnsuccessfulResponseHandler(backoff));
+            request.setIOExceptionHandler(new HttpBackOffIOExceptionHandler(backoff));
+        };
+
+        return new Sheets.Builder(transport, JSON_FACTORY, init)
+                .setApplicationName("Tanishq Celebrations")  // ← removes the warning
+                .build();
+    }
     private List<List<Object>> formInputData(UserDetailsDTO input) {
         List<List<Object>> res = new ArrayList<>();
         List<Object> item = new ArrayList<>();
@@ -2262,6 +2288,33 @@ public class GSheetUserDetailsUtil {
         return res;
     }
 
+
+    private <T> T execWithBackoff(Callable<T> call, int maxAttempts) throws Exception {
+        int attempt = 0;
+        long waitMs = 350; // start small
+        while (true) {
+            try {
+                synchronized (SHEETS_RATE_LOCK) {
+                    return call.call(); // avoid concurrent hammering
+                }
+            } catch (GoogleJsonResponseException e) {
+                if (e.getStatusCode() == 429 && ++attempt < maxAttempts) {
+                    long jitter = (long) (Math.random() * 250);
+                    Thread.sleep(waitMs + jitter);
+                    waitMs = Math.min(waitMs * 2, 5_000);
+                    continue;
+                }
+                throw e;
+            } catch (IOException ioe) { // transient network
+                if (++attempt < maxAttempts) {
+                    Thread.sleep(waitMs);
+                    waitMs = Math.min(waitMs * 2, 5_000);
+                    continue;
+                }
+                throw ioe;
+            }
+        }
+    }
     public int insertSheetAttendeesData(AttendeesDetailDTO attendeesDetailDTO) {
         try {
             if (attendeesDetailDTO.getFile() != null && !attendeesDetailDTO.getFile().isEmpty()) {
@@ -2283,6 +2336,8 @@ public class GSheetUserDetailsUtil {
                 Sheets service = getSheetService(httpTransport);
 
                 String phone = attendeesDetailDTO.getPhone() == null ? "" : attendeesDetailDTO.getPhone().trim();
+                phone = phone.replaceAll("[\\s-]", ""); // ← normalize phone
+
                 if (!TEN_DIGITS.matcher(phone).matches()) {
                     // surface a clear validation error to the service/controller layer
                     throw new IllegalArgumentException("Phone must be exactly 10 digits");
@@ -2328,6 +2383,7 @@ public class GSheetUserDetailsUtil {
 
             // ✅ minimal addition: strict 10-digit phone validation
             String phone = inviteesDetailDTO.getContact() == null ? "" : inviteesDetailDTO.getContact().trim();
+            phone = phone.replaceAll("[\\s-]", ""); // ← normalize phone
             if (!TEN_DIGITS.matcher(phone).matches()) {
                 throw new IllegalArgumentException("Contact must be exactly 10 digits");
             }
@@ -2866,6 +2922,8 @@ public class GSheetUserDetailsUtil {
                 String phone      = safeString(row, 1);        // ← use as-is (no normalization)
                 String like       = safeString(row, 2);
                 String firstRaw   = safeString(row, 3);
+                phone = phone.replaceAll("[\\s-]", ""); // ← normalize phone (remove spaces and hyphens)
+
                 boolean firstTime = parseBooleanLenient(firstRaw);
 
                 // Skip trailing blank rows cleanly
@@ -2873,7 +2931,7 @@ public class GSheetUserDetailsUtil {
                     continue;
                 }
 
-                // Strict: exactly 10 digits, nothing else
+                phone = phone.replaceAll("[\\s-]", ""); // ← normalize for invitees Excel path
                 if (!TEN_DIGITS.matcher(phone).matches()) {
                     throw new IllegalArgumentException("Row " + (i + 2) + ": phone must be exactly 10 digits");
                 }
@@ -3209,6 +3267,30 @@ public class GSheetUserDetailsUtil {
         } catch (Exception e) {
             return null;
         }
+    }
+    public Map<String, String> loadAllStorePasswords() throws Exception {
+        final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+        Sheets sheetsService = getSheetService(httpTransport);
+
+        ValueRange response = execWithBackoff(
+                () -> sheetsService.spreadsheets().values().get(sheetId3, "Sheet3!A:D").execute(),
+                6
+        );
+
+        Map<String, String> map = new HashMap<>();
+        List<List<Object>> values = response.getValues();
+        if (values != null) {
+            for (List<Object> row : values) {
+                if (row.size() > 2) {
+                    String code = String.valueOf(row.get(0)).trim().toUpperCase();
+                    String pass = String.valueOf(row.get(2)).trim();
+                    if (!code.isEmpty() && !pass.isEmpty()) {
+                        map.put(code, pass);
+                    }
+                }
+            }
+        }
+        return map;
     }
 
     public ResponseDataDTO updateSaleOfAnEvent(String eventCode, String sale) throws Exception {
