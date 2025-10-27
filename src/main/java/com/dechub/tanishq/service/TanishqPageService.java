@@ -1320,1167 +1320,860 @@
 //    }
 //}
 
-
-
-
-package com.dechub.tanishq.service;
-
-
-
-import com.dechub.tanishq.dto.*;
-import com.dechub.tanishq.dto.eventsDto.*;
-import com.dechub.tanishq.dto.rivaahDto.BookAppointmentDTO;
-import com.dechub.tanishq.dto.rivaahDto.RivaahAllDetailsDTO;
-import com.dechub.tanishq.dto.rivaahDto.RivaahDTO;
-import com.dechub.tanishq.dto.rivaahDto.RivaahImagesDTO;
-import com.dechub.tanishq.gdrive.GoogleDriveService;
-import com.dechub.tanishq.gsheet.*;
-// import com.dechub.tanishq.mail.EmailService;
-import com.dechub.tanishq.util.CommonConstants;
-import com.dechub.tanishq.util.ResponseDataDTO;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.*;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.multipart.MultipartFile;
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.DoubleAdder;
-import java.util.stream.Collectors;
-import org.springframework.util.ResourceUtils;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Callable;
-import java.util.Objects;
-
-
-import javax.annotation.PostConstruct;
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-
-@Component
-public class TanishqPageService {
-
-
-
-    @Value("${dechub.bride.upload.dir}")
-    private String UPLOAD_DIR;
-
-    @Value("${dechub.base.image}")
-    private String BASE_IMG;
-
-    public ArrayList<ExcelStoreDTO> storeList = null;
-
-    @Autowired
-    private GSheetUserDetailsUtil gSheetUserDetailsUtil;
-
-
-
-    // @Autowired
-    // private EmailService emailService;
-
-
-    @Value("${selfie.upload.dir}")
-    private String selfieDirectory;
-
-
-    @Value("${system.isWindows}")
-    private String isWindows;
-
-
-    @Autowired
-    private StoreServices storeServices;
-
-
-    @Autowired
-    private GoogleDriveService googleDriveService;
-
-    @Autowired
-    private UserSession userSession;
-
-    @Value("${book.appoitment.api.username}")
-    private String bookAnAppoitmentUsername;
-    @Value("${book.appoitment.api.password}")
-    private String bookAnAppoitmentPassword;
-
-    @Value("${book.appoitment.api.url}")
-    public String bookAnAppoitmentUrl;
-
-    @Value("${book.appointment.api.url}")
-    public String bookAnAppointmentUrl;
-
-    private final RestTemplateBuilder restTemplateBuilder;
-    public RestTemplate restTemplate;
-
-    private static final Logger log = LoggerFactory.getLogger(TanishqPageService.class);
-    private final Map<String, String> passwordCache = new ConcurrentHashMap<>();
-
-
-    @Autowired
-    public TanishqPageService(RestTemplateBuilder restTemplateBuilder) {
-        this.restTemplateBuilder = restTemplateBuilder;
-    }
-
-
-    @PostConstruct
-    public void init() {
-        this.restTemplate = restTemplateBuilder
-                .build();
-        try {
-            passwordCache.clear();
-            passwordCache.putAll(gSheetUserDetailsUtil.loadAllStorePasswords());
-            log.info("Password cache warmed with {} entries", passwordCache.size());
-        } catch (Exception e) {
-            log.warn("Could not warm password cache at startup: {}", e.getMessage());
+    
+    package com.dechub.tanishq.service;
+    
+    import com.dechub.tanishq.dto.*;
+    import com.dechub.tanishq.dto.eventsDto.*;
+    import com.dechub.tanishq.dto.rivaahDto.BookAppointmentDTO;
+    import com.dechub.tanishq.dto.rivaahDto.RivaahAllDetailsDTO;
+    import com.dechub.tanishq.dto.rivaahDto.RivaahDTO;
+    import com.dechub.tanishq.gdrive.GoogleDriveService;
+    import com.dechub.tanishq.gsheet.GSheetUserDetailsUtil;
+    import com.dechub.tanishq.util.CommonConstants;
+    import com.dechub.tanishq.util.ResponseDataDTO;
+    import org.slf4j.Logger;
+    import org.slf4j.LoggerFactory;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.beans.factory.annotation.Value;
+    import org.springframework.boot.web.client.RestTemplateBuilder;
+    import org.springframework.http.*;
+    import org.springframework.scheduling.annotation.Scheduled;
+    import org.springframework.stereotype.Component;
+    import org.springframework.util.ResourceUtils;
+    import org.springframework.web.client.RestTemplate;
+    import org.springframework.web.multipart.MultipartFile;
+    
+    import javax.annotation.PostConstruct;
+    import javax.imageio.ImageIO;
+    import java.awt.*;
+    import java.awt.image.BufferedImage;
+    import java.io.*;
+    import java.nio.file.*;
+    import java.time.LocalDate;
+    import java.time.LocalDateTime;
+    import java.time.format.DateTimeFormatter;
+    import java.time.format.DateTimeParseException;
+    import java.util.*;
+    import java.util.List;
+    import java.util.concurrent.*;
+    import java.util.concurrent.atomic.AtomicInteger;
+    import java.util.concurrent.atomic.DoubleAdder;
+    import java.util.stream.Collectors;
+    
+    @Component
+    public class TanishqPageService {
+    
+        @Value("${dechub.bride.upload.dir}")
+        private String UPLOAD_DIR;
+    
+        @Value("${dechub.base.image}")
+        private String BASE_IMG;
+    
+        public ArrayList<ExcelStoreDTO> storeList = null;
+    
+        @Autowired
+        private GSheetUserDetailsUtil gSheetUserDetailsUtil;
+    
+        @Value("${selfie.upload.dir}")
+        private String selfieDirectory;
+    
+        @Value("${system.isWindows}")
+        private String isWindows;
+    
+        @Autowired
+        private StoreServices storeServices;
+    
+        @Autowired
+        private GoogleDriveService googleDriveService;
+    
+        @Autowired
+        private UserSession userSession;
+    
+        @Value("${book.appoitment.api.username}")
+        private String bookAnAppoitmentUsername;
+        @Value("${book.appoitment.api.password}")
+        private String bookAnAppoitmentPassword;
+    
+        @Value("${book.appoitment.api.url}")
+        public String bookAnAppoitmentUrl;
+    
+        @Value("${book.appointment.api.url}")
+        public String bookAnAppointmentUrl;
+    
+        private final RestTemplateBuilder restTemplateBuilder;
+        public RestTemplate restTemplate;
+    
+        private static final Logger log = LoggerFactory.getLogger(TanishqPageService.class);
+        private final Map<String, String> passwordCache = new ConcurrentHashMap<>();
+    
+        @Autowired
+        public TanishqPageService(RestTemplateBuilder restTemplateBuilder) {
+            this.restTemplateBuilder = restTemplateBuilder;
         }
-
-    }
-
-
-    public EventsLoginResponseDTO eventsLogin(String storeCode, String password) throws Exception {
-        EventsLoginResponseDTO response = new EventsLoginResponseDTO();
-
-        // Normalize inputs
-        String code = storeCode == null ? "" : storeCode.trim();
-        String pwd  = password == null ? "" : password;
-
-        // Region/manager codes (kept in lowercase for compatibility)
-        Set<String> codeList = new HashSet<>(Arrays.asList(
-                "east1", "east2",
-                "north1a", "north1b",
-                "north2", "north3",
-                "south1", "south2a", "south3",
-                "west1a", "west1b", "west2", "west3",
-                "test", "north1", "west1", "south2", "north4"
-        ));
-
-        // 1️⃣ Check password from cache first (case-insensitive key)
-        String correctPassword = passwordCache.get(code.toUpperCase());
-
-        if (correctPassword == null) {
-            // before:
-            // correctPassword = getWithRetry(() -> gSheetUserDetailsUtil.getNewPassword(code), 3, 400);
-
-            // after:
-            final String codeUpper = code.toUpperCase();
-            correctPassword = getWithRetry(() -> gSheetUserDetailsUtil.getNewPassword(codeUpper), 3, 400);
-            if (correctPassword != null) {
-                passwordCache.put(codeUpper, correctPassword);
+    
+        @PostConstruct
+        public void init() {
+            this.restTemplate = restTemplateBuilder.build();
+            try {
+                passwordCache.clear();
+                passwordCache.putAll(gSheetUserDetailsUtil.loadAllStorePasswords());
+                log.info("Password cache warmed with {} entries", passwordCache.size());
+            } catch (Exception e) {
+                log.warn("Could not warm password cache at startup: {}", e.getMessage());
             }
         }
-
-
-
-        // 3️⃣ Handle service issues
-        if (correctPassword == null) {
-            response.setStatus(false);
-            response.setMessage("Service temporarily unavailable. Please try again.");
-            return response;
-        }
-
-        // 4️⃣ Password mismatch
-        if (!Objects.equals(pwd, correctPassword)) {
-            response.setStatus(false);
-            response.setMessage("Invalid credentials.");
-            return response;
-        }
-
-        // 5️⃣ Region manager login
-        if (codeList.contains(code.toLowerCase())) {
-            Map<String, Object> details = new HashMap<>();
-            details.put("manager", code.toUpperCase());
+    
+        public EventsLoginResponseDTO eventsLogin(String storeCode, String password) throws Exception {
+            EventsLoginResponseDTO response = new EventsLoginResponseDTO();
+    
+            String code = storeCode == null ? "" : storeCode.trim();
+            String pwd  = password == null ? "" : password;
+    
+            Set<String> codeList = new HashSet<>(Arrays.asList(
+                    "east1","east2","north1a","north1b","north2","north3","south1","south2a","south3",
+                    "west1a","west1b","west2","west3","test","north1","west1","south2","north4"
+            ));
+    
+            String correctPassword = passwordCache.get(code.toUpperCase());
+            if (correctPassword == null) {
+                final String codeUpper = code.toUpperCase();
+                correctPassword = getWithRetry(() -> gSheetUserDetailsUtil.getNewPassword(codeUpper), 3, 400);
+                if (correctPassword != null) {
+                    passwordCache.put(codeUpper, correctPassword);
+                }
+            }
+    
+            if (correctPassword == null) {
+                response.setStatus(false);
+                response.setMessage("Service temporarily unavailable. Please try again.");
+                return response;
+            }
+            if (!Objects.equals(pwd, correctPassword)) {
+                response.setStatus(false);
+                response.setMessage("Invalid credentials.");
+                return response;
+            }
+    
+            if (codeList.contains(code.toLowerCase())) {
+                Map<String, Object> details = new HashMap<>();
+                details.put("manager", code.toUpperCase());
+                response.setStoreData(details);
+                response.setStatus(true);
+                return response;
+            }
+    
+            Map<String, Object> details = gSheetUserDetailsUtil.getDataFromSheet(code.toUpperCase());
+            if (details == null || details.isEmpty()) {
+                details = new HashMap<>();
+                details.put("storeCode", code.toUpperCase());
+            }
+    
             response.setStoreData(details);
             response.setStatus(true);
             return response;
         }
-
-        // 6️⃣ Regular store login
-        Map<String, Object> details = gSheetUserDetailsUtil.getDataFromSheet(code.toUpperCase());
-        if (details == null || details.isEmpty()) {
-            details = new HashMap<>();
-            details.put("storeCode", code.toUpperCase());
-        }
-
-        response.setStoreData(details);
-        response.setStatus(true);
-        return response;
-    }
-
-
-    // small local retry helper – no external impact
-    private <T> T getWithRetry(Callable<T> task, int attempts, long backoffMs) {
-        int n = 0; long wait = backoffMs;
-        while (true) {
-            try { return task.call(); }
-            catch (Exception ex) {
-                if (++n >= attempts) return null;
-                try { Thread.sleep(wait); } catch (InterruptedException ignored) {}
-                wait *= 2;
+    
+        private <T> T getWithRetry(Callable<T> task, int attempts, long backoffMs) {
+            int n = 0; long wait = backoffMs;
+            while (true) {
+                try { return task.call(); }
+                catch (Exception ex) {
+                    if (++n >= attempts) return null;
+                    try { Thread.sleep(wait); } catch (InterruptedException ignored) {}
+                    wait = Math.min(wait * 2, 2000);
+                }
             }
         }
-    }
-
-    public boolean containsIgnoreCase(String str, String searchStr) {
-        if (str == null || searchStr == null) {
+    
+        public boolean containsIgnoreCase(String str, String searchStr) {
+            if (str == null || searchStr == null) return false;
+            int len = searchStr.length();
+            int max = str.length() - len;
+            for (int i = 0; i <= max; i++) {
+                if (str.regionMatches(true, i, searchStr, 0, len)) return true;
+            }
             return false;
         }
-        int len = searchStr.length();
-        int max = str.length() - len;
-        for (int i = 0; i <= max; i++) {
-            if (str.regionMatches(true, i, searchStr, 0, len)) {
-                return true;
+    
+        public ResponseDataDTO storeUserDetails(UserDetailsDTO userDetailsDTO) {
+            ResponseDataDTO responseDataDTO = new ResponseDataDTO();
+    
+            String divisionName = this.getDivisionDirectory(userDetailsDTO.getStoreCode());
+            if (divisionName == null) {
+                responseDataDTO.setMessage("Invalid Store Code");
+                return responseDataDTO;
             }
-        }
-        return false;
-    }
-
-    public ResponseDataDTO storeUserDetails(UserDetailsDTO userDetailsDTO) {
-        ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-
-        String divisionName = this.getDivisionDirectory(userDetailsDTO.getStoreCode());
-        if(divisionName == null){
-            responseDataDTO.setMessage("Invalid Store Code");
+    
+            userDetailsDTO.setDate(this.getCurrentTime());
+            boolean isDone = gSheetUserDetailsUtil.insertSheetData(userDetailsDTO);
+    
+            UserDetailResponseDTO userDetailResponseDTO = new UserDetailResponseDTO(isDone, false);
+            responseDataDTO.setMessage(CommonConstants.SUCCESS_CONST);
+            responseDataDTO.setResult(userDetailResponseDTO);
             return responseDataDTO;
         }
-
-        //storing details
-        userDetailsDTO.setDate(this.getCurrentTime());
-        boolean isDone = gSheetUserDetailsUtil.insertSheetData(userDetailsDTO);
-
-        //sending mail
-//        String imageNameWithRespectiveDirectory = isWindows.equalsIgnoreCase("Y") ? divisionName + "\\" + userDetailsDTO.getSelfieImageName() : divisionName + "/" + userDetailsDTO.getSelfieImageName();
-//        boolean isEmailSent = emailService.sendEmail(userDetailsDTO.getEmailId(), "Test", "This is Test Email", imageNameWithRespectiveDirectory);
-
-        UserDetailResponseDTO userDetailResponseDTO = new UserDetailResponseDTO(isDone, false);
-        responseDataDTO.setMessage(CommonConstants.SUCCESS_CONST);
-        responseDataDTO.setResult(userDetailResponseDTO);
-        return responseDataDTO;
-    }
-
-    public QrResponseDTO storeEventsDetails(EventsDetailDTO eventsDetailsDTO) {
-
-
-
-        QrResponseDTO isDone = gSheetUserDetailsUtil.insertSheetEventsData(eventsDetailsDTO);
-
-
-        return isDone;
-    }
-
-    public ResponseDataDTO saveImage(MultipartFile file, String storeCode) {
-        ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-
-        String divisionName = this.getDivisionDirectory(storeCode);
-        if(divisionName == null){
-            responseDataDTO.setMessage("Invalid Store Code");
-            return responseDataDTO;
+    
+        public QrResponseDTO storeEventsDetails(EventsDetailDTO eventsDetailsDTO) {
+            return gSheetUserDetailsUtil.insertSheetEventsData(eventsDetailsDTO);
         }
-
-        try{
-            String newFileName = this.getNewFileName(file.getOriginalFilename());
-            String filePath = null;
-            if(isWindows.equalsIgnoreCase("Y")){
-                filePath = selfieDirectory + "\\" + divisionName + "\\" + newFileName;
-            }else{
-                filePath = selfieDirectory + "/" + divisionName + "/" + newFileName;
+    
+        public ResponseDataDTO saveImage(MultipartFile file, String storeCode) {
+            ResponseDataDTO dto = new ResponseDataDTO();
+    
+            String divisionName = this.getDivisionDirectory(storeCode);
+            if (divisionName == null) {
+                dto.setMessage("Invalid Store Code");
+                return dto;
             }
-            File targetFile = new File(filePath);
-            file.transferTo(targetFile);
-            responseDataDTO.setMessage(CommonConstants.SUCCESS_CONST);
-            responseDataDTO.setResult(newFileName);
-        }catch (Exception e){
-            responseDataDTO.setMessage(e.getMessage());
-        }
-        return responseDataDTO;
-    }
-    @Scheduled(fixedDelayString = "${dechub.scheduler.fixedDelay}")
-    public void fetchData(){
-        log.info("fetching details from Google sheet triggered");
-        ArrayList<ExcelStoreDTO> lst = gSheetUserDetailsUtil.getData();
-        if(lst != null){
-            log.info("fetched details from Google sheet result store count: " + lst.size());
-            if(lst.size() > 0){
-                this.storeList = lst;
-                log.info("fetched details from Google sheet assigned to main data");
-            }else{
-                log.info("fetched details from Google sheet result got Empty size 0");
-            }
-        }else{
-            log.info("fetched details from Google sheet result got Empty");
-        }
-    }
-    // 🔹 Periodically refresh password cache (every 10 minutes)
-
-    @Scheduled(fixedDelayString = "PT10M", initialDelayString = "PT2M")// 10 minutes
-    public void refreshPasswordCache() {
-        try {
-            Map<String, String> fresh = gSheetUserDetailsUtil.loadAllStorePasswords();
-            passwordCache.clear();
-            passwordCache.putAll(fresh);
-            log.info("✅ Password cache refreshed: {}", passwordCache.size());
-        } catch (Exception e) {
-            log.warn("⚠️ Password cache refresh failed: {}", e.getMessage());
-            // keep the old cache – safer than clearing on error
-        }
-    }
-
-
-    // public ResponseDataDTO saveVideo(MultipartFile file) {
-    //     ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-
-    //     try{
-    //         googleDriveService.uploadVideo(file);
-    //         responseDataDTO.setMessage(CommonConstants.SUCCESS_CONST);
-    //     }catch (Exception e){
-    //         responseDataDTO.setMessage(e.getMessage());
-    //     }
-    //     return responseDataDTO;
-    // }
-
-    public String getNewFileName(String fileName){
-        String result = null;
-        try{
-            String[] lst = fileName.split("\\.");
-            String extension = lst[lst.length - 1];
-            result =  getCurrentTimeAsUnique() + "." + extension;
-//            result =  getCurrentTimeAsUnique() + selfieExtension;
-        }catch (Exception e){
-            log.info(e.getMessage() + " with file name: " + fileName);
-        }
-        return result;
-    }
-
-    public String getCurrentTime(){
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
-        LocalDateTime now = LocalDateTime.now();
-        return dtf.format(now);
-    }
-
-    public String getCurrentTimeAsUnique(){
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
-        LocalDateTime now = LocalDateTime.now();
-        return dtf.format(now);
-    }
-
-    public String getDivisionDirectory(String storeCode){
-        String result = null;
-        Map<String, List<String>> storeDetails = storeServices.getStoreDetails();
-        for(Map.Entry<String, List<String>> entry : storeDetails.entrySet()){
-            List<String> tempVar = entry.getValue().stream().filter(i -> i.equalsIgnoreCase(storeCode)).collect(Collectors.toList());
-            if(tempVar.size() > 0){
-                result = entry.getKey();
-                break;
-            }
-        }
-
-        return result;
-    }
-
-
-    public ResponseDataDTO getStoreCode() {
-        ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-        responseDataDTO.setMessage(CommonConstants.SUCCESS_CONST);
-        Map<String, List<String>> storesData = storeServices.getStoreDetails();
-        List<String> result = new ArrayList<>();
-        for(Map.Entry<String, List<String>> entry : storesData.entrySet()){
-            result.addAll(entry.getValue());
-        }
-        responseDataDTO.setResult(result);
-        return responseDataDTO;
-    }
-
-
-    public ResponseDataDTO storeBrideImage(MultipartFile file) {
-        ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-
-        if (file.isEmpty()) {
-            responseDataDTO.setMessage("Please select a file to upload");
-            return responseDataDTO;
-        }
-
-        try {
-            byte[] bytes = file.getBytes();
-            String newFileName = getNewFileName(file.getOriginalFilename());
-            Path path = Paths.get(UPLOAD_DIR + File.separator + newFileName);
-            Files.write(path, bytes);
-
-            responseDataDTO.setMessage(CommonConstants.SUCCESS_CONST);
-            responseDataDTO.setResult(newFileName);
-            responseDataDTO.setStatus(true);
-            // Set the full path of the stored file in the response
-            responseDataDTO.setFilePath(path.toString());
-            System.out.println("bride image uploaded in uploads");
-        } catch (IOException e) {
-            responseDataDTO.setMessage("Failed to upload file: " + file.getOriginalFilename() + " - " + e.getMessage());
-            e.printStackTrace();
-            // You can log the exception or handle it based on your application's needs
-        }
-        return responseDataDTO;
-    }
-
-
-    public ResponseEntity<byte[]> storeBrideDetails(String brideType, String brideEvent, String brideName, String phone, String date, String email,String zipcode,String filepath) {
-        ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-        BrideDetailsDTO brideDetailsDTO = new BrideDetailsDTO();
-        brideDetailsDTO.setBrideName(brideName);
-        brideDetailsDTO.setBrideEvent(brideEvent);
-        brideDetailsDTO.setBrideType(brideType);
-        brideDetailsDTO.setDate(date);
-        brideDetailsDTO.setEmail(email);
-        brideDetailsDTO.setPhone(phone);
-        brideDetailsDTO.setZipCode(zipcode);
-        System.out.println(brideDetailsDTO.getZipCode());
-        boolean isDone = gSheetUserDetailsUtil.insertSheetBrideData(brideDetailsDTO);
-        ResponseEntity<byte[]> imageResponse = processImageWithTextOverlay(brideName, phone, date, email, filepath);
-        if (imageResponse.getStatusCode() != HttpStatus.OK) {
-            responseDataDTO.setMessage("Failed to process image");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-        if(isDone){
-            responseDataDTO.setMessage(CommonConstants.SUCCESS_CONST);
-            responseDataDTO.setImageResponse(imageResponse);
-            responseDataDTO.setStatus(true);
-        }else{
-            responseDataDTO.setMessage("Failed to store bride details");
-        }
-        return imageResponse;
-    }
-    public ResponseDataDTO storeAttendeesData(AttendeesDetailDTO attendeesDetailDTO) {
-        ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-        try {
-            int isDone = gSheetUserDetailsUtil.insertSheetAttendeesData(attendeesDetailDTO); // store in attendees sheet
-            responseDataDTO.setResult(isDone); // send count to frontend
-
-            if (isDone > 0) {
-                boolean updated = gSheetUserDetailsUtil.updateAttendees(attendeesDetailDTO.getId(), isDone);
-                log.info("Updated attendees count in Event Sheet? => " + updated);
-                responseDataDTO.setStatus(true);
-                responseDataDTO.setMessage("Stored attendees data successfully (only in Attendees & Event Sheet)");
-            } else {
-                responseDataDTO.setStatus(false);
-                responseDataDTO.setMessage("Failed to store attendees data");
-            }
-        } catch (IllegalArgumentException iae) {
-            // validation failures (bad phone) end up here
-            responseDataDTO.setStatus(false);
-            responseDataDTO.setMessage(iae.getMessage());
-        } catch (Exception e) {
-            responseDataDTO.setStatus(false);
-            responseDataDTO.setMessage("Error: " + e.getMessage());
-        }
-        return responseDataDTO;
-    }
-
-//    public ResponseEntity<ApiResponse<String>> storeAttendeesData(AttendeesDetailDTO attendeesDetailDTO) {
-//        try {
-//            int isDone = gSheetUserDetailsUtil.insertSheetAttendeesData(attendeesDetailDTO);
-//            if (isDone > 0) {
-//                boolean updated = gSheetUserDetailsUtil.updateAttendees(attendeesDetailDTO.getId(), isDone);
-//                if (updated) {
-//                    return ResponseEntity.ok(new ApiResponse<>(200, "Data stored successfully", null));
-//                } else {
-//                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                            .body(new ApiResponse<>(500, "Data inserted in sheet but update failed", null));
-//                }
-//            } else {
-//                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-//                        .body(new ApiResponse<>(400, "Failed to store data in sheet", null));
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//                    .body(new ApiResponse<>(500, "An error occurred: " + e.getMessage(), null));
-//        }
-//    }
-
-
-
-    public ResponseEntity<byte[]> processImageWithTextOverlay(String brideName, String phone, String date, String email, String filepath) {
-        try {
-            BufferedImage baseImage = ImageIO.read(ResourceUtils.getFile(BASE_IMG));
-            BufferedImage overlayImage = ImageIO.read(ResourceUtils.getFile(filepath));
-
-            // Resize overlay image if larger than base image
-            overlayImage = resizeImage(overlayImage, baseImage.getWidth(), baseImage.getHeight());
-
-            Graphics2D g2d = baseImage.createGraphics();
-            g2d.setFont(new Font("Nunito", Font.PLAIN, 14));
-            g2d.setColor(Color.BLACK);
-
-            g2d.drawString("Name: " + brideName, 190, 250);
-            g2d.drawString("Phone: " + phone, 500, 250);
-            g2d.drawString("Email: " + email, 190, 320);
-            g2d.drawString("Wedding Date: " + date, 500, 320);
-
-//            g2d.drawString("Name: " + brideName, 70, 55);
-//            g2d.drawString("Phone: " + phone, 170, 55);
-//            g2d.drawString("Email: " + email, 70, 76);
-//            g2d.drawString("Wedding Date: " + date, 170, 76);
-
-            // Center the overlay image
-            int imgX = (baseImage.getWidth() - overlayImage.getWidth()) / 2;
-            int imgY = (baseImage.getHeight() / 4);
-
-            g2d.drawImage(overlayImage, imgX, imgY, null);
-            g2d.dispose();
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(baseImage, "jpg", baos);
-            byte[] imageBytes = baos.toByteArray();
-
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.IMAGE_JPEG);
-            headers.setContentDispositionFormData("attachment", "output.jpg");
-            headers.setContentLength(imageBytes.length);
-
-            return new ResponseEntity<>(imageBytes, headers, HttpStatus.OK);
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    private BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) {
-        int originalWidth = originalImage.getWidth();
-        int originalHeight = originalImage.getHeight();
-        float aspectRatio = (float) originalWidth / originalHeight;
-
-        // Apply padding to ensure the image fits well within the target dimensions
-        int paddedWidth = targetWidth - 400; // Adding a padding of 20 pixels
-        int paddedHeight = targetHeight - 400; // Adding a padding of 20 pixels
-
-        int newWidth = paddedWidth;
-        int newHeight = paddedHeight;
-
-        if (originalWidth > paddedWidth || originalHeight > paddedHeight) {
-            if (originalWidth > originalHeight) {
-                newWidth = paddedWidth;
-                newHeight = Math.round(paddedWidth / aspectRatio);
-            } else {
-                newHeight = paddedHeight;
-                newWidth = Math.round(paddedHeight * aspectRatio);
-            }
-        }
-
-        BufferedImage resizedImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = resizedImage.createGraphics();
-        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g2d.drawImage(originalImage, 0, 0, newWidth, newHeight, null);
-        g2d.dispose();
-
-        return resizedImage;
-    }
-
-    public CompletedEventsResponseDTO getAllCompletedEvents(String code) {
-        CompletedEventsResponseDTO completedEventsResponseDTO = new CompletedEventsResponseDTO();
-        try{
-            if(code.equalsIgnoreCase("North1")||
-                    code.equalsIgnoreCase("North2")||
-                    code.equalsIgnoreCase("North3")||
-                    code.equalsIgnoreCase("North4")||
-                    code.equalsIgnoreCase("South1")||
-                    code.equalsIgnoreCase("South2")||
-                    code.equalsIgnoreCase("South3")||
-                    code.equalsIgnoreCase("East1")||
-                    code.equalsIgnoreCase("East2")||
-                    code.equalsIgnoreCase("West1")||
-                    code.equalsIgnoreCase("West2")||
-                    code.equalsIgnoreCase("West3")){
-
-                List<storeCodeDataDTO> codes = gSheetUserDetailsUtil.getStoresByRegion(code);
-                List<Map<String, Object>> combinedEvents = new ArrayList<>();
-
-                for(storeCodeDataDTO store : codes){
-                    List<Map<String, Object>> events = gSheetUserDetailsUtil.getCompletedEventDetails(store.getStoreCode());
-                    combinedEvents.addAll(events);
-                   // Thread.sleep(200);
+    
+            try {
+                String newFileName = this.getNewFileName(file.getOriginalFilename());
+                String sep = isWindows.equalsIgnoreCase("Y") ? "\\" : "/";
+                String filePath = selfieDirectory + sep + divisionName + sep + newFileName;
+    
+                File targetFile = new File(filePath);
+                File parent = targetFile.getParentFile();
+                if (parent != null && !parent.exists() && !parent.mkdirs()) {
+                    throw new IOException("Could not create directory: " + parent);
                 }
-
-                if(!combinedEvents.isEmpty()){
-                    completedEventsResponseDTO.setStatus(true);
-                    completedEventsResponseDTO.setMessage("fetched events");
-                    completedEventsResponseDTO.setEventData(combinedEvents);
-                    return completedEventsResponseDTO;
+    
+                file.transferTo(targetFile);
+                dto.setMessage(CommonConstants.SUCCESS_CONST);
+                dto.setResult(newFileName);
+            } catch (Exception e) {
+                dto.setMessage(e.getMessage());
+            }
+            return dto;
+        }
+    
+        @Scheduled(fixedDelayString = "${dechub.scheduler.fixedDelay}")
+        public void fetchData() {
+            log.info("fetching details from Google sheet triggered");
+            ArrayList<ExcelStoreDTO> lst = gSheetUserDetailsUtil.getData();
+            if (lst != null) {
+                log.info("fetched details from Google sheet result store count: {}", lst.size());
+                if (!lst.isEmpty()) {
+                    this.storeList = lst;
+                    log.info("fetched details from Google sheet assigned to main data");
                 } else {
-                    completedEventsResponseDTO.setStatus(false);
-                    completedEventsResponseDTO.setMessage("fetching failed");
-                    return completedEventsResponseDTO;
+                    log.info("fetched details from Google sheet result got Empty size 0");
                 }
-            }
-            List<Map<String, Object>> completedEventsDataDTOS = gSheetUserDetailsUtil.getCompletedEventDetails(code);
-            if(completedEventsDataDTOS.size()>0){
-                completedEventsResponseDTO.setStatus(true);
-                completedEventsResponseDTO.setMessage("fetched events");
-                completedEventsResponseDTO.setEventData(completedEventsDataDTOS);
-            }else{
-                completedEventsResponseDTO.setStatus(false);
-                completedEventsResponseDTO.setMessage("fetching failed");
-
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-            completedEventsResponseDTO.setStatus(false);
-            completedEventsResponseDTO.setEventData("error"+e.getMessage());
-        }
-        return completedEventsResponseDTO;
-    }
-
-
-    public List<storeCodeDataDTO> getStoresByRegion(String region) {
-        try {
-            return gSheetUserDetailsUtil.getStoresByRegion(region);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
-    }
-
-    public List<?> getInvitedMember(String eventId) {
-        try{
-            return  gSheetUserDetailsUtil.getAllAttendees(eventId);
-        }catch (Exception e){
-            return new ArrayList<>();
-        }
-    }
-
-    public ResponseDataDTO getShareCode(RivaahDTO rivaahDTO) {
-        return gSheetUserDetailsUtil.insertRivaahDetails(rivaahDTO);
-    }
-
-    public ResponseDataDTO storeRivaahUser(String name, String contact) {
-        ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-
-        boolean status = gSheetUserDetailsUtil.insertRivaahUserDetails(name, contact);
-
-        // Create minimal DTO to call appointment()
-        BookAppointmentDTO bookAppointmentDTO = new BookAppointmentDTO();
-        String[] nameParts = name.trim().split("\\s+", 2);
-        String firstName = nameParts[0];
-        String lastName = nameParts.length > 1 ? nameParts[1] : "";
-
-        bookAppointmentDTO.setFirstName(firstName);
-        bookAppointmentDTO.setLastName(lastName);
-        bookAppointmentDTO.setPhone(contact);
-
-
-        if (!status) {
-            responseDataDTO.setStatus(false);
-            responseDataDTO.setMessage("User details storing failed");
-            return responseDataDTO;
-        }
-
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBasicAuth(bookAnAppoitmentUsername, bookAnAppoitmentPassword);
-            headers.add("PartnerId", "Ecomm");
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            HttpEntity<BookAppointmentDTO> entity = new HttpEntity<>(bookAppointmentDTO, headers);
-
-            ResponseEntity<String> response = restTemplate.exchange(
-                    bookAnAppointmentUrl,
-                    HttpMethod.POST,
-                    entity,
-                    String.class
-            );
-
-            if (response.getBody() != null) {
-                responseDataDTO.setStatus(true);
-                responseDataDTO.setMessage("Successfully stored user details and booked appointment");
-                responseDataDTO.setResult(response.getBody());
             } else {
-                responseDataDTO.setStatus(false);
-                responseDataDTO.setMessage("Stored user details, but failed to book appointment");
+                log.info("fetched details from Google sheet result got Empty");
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            responseDataDTO.setStatus(false);
-            responseDataDTO.setMessage("Error while booking appointment: " + e.getMessage());
         }
-
-        return responseDataDTO;
-    }
-
-    public RivaahAllDetailsDTO getRivaahDetails(String code) {
-        return gSheetUserDetailsUtil.getRivaahDetails(code);
-    }
-
-    public ResponseDataDTO changePasswordForEventManager(String storeCode, String oldPassword, String newPassword) {
-        return gSheetUserDetailsUtil.changePassword(storeCode,oldPassword,newPassword);
-    }
-
-    public ResponseDataDTO updateSaleOfAnEvent(String eventCode, String sale) {
-        try{
-            return gSheetUserDetailsUtil.updateSaleOfAnEvent(eventCode,sale);
-        }catch (Exception e){
-            ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-            responseDataDTO.setStatus(false);
-            responseDataDTO.setMessage(e.getMessage());
-            return responseDataDTO;
-        }
-    }
-    public ResponseDataDTO updateAdvanceOfAnEvent(String eventCode, String advance) {
-        try{
-            return gSheetUserDetailsUtil.updateAdvanceOfAnEvent(eventCode,advance);
-        }catch (Exception e){
-            ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-            responseDataDTO.setStatus(false);
-            responseDataDTO.setMessage(e.getMessage());
-            return responseDataDTO;
-        }
-    }
-    public ResponseDataDTO updateGhsRgaOfAnEvent(String eventCode, String ghsRga) {
-        try{
-            return gSheetUserDetailsUtil.updateGhsRgaOfAnEvent(eventCode,ghsRga);
-        }catch (Exception e){
-            ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-            responseDataDTO.setStatus(false);
-            responseDataDTO.setMessage(e.getMessage());
-            return responseDataDTO;
-        }
-    }
-    public ResponseDataDTO updateGmbOfAnEvent(String eventCode, String gmb) {
-        try{
-            return gSheetUserDetailsUtil.updateGmbOfAnEvent(eventCode,gmb);
-        }catch (Exception e){
-            ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-            responseDataDTO.setStatus(false);
-            responseDataDTO.setMessage(e.getMessage());
-            return responseDataDTO;
-        }
-    }
-
-//    public boolean authenticateAbm(String username, String password) {
-//        try {
-//            return gSheetUserDetailsUtil.isValidUserAbm(username, password);
-//        } catch (Exception e) {
-//            // Log the error
-//            return false;
-//        }
-//    }
-
-    public Optional<LoginResponseDTO> authenticateAbm(String username, String password) {
-        try {
-            return gSheetUserDetailsUtil.isValidUserAbm(username, password);
-        } catch (Exception e) {
-            return Optional.empty();
-        }
-    }
-
-
-
-    public Optional<LoginResponseDTO> authenticateRbm(String username, String password) {
-        try {
-            return gSheetUserDetailsUtil.isValidUserRbm(username, password);
-        } catch (Exception e) {
-            return Optional.empty();
-        }
-    }
-
-
-    public Optional<LoginResponseDTO> authenticateCee(String username, String password) {
-        try {
-            return gSheetUserDetailsUtil.isValidUserCee(username, password);
-        } catch (Exception e) {
-            return Optional.empty();
-        }
-    }
-
-
-    public List<String> fetchStoresByRbm(String rbmUsername) throws Exception {
-        return gSheetUserDetailsUtil.getStoresByRbmUsername(rbmUsername);
-    }
-
-    public List<String> fetchStoresByAbm(String abmUsername) throws Exception {
-        return gSheetUserDetailsUtil.getStoresByAbmUsername(abmUsername);
-    }
-
-    public List<String> fetchStoresByCee(String ceeUsername) throws Exception{
-        return gSheetUserDetailsUtil.getStoresByCeeUsername(ceeUsername);
-    }
-
-    public List<CompletedEventsResponseDTO> getCompletedEventsForStores(List<String> storeCodes) {
-        List<CompletedEventsResponseDTO> result = new ArrayList<>();
-        for (String storeCode : storeCodes) {
+    
+        @Scheduled(fixedDelayString = "PT10M", initialDelayString = "PT2M")
+        public void refreshPasswordCache() {
             try {
-                CompletedEventsResponseDTO events = getAllCompletedEvents(storeCode);
-                if (events != null) {
-                    result.add(events);
-                }
+                Map<String, String> fresh = gSheetUserDetailsUtil.loadAllStorePasswords();
+                passwordCache.clear();
+                passwordCache.putAll(fresh);
+                log.info("Password cache refreshed: {}", passwordCache.size());
             } catch (Exception e) {
-                // Log and skip problematic store
+                log.warn("Password cache refresh failed: {}", e.getMessage());
             }
         }
-        return result;
-    }
-
-    public List<Map<String, Object>> getOnlyEventsForStores(List<String> storeCodes) {
-        List<Map<String, Object>> allEvents = new ArrayList<>();
-        for (String storeCode : storeCodes) {
+    
+        public String getNewFileName(String fileName){
+            try{
+                if (fileName == null || fileName.trim().isEmpty()) {
+                    return getCurrentTimeAsUnique();
+                }
+                String[] lst = fileName.split("\\.");
+                String extension = (lst.length > 1) ? lst[lst.length - 1] : "";
+                return extension.isEmpty() ? getCurrentTimeAsUnique()
+                        : getCurrentTimeAsUnique() + "." + extension;
+            }catch (Exception e){
+                log.info(e.getMessage() + " with file name: " + fileName);
+                return getCurrentTimeAsUnique();
+            }
+        }
+    
+        public String getCurrentTime(){
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+            return dtf.format(LocalDateTime.now());
+        }
+    
+        public String getCurrentTimeAsUnique(){
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+            return dtf.format(LocalDateTime.now());
+        }
+    
+        public String getDivisionDirectory(String storeCode){
+            String result = null;
+            Map<String, List<String>> storeDetails = storeServices.getStoreDetails();
+            for (Map.Entry<String, List<String>> entry : storeDetails.entrySet()){
+                boolean present = entry.getValue().stream().anyMatch(i -> i.equalsIgnoreCase(storeCode));
+                if (present) { result = entry.getKey(); break; }
+            }
+            return result;
+        }
+    
+        public ResponseDataDTO getStoreCode() {
+            ResponseDataDTO dto = new ResponseDataDTO();
+            dto.setMessage(CommonConstants.SUCCESS_CONST);
+            Map<String, List<String>> storesData = storeServices.getStoreDetails();
+            List<String> result = new ArrayList<>();
+            for (Map.Entry<String, List<String>> entry : storesData.entrySet()){
+                result.addAll(entry.getValue());
+            }
+            dto.setResult(result);
+            return dto;
+        }
+    
+        public ResponseDataDTO storeBrideImage(MultipartFile file) {
+            ResponseDataDTO dto = new ResponseDataDTO();
+    
+            if (file.isEmpty()) {
+                dto.setMessage("Please select a file to upload");
+                return dto;
+            }
+    
             try {
-                CompletedEventsResponseDTO dto = getAllCompletedEvents(storeCode);
-                if (dto != null && dto.getStatus()==true && dto.getEventData() instanceof List) {
-                    List<Map<String, Object>> events = (List<Map<String, Object>>) dto.getEventData();
-                    if (events != null) {
-                        allEvents.addAll(events);
-                    }
-                }
-            } catch (Exception e) {
-                // Optionally log the error
+                String newFileName = getNewFileName(file.getOriginalFilename());
+                Path path = Paths.get(UPLOAD_DIR + File.separator + newFileName);
+                Path parent = path.getParent();
+                if (parent != null) Files.createDirectories(parent);
+                Files.write(path, file.getBytes());
+    
+                dto.setMessage(CommonConstants.SUCCESS_CONST);
+                dto.setResult(newFileName);
+                dto.setStatus(true);
+                dto.setFilePath(path.toString());
+                System.out.println("bride image uploaded in uploads");
+            } catch (IOException e) {
+                dto.setMessage("Failed to upload file: " + file.getOriginalFilename() + " - " + e.getMessage());
+                e.printStackTrace();
             }
+            return dto;
         }
-        return allEvents;
-    }
-
-
-    public List<Map<String, Object>> filterEventsByStartDate(List<Map<String, Object>> events, String startDateStr, String endDateStr) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate start = LocalDate.parse(startDateStr, formatter);
-        LocalDate end = LocalDate.parse(endDateStr, formatter);
-
-        return events.stream()
-                .filter(e -> {
-                    try {
-                        String startDate = (String) e.get("StartDate");
-                        if (startDate == null || startDate.isEmpty()) return false;
-                        LocalDate eventDate = LocalDate.parse(startDate);
-                        return !eventDate.isBefore(start) && !eventDate.isAfter(end);
-                    } catch (Exception ex) {
-                        return false;
-                    }
-                })
-                .collect(Collectors.toList());
-    }
-
-//    public List<StoreEventSummaryDTO> fetchStoreSummariesByRbmParallel(String rbmUsername) throws Exception {
-//        List<String> storeCodes = fetchStoresByRbm(rbmUsername);
-//
-//        // Use parallel stream for faster processing
-//        return storeCodes.parallelStream().map(storeCode -> {
-//            try {
-//                CompletedEventsResponseDTO eventsResponse = getAllCompletedEvents(storeCode);
-//                Object rawData = eventsResponse.getEventData();
-//
-//                List<Map<String, Object>> events = new ArrayList<>();
-//
-//                if (rawData instanceof List<?>) {
-//                    List<?> rawList = (List<?>) rawData;
-//                    events = rawList.stream()
-//                            .filter(e -> e instanceof Map)
-//                            .map(e -> (Map<String, Object>) e)
-//                            .collect(Collectors.toList());
-//                }
-//
-//                int totalEvents = events.size();
-//                int totalInvitees = 0;
-//                int totalAttendees = 0;
-//                double totalAdvance = 0;
-//                double totalGhsOrRga = 0;
-//                double totalSale = 0;
-//
-//                for (Map<String, Object> event : events) {
-//                    totalInvitees += parseInt(event.get("Invitees"));
-//                    totalAttendees += parseInt(event.get("Attendees"));
-//                    totalAdvance += parseDouble(event.get("advance"));
-//                    totalGhsOrRga += parseDouble(event.get("ghs/rga"));
-//                    totalSale += parseDouble(event.get("sale"));
-//                }
-//
-//                return new StoreEventSummaryDTO(
-//                        storeCode, totalEvents, totalInvitees, totalAttendees,
-//                        totalAdvance, totalGhsOrRga, totalSale
-//                );
-//
-//            } catch (Exception e) {
-//                // In case of failure, return summary with zeros
-//                return new StoreEventSummaryDTO(storeCode, 0, 0, 0, 0, 0, 0);
-//            }
-//        }).collect(Collectors.toList());
-//    }
-
-//    public List<StoreEventSummaryDTO> fetchStoreSummariesByRbmParallel(String rbmUsername, LocalDate startDate, LocalDate endDate) throws Exception {
-//        List<String> storeCodes = fetchStoresByRbm(rbmUsername);
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-//
-//        return storeCodes.parallelStream().map(storeCode -> {
-//            try {
-//                CompletedEventsResponseDTO eventsResponse = getAllCompletedEvents(storeCode);
-//                Object rawData = eventsResponse.getEventData();
-//
-//                List<Map<String, Object>> events = new ArrayList<>();
-//
-//                if (rawData instanceof List<?>) {
-//                    List<?> rawList = (List<?>) rawData;
-//                    events = rawList.stream()
-//                            .filter(e -> e instanceof Map)
-//                            .map(e -> (Map<String, Object>) e)
-//                            .collect(Collectors.toList());
-//                }
-//
-//                // ✅ Apply date filter ONLY if both dates are provided
-//                List<Map<String, Object>> filteredEvents = events.stream()
-//                        .filter(event -> {
-//                            if (startDate == null || endDate == null) return true;
-//
-//                            Object dateObj = event.get("eventDate");
-//                            if (dateObj == null) return false;
-//
-//                            try {
-//                                LocalDate eventDate = LocalDate.parse(dateObj.toString(), formatter);
-//                                return !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
-//                            } catch (Exception e) {
-//                                return false;
-//                            }
-//                        })
-//                        .collect(Collectors.toList());
-//
-//                int totalEvents = filteredEvents.size();
-//                int totalInvitees = 0;
-//                int totalAttendees = 0;
-//                double totalAdvance = 0;
-//                double totalGhsOrRga = 0;
-//                double totalSale = 0;
-//
-//                for (Map<String, Object> event : filteredEvents) {
-//                    totalInvitees += parseInt(event.get("Invitees"));
-//                    totalAttendees += parseInt(event.get("Attendees"));
-//                    totalAdvance += parseDouble(event.get("advance"));
-//                    totalGhsOrRga += parseDouble(event.get("ghs/rga"));
-//                    totalSale += parseDouble(event.get("sale"));
-//                }
-//
-//                return new StoreEventSummaryDTO(
-//                        storeCode, totalEvents, totalInvitees, totalAttendees,
-//                        totalAdvance, totalGhsOrRga, totalSale
-//                );
-//
-//            } catch (Exception e) {
-//                return new StoreEventSummaryDTO(storeCode, 0, 0, 0, 0, 0, 0);
-//            }
-//        }).collect(Collectors.toList());
-//    }
-
-
-//    public StoreSummaryWrapperDTO fetchStoreSummariesByRbmParallel(String rbmUsername, LocalDate startDate, LocalDate endDate) throws Exception {
-//        List<String> storeCodes = fetchStoresByRbm(rbmUsername);
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-//
-//        List<StoreEventSummaryDTO> summaries = Collections.synchronizedList(new ArrayList<>());
-//
-//        AtomicInteger totalEvents = new AtomicInteger(0);
-//        AtomicInteger totalInvitees = new AtomicInteger(0);
-//        AtomicInteger totalAttendees = new AtomicInteger(0);
-//        DoubleAdder totalAdvance = new DoubleAdder();
-//        DoubleAdder totalGhsOrRga = new DoubleAdder();
-//        DoubleAdder totalSale = new DoubleAdder();
-//
-//        storeCodes.parallelStream().forEach(storeCode -> {
-//            try {
-//                CompletedEventsResponseDTO eventsResponse = getAllCompletedEvents(storeCode);
-//                Object rawData = eventsResponse.getEventData();
-//
-//                List<Map<String, Object>> events = new ArrayList<>();
-//
-//                if (rawData instanceof List<?>) {
-//                    List<?> rawList = (List<?>) rawData;
-//                    events = rawList.stream()
-//                            .filter(e -> e instanceof Map)
-//                            .map(e -> (Map<String, Object>) e)
-//                            .collect(Collectors.toList());
-//                }
-//
-//                List<Map<String, Object>> filteredEvents = events.stream()
-//                        .filter(event -> {
-//                            if (startDate == null || endDate == null) return true;
-//                            Object dateObj = event.get("eventDate");
-//                            if (dateObj == null) return false;
-//
-//                            try {
-//                                LocalDate eventDate = LocalDate.parse(dateObj.toString(), formatter);
-//                                return !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
-//                            } catch (Exception e) {
-//                                return false;
-//                            }
-//                        })
-//                        .collect(Collectors.toList());
-//
-//                int storeEventCount = filteredEvents.size();
-//                int storeInvitees = 0;
-//                int storeAttendees = 0;
-//                double storeAdvance = 0;
-//                double storeGhsOrRga = 0;
-//                double storeSale = 0;
-//
-//                for (Map<String, Object> event : filteredEvents) {
-//                    storeInvitees += parseInt(event.get("Invitees"));
-//                    storeAttendees += parseInt(event.get("Attendees"));
-//                    storeAdvance += parseDouble(event.get("advance"));
-//                    storeGhsOrRga += parseDouble(event.get("ghs/rga"));
-//                    storeSale += parseDouble(event.get("sale"));
-//                }
-//
-//                // Add to totals (thread-safe)
-//                totalEvents.addAndGet(storeEventCount);
-//                totalInvitees.addAndGet(storeInvitees);
-//                totalAttendees.addAndGet(storeAttendees);
-//                totalAdvance.add(storeAdvance);
-//                totalGhsOrRga.add(storeGhsOrRga);
-//                totalSale.add(storeSale);
-//
-//                summaries.add(new StoreEventSummaryDTO(
-//                        storeCode, storeEventCount, storeInvitees, storeAttendees,
-//                        storeAdvance, storeGhsOrRga, storeSale
-//                ));
-//
-//            } catch (Exception e) {
-//                summaries.add(new StoreEventSummaryDTO(storeCode, 0, 0, 0, 0, 0, 0));
-//            }
-//        });
-//
-//        StoreEventSummaryDTO total = new StoreEventSummaryDTO(
-//                "TOTAL",
-//                totalEvents.get(),
-//                totalInvitees.get(),
-//                totalAttendees.get(),
-//                totalAdvance.sum(),
-//                totalGhsOrRga.sum(),
-//                totalSale.sum()
-//        );
-//
-//        return new StoreSummaryWrapperDTO(summaries, total);
-//    }
-
-
-//    public StoreSummaryWrapperDTO fetchStoreSummariesByRbmParallel(String rbmUsername, LocalDate startDate, LocalDate endDate) throws Exception {
-//        List<String> storeCodes = fetchStoresByRbm(rbmUsername);
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-//
-//        List<StoreEventSummaryDTO> summaries = new ArrayList<>();
-//
-//        AtomicInteger totalEvents = new AtomicInteger(0);
-//        AtomicInteger totalInvitees = new AtomicInteger(0);
-//        AtomicInteger totalAttendees = new AtomicInteger(0);
-//        DoubleAdder totalAdvance = new DoubleAdder();
-//        DoubleAdder totalGhsOrRga = new DoubleAdder();
-//        DoubleAdder totalSale = new DoubleAdder();
-//
-//        for (String storeCode : storeCodes) {
-//            try {
-//                CompletedEventsResponseDTO eventsResponse = getAllCompletedEventsWithRetry(storeCode);
-//                Object rawData = eventsResponse.getEventData();
-//
-//                List<Map<String, Object>> events = new ArrayList<>();
-//                if (rawData instanceof List<?>) {
-//                    events = ((List<?>) rawData).stream()
-//                            .filter(e -> e instanceof Map)
-//                            .map(e -> (Map<String, Object>) e)
-//                            .collect(Collectors.toList());
-//                }
-//
-//                List<Map<String, Object>> filteredEvents = events.stream()
-//                        .filter(event -> {
-//                            if (startDate == null || endDate == null) return true;
-//                            Object dateObj = event.get("eventDate");
-//                            if (dateObj == null) return false;
-//                            try {
-//                                LocalDate eventDate = LocalDate.parse(dateObj.toString(), formatter);
-//                                return !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
-//                            } catch (Exception e) {
-//                                return false;
-//                            }
-//                        })
-//                        .collect(Collectors.toList());
-//
-//                int storeEventCount = filteredEvents.size();
-//                int storeInvitees = 0;
-//                int storeAttendees = 0;
-//                double storeAdvance = 0;
-//                double storeGhsOrRga = 0;
-//                double storeSale = 0;
-//
-//                for (Map<String, Object> event : filteredEvents) {
-//                    storeInvitees += parseInt(event.get("Invitees"));
-//                    storeAttendees += parseInt(event.get("Attendees"));
-//                    storeAdvance += parseDouble(event.get("advance"));
-//                    storeGhsOrRga += parseDouble(event.get("ghs/rga"));
-//                    storeSale += parseDouble(event.get("sale"));
-//                }
-//
-//                totalEvents.addAndGet(storeEventCount);
-//                totalInvitees.addAndGet(storeInvitees);
-//                totalAttendees.addAndGet(storeAttendees);
-//                totalAdvance.add(storeAdvance);
-//                totalGhsOrRga.add(storeGhsOrRga);
-//                totalSale.add(storeSale);
-//
-//                summaries.add(new StoreEventSummaryDTO(storeCode, storeEventCount, storeInvitees, storeAttendees, storeAdvance, storeGhsOrRga, storeSale));
-//
-//            } catch (Exception e) {
-//                // Log error if needed
-//                System.err.println("Failed to fetch for store: " + storeCode + " - " + e.getMessage());
-//                summaries.add(new StoreEventSummaryDTO(storeCode, 0, 0, 0, 0, 0, 0));
-//            }
-//        }
-//
-//        StoreEventSummaryDTO total = new StoreEventSummaryDTO(
-//                "TOTAL",
-//                totalEvents.get(),
-//                totalInvitees.get(),
-//                totalAttendees.get(),
-//                totalAdvance.sum(),
-//                totalGhsOrRga.sum(),
-//                totalSale.sum()
-//        );
-//
-//        return new StoreSummaryWrapperDTO(summaries, total);
-//    }
-
-    public StoreSummaryWrapperDTO fetchStoreSummariesByRbmParallel(String rbmUsername, LocalDate startDate, LocalDate endDate) throws Exception {
-        List<String> storeCodes = fetchStoresByRbm(rbmUsername);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-        List<StoreEventSummaryDTO> summaries = Collections.synchronizedList(new ArrayList<>());
-
-        AtomicInteger totalEvents = new AtomicInteger(0);
-        AtomicInteger totalInvitees = new AtomicInteger(0);
-        AtomicInteger totalAttendees = new AtomicInteger(0);
-        DoubleAdder totalAdvance = new DoubleAdder();
-        DoubleAdder totalGhsOrRga = new DoubleAdder();
-        DoubleAdder totalSale = new DoubleAdder();
-
-        int maxThreads = 2; // reduced concurrency
-        ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
-        List<Future<?>> futures = new ArrayList<>();
-
-        for (String storeCode : storeCodes) {
-            futures.add(executor.submit(() -> {
+    
+        public ResponseEntity<byte[]> storeBrideDetails(String brideType, String brideEvent, String brideName, String phone, String date, String email, String zipcode, String filepath) {
+            ResponseDataDTO responseDataDTO = new ResponseDataDTO();
+            BrideDetailsDTO brideDetailsDTO = new BrideDetailsDTO();
+            brideDetailsDTO.setBrideName(brideName);
+            brideDetailsDTO.setBrideEvent(brideEvent);
+            brideDetailsDTO.setBrideType(brideType);
+            brideDetailsDTO.setDate(date);
+            brideDetailsDTO.setEmail(email);
+            brideDetailsDTO.setPhone(phone);
+            brideDetailsDTO.setZipCode(zipcode);
+    
+            boolean isDone = gSheetUserDetailsUtil.insertSheetBrideData(brideDetailsDTO);
+            ResponseEntity<byte[]> imageResponse = processImageWithTextOverlay(brideName, phone, date, email, filepath);
+            if (imageResponse.getStatusCode() != HttpStatus.OK) {
+                responseDataDTO.setMessage("Failed to process image");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+            if(isDone){
+                responseDataDTO.setMessage(CommonConstants.SUCCESS_CONST);
+                responseDataDTO.setImageResponse(imageResponse);
+                responseDataDTO.setStatus(true);
+            }else{
+                responseDataDTO.setMessage("Failed to store bride details");
+            }
+            return imageResponse;
+        }
+    
+        public ResponseDataDTO storeAttendeesData(AttendeesDetailDTO attendeesDetailDTO) {
+            ResponseDataDTO dto = new ResponseDataDTO();
+            try {
+                int isDone = gSheetUserDetailsUtil.insertSheetAttendeesData(attendeesDetailDTO);
+                dto.setResult(isDone);
+    
+                if (isDone > 0) {
+                    boolean updated = gSheetUserDetailsUtil.updateAttendees(attendeesDetailDTO.getId(), isDone);
+                    log.info("Updated attendees count in Event Sheet? => {}", updated);
+                    dto.setStatus(true);
+                    dto.setMessage("Stored attendees data successfully (only in Attendees & Event Sheet)");
+                } else {
+                    dto.setStatus(false);
+                    dto.setMessage("Failed to store attendees data");
+                }
+            } catch (IllegalArgumentException iae) {
+                dto.setStatus(false);
+                dto.setMessage(iae.getMessage());
+            } catch (Exception e) {
+                dto.setStatus(false);
+                dto.setMessage("Error: " + e.getMessage());
+            }
+            return dto;
+        }
+    
+        public ResponseEntity<byte[]> processImageWithTextOverlay(String brideName, String phone, String date, String email, String filepath) {
+            try {
+                if (BASE_IMG == null || BASE_IMG.isBlank() || filepath == null || filepath.isBlank()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                }
+                File baseFile, overlayFile;
                 try {
-                    // Rate limiting: sleep before making the request
-                    Thread.sleep(1000); // 1 second delay between each thread's request
-
+                    baseFile = ResourceUtils.getFile(BASE_IMG);
+                    overlayFile = ResourceUtils.getFile(filepath);
+                } catch (Exception e) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                }
+                if (!baseFile.exists() || !overlayFile.exists()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                }
+    
+                BufferedImage baseImage = ImageIO.read(baseFile);
+                BufferedImage overlayImage = ImageIO.read(overlayFile);
+                if (baseImage == null || overlayImage == null) {
+                    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).build();
+                }
+    
+                overlayImage = resizeImage(overlayImage, baseImage.getWidth(), baseImage.getHeight());
+    
+                Graphics2D g2d = baseImage.createGraphics();
+                try {
+                    g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2d.setFont(new Font("Nunito", Font.PLAIN, 14));
+                    g2d.setColor(Color.BLACK);
+    
+                    String n = brideName == null ? "" : brideName;
+                    String p = phone     == null ? "" : phone;
+                    String d = date      == null ? "" : date;
+                    String m = email     == null ? "" : email;
+    
+                    g2d.drawString("Name: " + n,   190, 250);
+                    g2d.drawString("Phone: " + p,  500, 250);
+                    g2d.drawString("Email: " + m,  190, 320);
+                    g2d.drawString("Wedding Date: " + d, 500, 320);
+    
+                    int imgX = (baseImage.getWidth() - overlayImage.getWidth()) / 2;
+                    int imgY = (baseImage.getHeight() / 4);
+                    g2d.drawImage(overlayImage, imgX, imgY, null);
+                } finally {
+                    g2d.dispose();
+                }
+    
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(baseImage, "jpg", baos);
+                byte[] imageBytes = baos.toByteArray();
+    
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.IMAGE_JPEG);
+                headers.setContentDispositionFormData("attachment", "output.jpg");
+                headers.setContentLength(imageBytes.length);
+                return new ResponseEntity<>(imageBytes, headers, HttpStatus.OK);
+            } catch (IOException e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        }
+    
+        private BufferedImage resizeImage(BufferedImage originalImage, int targetWidth, int targetHeight) {
+            int originalWidth = originalImage.getWidth();
+            int originalHeight = originalImage.getHeight();
+            float aspectRatio = (float) originalWidth / originalHeight;
+    
+            int paddedWidth = targetWidth - 400;
+            int paddedHeight = targetHeight - 400;
+    
+            int newWidth = paddedWidth;
+            int newHeight = paddedHeight;
+    
+            if (originalWidth > paddedWidth || originalHeight > paddedHeight) {
+                if (originalWidth > originalHeight) {
+                    newWidth = paddedWidth;
+                    newHeight = Math.round(paddedWidth / aspectRatio);
+                } else {
+                    newHeight = paddedHeight;
+                    newWidth = Math.round(paddedHeight * aspectRatio);
+                }
+            }
+    
+            BufferedImage resizedImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2d = resizedImage.createGraphics();
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2d.drawImage(originalImage, 0, 0, newWidth, newHeight, null);
+            g2d.dispose();
+    
+            return resizedImage;
+        }
+    
+        public CompletedEventsResponseDTO getAllCompletedEvents(String code) {
+            CompletedEventsResponseDTO out = new CompletedEventsResponseDTO();
+            try {
+                if (code == null || code.trim().isEmpty()) {
+                    out.setStatus(false);
+                    out.setMessage("Invalid code");
+                    return out;
+                }
+    
+                // Region buckets we support
+                Set<String> regions = new HashSet<>(Arrays.asList(
+                        "North1","North2","North3","North4",
+                        "South1","South2","South3",
+                        "East1","East2",
+                        "West1","West2","West3"
+                ));
+    
+                List<String> storeCodes;
+                if (regions.contains(code.trim())) {
+                    // ⚡️ Region path → get all store codes for that region
+                    List<storeCodeDataDTO> regionStores = gSheetUserDetailsUtil.getStoresByRegion(code.trim());
+                    storeCodes = regionStores.stream()
+                            .map(storeCodeDataDTO::getStoreCode)
+                            .filter(Objects::nonNull)
+                            .map(String::trim)
+                            .filter(s -> !s.isEmpty())
+                            .collect(Collectors.toList());
+                } else {
+                    // ⚡️ Single store path → treat as a 1-item list
+                    storeCodes = Collections.singletonList(code.trim());
+                }
+    
+                // ⚡️ One cached read of the Events sheet, then in-memory filtering
+                List<Map<String, Object>> events = gSheetUserDetailsUtil.getEventsForStores(storeCodes);
+    
+                if (events == null || events.isEmpty()) {
+                    out.setStatus(false);
+                    out.setMessage("No events found");
+                    out.setEventData(Collections.emptyList());
+                } else {
+                    out.setStatus(true);
+                    out.setMessage("fetched events");
+                    out.setEventData(events);
+                }
+            } catch (Exception e) {
+                out.setStatus(false);
+                out.setMessage("error: " + e.getMessage());
+                out.setEventData(Collections.emptyList());
+            }
+            return out;
+        }
+    
+    
+        public List<storeCodeDataDTO> getStoresByRegion(String region) {
+            try { return gSheetUserDetailsUtil.getStoresByRegion(region); }
+            catch (Exception e) { e.printStackTrace(); return new ArrayList<>(); }
+        }
+    
+        public List<?> getInvitedMember(String eventId) {
+            try { return gSheetUserDetailsUtil.getAllAttendees(eventId); }
+            catch (Exception e){ return new ArrayList<>(); }
+        }
+    
+        public ResponseDataDTO getShareCode(RivaahDTO rivaahDTO) {
+            return gSheetUserDetailsUtil.insertRivaahDetails(rivaahDTO);
+        }
+    
+        public ResponseDataDTO storeRivaahUser(String name, String contact) {
+            ResponseDataDTO dto = new ResponseDataDTO();
+    
+            boolean status = gSheetUserDetailsUtil.insertRivaahUserDetails(name, contact);
+    
+            BookAppointmentDTO bookAppointmentDTO = new BookAppointmentDTO();
+            String[] nameParts = name.trim().split("\\s+", 2);
+            String firstName = nameParts[0];
+            String lastName = nameParts.length > 1 ? nameParts[1] : "";
+            bookAppointmentDTO.setFirstName(firstName);
+            bookAppointmentDTO.setLastName(lastName);
+            bookAppointmentDTO.setPhone(contact);
+    
+            if (!status) {
+                dto.setStatus(false);
+                dto.setMessage("User details storing failed");
+                return dto;
+            }
+    
+            try {
+                HttpHeaders headers = new HttpHeaders();
+                headers.setBasicAuth(bookAnAppoitmentUsername, bookAnAppoitmentPassword);
+                headers.add("PartnerId", "Ecomm");
+                headers.setContentType(MediaType.APPLICATION_JSON);
+    
+                HttpEntity<BookAppointmentDTO> entity = new HttpEntity<>(bookAppointmentDTO, headers);
+    
+                ResponseEntity<String> response = restTemplate.exchange(
+                        bookAnAppointmentUrl, HttpMethod.POST, entity, String.class
+                );
+    
+                if (response.getBody() != null) {
+                    dto.setStatus(true);
+                    dto.setMessage("Successfully stored user details and booked appointment");
+                    dto.setResult(response.getBody());
+                } else {
+                    dto.setStatus(false);
+                    dto.setMessage("Stored user details, but failed to book appointment");
+                }
+    
+            } catch (Exception e) {
+                e.printStackTrace();
+                dto.setStatus(false);
+                dto.setMessage("Error while booking appointment: " + e.getMessage());
+            }
+    
+            return dto;
+        }
+    
+        public RivaahAllDetailsDTO getRivaahDetails(String code) {
+            return gSheetUserDetailsUtil.getRivaahDetails(code);
+        }
+    
+        public ResponseDataDTO changePasswordForEventManager(String storeCode, String oldPassword, String newPassword) {
+            return gSheetUserDetailsUtil.changePassword(storeCode, oldPassword, newPassword);
+        }
+    
+        public ResponseDataDTO updateSaleOfAnEvent(String eventCode, String sale) {
+            try{
+                return gSheetUserDetailsUtil.updateSaleOfAnEvent(eventCode, sale);
+            }catch (Exception e){
+                ResponseDataDTO dto = new ResponseDataDTO();
+                dto.setStatus(false);
+                dto.setMessage(e.getMessage());
+                return dto;
+            }
+        }
+        public ResponseDataDTO updateAdvanceOfAnEvent(String eventCode, String advance) {
+            try{
+                return gSheetUserDetailsUtil.updateAdvanceOfAnEvent(eventCode, advance);
+            }catch (Exception e){
+                ResponseDataDTO dto = new ResponseDataDTO();
+                dto.setStatus(false);
+                dto.setMessage(e.getMessage());
+                return dto;
+            }
+        }
+        public ResponseDataDTO updateGhsRgaOfAnEvent(String eventCode, String ghsRga) {
+            try{
+                return gSheetUserDetailsUtil.updateGhsRgaOfAnEvent(eventCode, ghsRga);
+            }catch (Exception e){
+                ResponseDataDTO dto = new ResponseDataDTO();
+                dto.setStatus(false);
+                dto.setMessage(e.getMessage());
+                return dto;
+            }
+        }
+        public ResponseDataDTO updateGmbOfAnEvent(String eventCode, String gmb) {
+            try{
+                return gSheetUserDetailsUtil.updateGmbOfAnEvent(eventCode, gmb);
+            }catch (Exception e){
+                ResponseDataDTO dto = new ResponseDataDTO();
+                dto.setStatus(false);
+                dto.setMessage(e.getMessage());
+                return dto;
+            }
+        }
+    
+        public Optional<LoginResponseDTO> authenticateAbm(String username, String password) {
+            try { return gSheetUserDetailsUtil.isValidUserAbm(username, password); }
+            catch (Exception e) { return Optional.empty(); }
+        }
+    
+        public Optional<LoginResponseDTO> authenticateRbm(String username, String password) {
+            try { return gSheetUserDetailsUtil.isValidUserRbm(username, password); }
+            catch (Exception e) { return Optional.empty(); }
+        }
+    
+        public Optional<LoginResponseDTO> authenticateCee(String username, String password) {
+            try { return gSheetUserDetailsUtil.isValidUserCee(username, password); }
+            catch (Exception e) { return Optional.empty(); }
+        }
+    
+        public List<String> fetchStoresByRbm(String rbmUsername) throws Exception {
+            return gSheetUserDetailsUtil.getStoresByRbmUsername(rbmUsername);
+        }
+    
+        public List<String> fetchStoresByAbm(String abmUsername) throws Exception {
+            return gSheetUserDetailsUtil.getStoresByAbmUsername(abmUsername);
+        }
+    
+        public List<String> fetchStoresByCee(String ceeUsername) throws Exception{
+            return gSheetUserDetailsUtil.getStoresByCeeUsername(ceeUsername);
+        }
+    
+        public List<CompletedEventsResponseDTO> getCompletedEventsForStores(List<String> storeCodes) {
+            List<CompletedEventsResponseDTO> result = new ArrayList<>();
+            if (storeCodes == null) return result;
+    
+            for (String storeCode : storeCodes) {
+                if (storeCode == null || storeCode.trim().isEmpty()) continue;
+                try {
+                    CompletedEventsResponseDTO events = getAllCompletedEventsWithBackoff(storeCode);
+                    if (events != null) result.add(events);
+                } catch (Exception e) {
+                    log.warn("getCompletedEventsForStores: failed for {}: {}", storeCode, e.toString());
+                }
+            }
+            return result;
+        }
+    
+        /** ✅ now uses the cached, single-fetch util for efficiency */
+        public List<Map<String, Object>> getOnlyEventsForStores(List<String> storeCodes) {
+            try {
+                return gSheetUserDetailsUtil.getEventsForStores(storeCodes);
+            } catch (Exception e) {
+                return new ArrayList<>();
+            }
+        }
+    
+        /** ✅ looks up StartDate (sanitized header from the sheet) */
+        public List<Map<String, Object>> filterEventsByStartDate(List<Map<String, Object>> events, String startDateStr, String endDateStr) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate start = LocalDate.parse(startDateStr, formatter);
+            LocalDate end = LocalDate.parse(endDateStr, formatter);
+    
+            return events.stream().filter(e -> {
+                try {
+                    String startDate = (String) e.get("StartDate");
+                    if (startDate == null || startDate.isEmpty()) return false;
+                    LocalDate eventDate = parseFlexibleDate(startDate);
+                    return eventDate != null && !eventDate.isBefore(start) && !eventDate.isAfter(end);
+                } catch (Exception ex) {
+                    return false;
+                }
+            }).collect(Collectors.toList());
+        }
+    
+        public StoreSummaryWrapperDTO fetchStoreSummariesByRbmParallel(String rbmUsername, LocalDate startDate, LocalDate endDate) throws Exception {
+            List<String> storeCodes = fetchStoresByRbm(rbmUsername);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    
+            List<StoreEventSummaryDTO> summaries = Collections.synchronizedList(new ArrayList<>());
+    
+            AtomicInteger totalEvents = new AtomicInteger(0);
+            AtomicInteger totalInvitees = new AtomicInteger(0);
+            AtomicInteger totalAttendees = new AtomicInteger(0);
+            DoubleAdder totalAdvance = new DoubleAdder();
+            DoubleAdder totalGhsOrRga = new DoubleAdder();
+            DoubleAdder totalSale = new DoubleAdder();
+    
+            int maxThreads = 2;
+            ExecutorService executor = Executors.newFixedThreadPool(maxThreads);
+            List<Future<?>> futures = new ArrayList<>();
+    
+            for (String storeCode : storeCodes) {
+                futures.add(executor.submit(() -> {
+                    try {
+                        Thread.sleep(1000);
+    
+                        CompletedEventsResponseDTO eventsResponse = getAllCompletedEventsWithBackoff(storeCode);
+                        Object rawData = eventsResponse.getEventData();
+    
+                        List<Map<String, Object>> events = new ArrayList<>();
+                        if (rawData instanceof List<?>) {
+                            events = ((List<?>) rawData).stream()
+                                    .filter(e -> e instanceof Map)
+                                    .map(e -> (Map<String, Object>) e)
+                                    .collect(Collectors.toList());
+                        }
+    
+                        List<Map<String, Object>> filteredEvents = events.stream()
+                                .filter(event -> {
+                                    if (startDate == null || endDate == null) return true;
+                                    Object dateObj = event.get("StartDate"); // ✅ fixed key
+                                    if (dateObj == null) return false;
+                                    try {
+                                        LocalDate eventDate = LocalDate.parse(dateObj.toString(), formatter);
+                                        return !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
+                                    } catch (Exception e) {
+                                        return false;
+                                    }
+                                })
+                                .collect(Collectors.toList());
+    
+                        int storeEventCount = filteredEvents.size();
+                        int storeInvitees = 0;
+                        int storeAttendees = 0;
+                        double storeAdvance = 0;
+                        double storeGhsOrRga = 0;
+                        double storeSale = 0;
+    
+                        for (Map<String, Object> event : filteredEvents) {
+                            storeInvitees += parseInt(event.get("Invitees"));
+                            storeAttendees += parseInt(event.get("Attendees"));
+                            storeAdvance += parseDouble(event.get("advance"));
+                            storeGhsOrRga += parseDouble(event.get("ghs/rga"));
+                            storeSale += parseDouble(event.get("sale"));
+                        }
+    
+                        totalEvents.addAndGet(storeEventCount);
+                        totalInvitees.addAndGet(storeInvitees);
+                        totalAttendees.addAndGet(storeAttendees);
+                        totalAdvance.add(storeAdvance);
+                        totalGhsOrRga.add(storeGhsOrRga);
+                        totalSale.add(storeSale);
+    
+                        summaries.add(new StoreEventSummaryDTO(
+                                storeCode, storeEventCount, storeInvitees, storeAttendees,
+                                storeAdvance, storeGhsOrRga, storeSale
+                        ));
+    
+                    } catch (Exception e) {
+                        System.err.println("Error processing store " + storeCode + ": " + e.getMessage());
+                        summaries.add(new StoreEventSummaryDTO(storeCode, 0, 0, 0, 0, 0, 0));
+                    }
+                }));
+            }
+    
+            for (Future<?> future : futures) {
+                try { future.get(); } catch (Exception e) { e.printStackTrace(); }
+            }
+    
+            executor.shutdown();
+            executor.awaitTermination(5, TimeUnit.MINUTES);
+    
+            StoreEventSummaryDTO total = new StoreEventSummaryDTO(
+                    "TOTAL",
+                    totalEvents.get(),
+                    totalInvitees.get(),
+                    totalAttendees.get(),
+                    totalAdvance.sum(),
+                    totalGhsOrRga.sum(),
+                    totalSale.sum()
+            );
+    
+            return new StoreSummaryWrapperDTO(summaries, total);
+        }
+    
+        public CompletedEventsResponseDTO getAllCompletedEventsWithBackoff(String storeCode) throws Exception {
+            int maxRetries = 5; long wait = 500;
+            for (int attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    return getAllCompletedEvents(storeCode);
+                } catch (Exception ex) {
+                    if (attempt == maxRetries) throw ex;
+                    Thread.sleep(wait);
+                    wait = Math.min(wait * 2, 5000);
+                }
+            }
+            throw new RuntimeException("Unreachable");
+        }
+    
+        public StoreSummaryWrapperDTO fetchStoreSummariesByAbmParallel(String abmUsername, LocalDate startDate, LocalDate endDate) throws Exception {
+            List<String> storeCodes = fetchStoresByAbm(abmUsername);
+            return processStoreCodesInParallel(storeCodes, startDate, endDate);
+        }
+    
+        public StoreSummaryWrapperDTO fetchStoreSummariesByCeeParallel(String ceeUsername, LocalDate startDate, LocalDate endDate) throws Exception {
+            List<String> storeCodes = fetchStoresByCee(ceeUsername);
+            return processStoreCodesInParallel(storeCodes, startDate, endDate);
+        }
+    
+        private StoreSummaryWrapperDTO processStoreCodesInParallel(List<String> storeCodes, LocalDate startDate, LocalDate endDate) throws Exception {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    
+            List<StoreEventSummaryDTO> summaries = Collections.synchronizedList(new ArrayList<>());
+    
+            AtomicInteger totalEvents = new AtomicInteger(0);
+            AtomicInteger totalInvitees = new AtomicInteger(0);
+            AtomicInteger totalAttendees = new AtomicInteger(0);
+            DoubleAdder totalAdvance = new DoubleAdder();
+            DoubleAdder totalGhsOrRga = new DoubleAdder();
+            DoubleAdder totalSale = new DoubleAdder();
+    
+            int threadPoolSize = Math.min(10, Runtime.getRuntime().availableProcessors() * 2);
+            ExecutorService executor = Executors.newFixedThreadPool(threadPoolSize);
+    
+            List<Callable<Void>> tasks = storeCodes.stream().map(storeCode -> (Callable<Void>) () -> {
+                try {
                     CompletedEventsResponseDTO eventsResponse = getAllCompletedEventsWithBackoff(storeCode);
                     Object rawData = eventsResponse.getEventData();
-
+    
                     List<Map<String, Object>> events = new ArrayList<>();
                     if (rawData instanceof List<?>) {
                         events = ((List<?>) rawData).stream()
@@ -2488,28 +2181,28 @@ public class TanishqPageService {
                                 .map(e -> (Map<String, Object>) e)
                                 .collect(Collectors.toList());
                     }
-
+    
                     List<Map<String, Object>> filteredEvents = events.stream()
                             .filter(event -> {
                                 if (startDate == null || endDate == null) return true;
-                                Object dateObj = event.get("eventDate");
+                                Object dateObj = event.get("StartDate"); // ✅ fixed key
                                 if (dateObj == null) return false;
                                 try {
                                     LocalDate eventDate = LocalDate.parse(dateObj.toString(), formatter);
                                     return !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
-                                } catch (Exception e) {
+                                } catch (Exception ex) {
                                     return false;
                                 }
                             })
                             .collect(Collectors.toList());
-
+    
                     int storeEventCount = filteredEvents.size();
                     int storeInvitees = 0;
                     int storeAttendees = 0;
                     double storeAdvance = 0;
                     double storeGhsOrRga = 0;
                     double storeSale = 0;
-
+    
                     for (Map<String, Object> event : filteredEvents) {
                         storeInvitees += parseInt(event.get("Invitees"));
                         storeAttendees += parseInt(event.get("Attendees"));
@@ -2517,456 +2210,157 @@ public class TanishqPageService {
                         storeGhsOrRga += parseDouble(event.get("ghs/rga"));
                         storeSale += parseDouble(event.get("sale"));
                     }
-
+    
                     totalEvents.addAndGet(storeEventCount);
                     totalInvitees.addAndGet(storeInvitees);
                     totalAttendees.addAndGet(storeAttendees);
                     totalAdvance.add(storeAdvance);
                     totalGhsOrRga.add(storeGhsOrRga);
                     totalSale.add(storeSale);
-
+    
                     summaries.add(new StoreEventSummaryDTO(
                             storeCode, storeEventCount, storeInvitees, storeAttendees,
                             storeAdvance, storeGhsOrRga, storeSale
                     ));
-
                 } catch (Exception e) {
                     System.err.println("Error processing store " + storeCode + ": " + e.getMessage());
                     summaries.add(new StoreEventSummaryDTO(storeCode, 0, 0, 0, 0, 0, 0));
                 }
-            }));
+                return null;
+            }).collect(Collectors.toList());
+    
+            executor.invokeAll(tasks);
+            executor.shutdown();
+            executor.awaitTermination(5, TimeUnit.MINUTES);
+    
+            StoreEventSummaryDTO total = new StoreEventSummaryDTO(
+                    "TOTAL",
+                    totalEvents.get(),
+                    totalInvitees.get(),
+                    totalAttendees.get(),
+                    totalAdvance.sum(),
+                    totalGhsOrRga.sum(),
+                    totalSale.sum()
+            );
+    
+            return new StoreSummaryWrapperDTO(summaries, total);
         }
-
-        for (Future<?> future : futures) {
+    
+        private int parseInt(Object value) {
+            try { return Integer.parseInt(value != null ? value.toString().trim() : "0"); }
+            catch (Exception e) { return 0; }
+        }
+    
+        private double parseDouble(Object value) {
+            try { return Double.parseDouble(value != null ? value.toString().trim() : "0"); }
+            catch (Exception e) { return 0.0; }
+        }
+    
+        public StoreEventSummaryDTO processSingleStoreCode(String storeCode, LocalDate startDate, LocalDate endDate) throws Exception {
+            CompletedEventsResponseDTO eventsResponse = getAllCompletedEventsWithBackoff(storeCode);
+            Object rawData = eventsResponse.getEventData();
+    
+            List<Map<String, Object>> events = new ArrayList<>();
+            if (rawData instanceof List<?>) {
+                events = ((List<?>) rawData).stream()
+                        .filter(e -> e instanceof Map)
+                        .map(e -> (Map<String, Object>) e)
+                        .collect(Collectors.toList());
+            }
+    
+            List<Map<String, Object>> filteredEvents = events.stream()
+                    .filter(event -> {
+                        if (startDate == null || endDate == null) return true;
+                        Object dateObj = event.get("StartDate"); // ✅ fixed key
+                        if (dateObj == null) return false;
+                        try {
+                            LocalDate eventDate = parseFlexibleDate(dateObj.toString());
+                            return eventDate != null && !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
+                        } catch (Exception ex) {
+                            return false;
+                        }
+                    })
+                    .collect(Collectors.toList());
+    
+            int storeEventCount = filteredEvents.size();
+            int storeInvitees = 0;
+            int storeAttendees = 0;
+            double storeAdvance = 0;
+            double storeGhsOrRga = 0;
+            double storeSale = 0;
+    
+            for (Map<String, Object> event : filteredEvents) {
+                storeInvitees += parseInt(event.get("Invitees"));
+                storeAttendees += parseInt(event.get("Attendees"));
+                storeAdvance += parseDouble(event.get("advance"));
+                storeGhsOrRga += parseDouble(event.get("ghs/rga"));
+                storeSale += parseDouble(event.get("sale"));
+            }
+    
+            return new StoreEventSummaryDTO(
+                    storeCode, storeEventCount, storeInvitees, storeAttendees,
+                    storeAdvance, storeGhsOrRga, storeSale
+            );
+        }
+    
+        private LocalDate parseFlexibleDate(String dateStr) {
+            try { return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd")); }
+            catch (DateTimeParseException e1) {
+                try { return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy/MM/dd")); }
+                catch (DateTimeParseException e2) { return null; }
+            }
+        }
+    
+        public ResponseDataDTO appointment(BookAppointmentDTO bookAppointmentDTO, boolean isVisitStore) {
+            ResponseDataDTO dto = new ResponseDataDTO();
+    
             try {
-                future.get();
+                HttpHeaders headers = new HttpHeaders();
+                headers.setBasicAuth(bookAnAppoitmentUsername, bookAnAppoitmentPassword);
+                headers.add("PartnerId", "Ecomm");
+                headers.setContentType(MediaType.APPLICATION_JSON);
+    
+                HttpEntity<BookAppointmentDTO> entity = new HttpEntity<>(bookAppointmentDTO, headers);
+                ResponseEntity<String> response = restTemplate.exchange(
+                        bookAnAppointmentUrl, HttpMethod.POST, entity, String.class
+                );
+    
+                List<Object> row = Arrays.asList(
+                        bookAppointmentDTO.getStoreCode(),
+                        bookAppointmentDTO.getStoreName(),
+                        bookAppointmentDTO.getAppointmentDate(),
+                        bookAppointmentDTO.getAppointmentTime(),
+                        bookAppointmentDTO.getFirstName(),
+                        bookAppointmentDTO.getLastName(),
+                        bookAppointmentDTO.getPhone(),
+                        bookAppointmentDTO.getEmailId(),
+                        bookAppointmentDTO.getTicketType()
+                );
+                boolean dataAdded = gSheetUserDetailsUtil.insertBAPSheetData(row);
+    
+                if (response.getBody() != null) {
+                    dto.setStatus(true);
+                    dto.setMessage(dataAdded ? "Success" : "Success, but failed to save data in sheet");
+                    dto.setResult(response.getBody());
+                } else {
+                    dto.setMessage("Failed to book appointment");
+                }
+    
             } catch (Exception e) {
                 e.printStackTrace();
+                dto.setMessage("Error: " + e.getMessage());
             }
+    
+            return dto;
         }
-
-        executor.shutdown();
-
-        StoreEventSummaryDTO total = new StoreEventSummaryDTO(
-                "TOTAL",
-                totalEvents.get(),
-                totalInvitees.get(),
-                totalAttendees.get(),
-                totalAdvance.sum(),
-                totalGhsOrRga.sum(),
-                totalSale.sum()
-        );
-
-        return new StoreSummaryWrapperDTO(summaries, total);
-    }
-
-    public CompletedEventsResponseDTO getAllCompletedEventsWithBackoff(String storeCode) throws Exception {
-        int maxRetries = 5;
-        long wait = 500; // start 0.5s
-        for (int attempt = 1; attempt <= maxRetries; attempt++) {
+        @Scheduled(fixedDelayString = "PT2M", initialDelayString = "PT1M")
+        public void warmEventsCache() {
             try {
-                return getAllCompletedEvents(storeCode);
-            } catch (Exception ex) {
-                if (attempt == maxRetries) throw ex;
-                Thread.sleep(wait);
-                wait = Math.min(wait * 2, 5000); // cap at 5s
-            }
-        }
-        throw new RuntimeException("Unreachable");
-    }
-
-
-    public StoreSummaryWrapperDTO fetchStoreSummariesByAbmParallel(String abmUsername, LocalDate startDate, LocalDate endDate) throws Exception {
-        List<String> storeCodes = fetchStoresByAbm(abmUsername);
-        return processStoreCodesInParallel(storeCodes, startDate, endDate);
-    }
-
-    public StoreSummaryWrapperDTO fetchStoreSummariesByCeeParallel(String ceeUsername, LocalDate startDate, LocalDate endDate) throws Exception {
-        List<String> storeCodes = fetchStoresByCee(ceeUsername);
-        return processStoreCodesInParallel(storeCodes, startDate, endDate);
-    }
-
-    private StoreSummaryWrapperDTO processStoreCodesInParallel(List<String> storeCodes, LocalDate startDate, LocalDate endDate) throws Exception {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-        List<StoreEventSummaryDTO> summaries = Collections.synchronizedList(new ArrayList<>());
-
-        AtomicInteger totalEvents = new AtomicInteger(0);
-        AtomicInteger totalInvitees = new AtomicInteger(0);
-        AtomicInteger totalAttendees = new AtomicInteger(0);
-        DoubleAdder totalAdvance = new DoubleAdder();
-        DoubleAdder totalGhsOrRga = new DoubleAdder();
-        DoubleAdder totalSale = new DoubleAdder();
-
-        int threadPoolSize = Math.min(10, Runtime.getRuntime().availableProcessors() * 2); // adjustable
-        ExecutorService executor = Executors.newFixedThreadPool(threadPoolSize);
-
-        List<Callable<Void>> tasks = storeCodes.stream().map(storeCode -> (Callable<Void>) () -> {
-            try {
-                CompletedEventsResponseDTO eventsResponse = getAllCompletedEventsWithRetry(storeCode);
-                Object rawData = eventsResponse.getEventData();
-
-                List<Map<String, Object>> events = new ArrayList<>();
-                if (rawData instanceof List<?>) {
-                    events = ((List<?>) rawData).stream()
-                            .filter(e -> e instanceof Map)
-                            .map(e -> (Map<String, Object>) e)
-                            .collect(Collectors.toList());
-                }
-
-                List<Map<String, Object>> filteredEvents = events.stream()
-                        .filter(event -> {
-                            if (startDate == null || endDate == null) return true;
-                            Object dateObj = event.get("eventDate");
-                            if (dateObj == null) return false;
-                            try {
-                                LocalDate eventDate = LocalDate.parse(dateObj.toString(), formatter);
-                                return !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
-                            } catch (Exception ex) {
-                                return false;
-                            }
-                        })
-                        .collect(Collectors.toList());
-
-                int storeEventCount = filteredEvents.size();
-                int storeInvitees = 0;
-                int storeAttendees = 0;
-                double storeAdvance = 0;
-                double storeGhsOrRga = 0;
-                double storeSale = 0;
-
-                for (Map<String, Object> event : filteredEvents) {
-                    storeInvitees += parseInt(event.get("Invitees"));
-                    storeAttendees += parseInt(event.get("Attendees"));
-                    storeAdvance += parseDouble(event.get("advance"));
-                    storeGhsOrRga += parseDouble(event.get("ghs/rga"));
-                    storeSale += parseDouble(event.get("sale"));
-                }
-
-                totalEvents.addAndGet(storeEventCount);
-                totalInvitees.addAndGet(storeInvitees);
-                totalAttendees.addAndGet(storeAttendees);
-                totalAdvance.add(storeAdvance);
-                totalGhsOrRga.add(storeGhsOrRga);
-                totalSale.add(storeSale);
-
-                summaries.add(new StoreEventSummaryDTO(
-                        storeCode, storeEventCount, storeInvitees, storeAttendees,
-                        storeAdvance, storeGhsOrRga, storeSale
-                ));
+                gSheetUserDetailsUtil.getEventsForStores(Collections.singletonList("TEST"));
+                log.info("✅ Events cache warmed successfully.");
             } catch (Exception e) {
-                System.err.println("Error processing store " + storeCode + ": " + e.getMessage());
-                summaries.add(new StoreEventSummaryDTO(storeCode, 0, 0, 0, 0, 0, 0));
-            }
-            return null;
-        }).collect(Collectors.toList());
-
-        // Submit all tasks and wait for completion
-        executor.invokeAll(tasks);
-        executor.shutdown();
-        executor.awaitTermination(5, TimeUnit.MINUTES);
-
-        StoreEventSummaryDTO total = new StoreEventSummaryDTO(
-                "TOTAL",
-                totalEvents.get(),
-                totalInvitees.get(),
-                totalAttendees.get(),
-                totalAdvance.sum(),
-                totalGhsOrRga.sum(),
-                totalSale.sum()
-        );
-
-        return new StoreSummaryWrapperDTO(summaries, total);
-    }
-
-
-
-
-    private CompletedEventsResponseDTO getAllCompletedEventsWithRetry(String storeCode) throws Exception {
-        int retries = 3;
-        int delay = 2000; // 2 seconds
-        for (int i = 0; i < retries; i++) {
-            return getAllCompletedEvents(storeCode);
-        }
-        throw new RuntimeException("Failed to fetch after retries for storeCode: " + storeCode);
-    }
-
-
-
-
-
-
-    private int parseInt(Object value) {
-        try {
-            return Integer.parseInt(value != null ? value.toString().trim() : "0");
-        } catch (Exception e) {
-            return 0;
-        }
-    }
-
-    private double parseDouble(Object value) {
-        try {
-            return Double.parseDouble(value != null ? value.toString().trim() : "0");
-        } catch (Exception e) {
-            return 0.0;
-        }
-    }
-
-
-//    public StoreEventSummaryDTO processSingleStoreCode(String storeCode, LocalDate startDate, LocalDate endDate) throws Exception {
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-//
-//        CompletedEventsResponseDTO eventsResponse = getAllCompletedEventsWithRetry(storeCode);
-//        Object rawData = eventsResponse.getEventData();
-//
-//        List<Map<String, Object>> events = new ArrayList<>();
-//        if (rawData instanceof List<?>) {
-//            events = ((List<?>) rawData).stream()
-//                    .filter(e -> e instanceof Map)
-//                    .map(e -> (Map<String, Object>) e)
-//                    .collect(Collectors.toList());
-//        }
-//
-//        List<Map<String, Object>> filteredEvents = events.stream()
-//                .filter(event -> {
-//                    if (startDate == null || endDate == null) return true;
-//                    Object dateObj = event.get("eventDate");
-//                    if (dateObj == null) return false;
-//                    try {
-//                        LocalDate eventDate = LocalDate.parse(dateObj.toString(), formatter);
-//                        return !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
-//                    } catch (Exception ex) {
-//                        return false;
-//                    }
-//                })
-//                .collect(Collectors.toList());
-//
-//        int storeEventCount = filteredEvents.size();
-//        int storeInvitees = 0;
-//        int storeAttendees = 0;
-//        double storeAdvance = 0;
-//        double storeGhsOrRga = 0;
-//        double storeSale = 0;
-//
-//        for (Map<String, Object> event : filteredEvents) {
-//            storeInvitees += parseInt(event.get("Invitees"));
-//            storeAttendees += parseInt(event.get("Attendees"));
-//            storeAdvance += parseDouble(event.get("advance"));
-//            storeGhsOrRga += parseDouble(event.get("ghs/rga"));
-//            storeSale += parseDouble(event.get("sale"));
-//        }
-//
-//        return new StoreEventSummaryDTO(
-//                storeCode, storeEventCount, storeInvitees, storeAttendees,
-//                storeAdvance, storeGhsOrRga, storeSale
-//        );
-//    }
-
-//    public StoreEventSummaryDTO processSingleStoreCode(String storeCode, LocalDate startDate, LocalDate endDate) throws Exception {
-//        DateTimeFormatter fallbackFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-//
-//        CompletedEventsResponseDTO eventsResponse = getAllCompletedEventsWithRetry(storeCode);
-//        Object rawData = eventsResponse.getEventData();
-//
-//        List<Map<String, Object>> events = new ArrayList<>();
-//        if (rawData instanceof List<?>) {
-//            events = ((List<?>) rawData).stream()
-//                    .filter(e -> e instanceof Map)
-//                    .map(e -> (Map<String, Object>) e)
-//                    .collect(Collectors.toList());
-//        }
-//
-//        List<Map<String, Object>> filteredEvents = events.stream()
-//                .filter(event -> {
-//                    Object dateObj = event.get("eventDate");
-//                    if (dateObj == null) {
-//                        System.out.println("Missing eventDate in event: " + event);
-//                        return false;
-//                    }
-//
-//                    try {
-//                        String dateStr = dateObj.toString();
-//                        LocalDate eventDate;
-//
-//                        if (dateStr.contains("T")) {
-//                            eventDate = LocalDateTime.parse(dateStr).toLocalDate(); // ISO_LOCAL_DATE_TIME
-//                        } else {
-//                            eventDate = LocalDate.parse(dateStr, fallbackFormatter);
-//                        }
-//
-//                        return (startDate == null || !eventDate.isBefore(startDate)) &&
-//                                (endDate == null || !eventDate.isAfter(endDate));
-//
-//                    } catch (Exception ex) {
-//                        System.out.println("Failed to parse eventDate: " + dateObj + " | Event: " + event);
-//                        return false;
-//                    }
-//                })
-//                .collect(Collectors.toList());
-//
-//        int storeEventCount = filteredEvents.size();
-//        int storeInvitees = 0;
-//        int storeAttendees = 0;
-//        double storeAdvance = 0;
-//        double storeGhsOrRga = 0;
-//        double storeSale = 0;
-//
-//        for (Map<String, Object> event : filteredEvents) {
-//            storeInvitees += parseInt(event.get("Invitees"));
-//            storeAttendees += parseInt(event.get("Attendees"));
-//            storeAdvance += parseDouble(event.get("advance"));
-//            storeGhsOrRga += parseDouble(event.get("ghs/rga"));
-//            storeSale += parseDouble(event.get("sale"));
-//        }
-//
-//        return new StoreEventSummaryDTO(
-//                storeCode,
-//                storeEventCount,
-//                storeInvitees,
-//                storeAttendees,
-//                storeAdvance,
-//                storeGhsOrRga,
-//                storeSale
-//        );
-//    }
-
-    public StoreEventSummaryDTO processSingleStoreCode(String storeCode, LocalDate startDate, LocalDate endDate) throws Exception {
-        CompletedEventsResponseDTO eventsResponse = getAllCompletedEventsWithRetry(storeCode);
-        Object rawData = eventsResponse.getEventData();
-
-        List<Map<String, Object>> events = new ArrayList<>();
-        if (rawData instanceof List<?>) {
-            events = ((List<?>) rawData).stream()
-                    .filter(e -> e instanceof Map)
-                    .map(e -> (Map<String, Object>) e)
-                    .collect(Collectors.toList());
-        }
-
-        List<Map<String, Object>> filteredEvents = events.stream()
-                .filter(event -> {
-                    if (startDate == null || endDate == null) return true;
-                    Object dateObj = event.get("StartDate"); // Use StartDate instead of eventDate
-                    if (dateObj == null) return false;
-                    try {
-                        LocalDate eventDate = parseFlexibleDate(dateObj.toString());
-                        return eventDate != null && !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate);
-                    } catch (Exception ex) {
-                        return false;
-                    }
-                })
-                .collect(Collectors.toList());
-
-        int storeEventCount = filteredEvents.size();
-        int storeInvitees = 0;
-        int storeAttendees = 0;
-        double storeAdvance = 0;
-        double storeGhsOrRga = 0;
-        double storeSale = 0;
-
-        for (Map<String, Object> event : filteredEvents) {
-            storeInvitees += parseInt(event.get("Invitees"));
-            storeAttendees += parseInt(event.get("Attendees"));
-            storeAdvance += parseDouble(event.get("advance"));
-            storeGhsOrRga += parseDouble(event.get("ghs/rga"));
-            storeSale += parseDouble(event.get("sale"));
-        }
-
-        return new StoreEventSummaryDTO(
-                storeCode, storeEventCount, storeInvitees, storeAttendees,
-                storeAdvance, storeGhsOrRga, storeSale
-        );
-    }
-
-    private LocalDate parseFlexibleDate(String dateStr) {
-        try {
-            return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        } catch (DateTimeParseException e1) {
-            try {
-                return LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-            } catch (DateTimeParseException e2) {
-                return null;
+                log.warn("⚠️ Events cache warm-up failed: {}", e.getMessage());
             }
         }
+    
     }
-
-
-//    public ResponseDataDTO appointment(BookAppointmentDTO bookAppointmentDTO,boolean isVisitStore) {
-//        ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-//        bookAppointmentDTO.setBrand("Tanishq");
-//
-//        try {
-//
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.setBasicAuth(bookAnAppoitmentUsername,bookAnAppoitmentPassword);
-//            headers.add("PartnerId", "Ecomm");
-//            headers.setContentType(MediaType.APPLICATION_JSON);
-//
-//            HttpEntity<BookAppointmentDTO> entity = new HttpEntity<>(bookAppointmentDTO, headers);
-//            ResponseEntity<String> response = restTemplate.exchange(bookAnAppointmentUrl, HttpMethod.POST, entity, String.class);
-//
-//            if (response.getBody() != null) {
-//                responseDataDTO.setStatus(true);
-//                responseDataDTO.setMessage("Success");
-//                responseDataDTO.setResult(response.getBody());
-//            } else {
-//                responseDataDTO.setMessage("Failed to book appointment");
-//            }
-//
-//        } catch (Exception e) {
-//            responseDataDTO.setMessage("Error: " + e.getMessage());
-//        }
-//        return responseDataDTO;
-//    }
-
-    public ResponseDataDTO appointment(BookAppointmentDTO bookAppointmentDTO, boolean isVisitStore) {
-        ResponseDataDTO responseDataDTO = new ResponseDataDTO();
-
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBasicAuth(bookAnAppoitmentUsername, bookAnAppoitmentPassword);
-            headers.add("PartnerId", "Ecomm");
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            HttpEntity<BookAppointmentDTO> entity = new HttpEntity<>(bookAppointmentDTO, headers);
-            ResponseEntity<String> response = restTemplate.exchange(
-                    bookAnAppointmentUrl,
-                    HttpMethod.POST,
-                    entity,
-                    String.class
-            );
-
-            // Save to Google Sheet
-            List<Object> row = Arrays.asList(
-                    bookAppointmentDTO.getStoreCode(),
-                    bookAppointmentDTO.getStoreName(),
-                    bookAppointmentDTO.getAppointmentDate(),
-                    bookAppointmentDTO.getAppointmentTime(),
-                    bookAppointmentDTO.getFirstName(),
-                    bookAppointmentDTO.getLastName(),
-                    bookAppointmentDTO.getPhone(),
-                    bookAppointmentDTO.getEmailId(),
-                    bookAppointmentDTO.getTicketType()
-            );
-            boolean dataAdded = gSheetUserDetailsUtil.insertBAPSheetData(row);
-
-            if (response.getBody() != null) {
-                responseDataDTO.setStatus(true);
-                if (dataAdded) {
-                    responseDataDTO.setMessage("Success");
-                } else {
-                    responseDataDTO.setMessage("Success, but failed to save data in sheet");
-                }
-                responseDataDTO.setResult(response.getBody());
-            } else {
-                responseDataDTO.setMessage("Failed to book appointment");
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace(); // Recommended during debugging
-            responseDataDTO.setMessage("Error: " + e.getMessage());
-        }
-
-        return responseDataDTO;
-    }
-}
-
