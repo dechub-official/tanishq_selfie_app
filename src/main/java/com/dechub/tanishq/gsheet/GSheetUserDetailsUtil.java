@@ -1457,75 +1457,79 @@ public class GSheetUserDetailsUtil {
 
     public boolean updateAttendees(String eventId, int count) {
         try {
-            System.out.println("Fetching row from events");
-
-            String range = "Sheet1!D:D"; // Column D for eventId
+            String range = "Sheet1!D:D"; // event Id column
             final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
             Sheets service = getSheetService(httpTransport);
 
-            ValueRange response = sheets.spreadsheets().values()
-                    .get(SheetId11, range) // Updated to new sheet ID
+            // 1. Find row index for this eventId
+            ValueRange response = service.spreadsheets().values()
+                    .get(SheetId11, range)
                     .execute();
 
             List<List<Object>> values = response.getValues();
             if (values == null || values.isEmpty()) {
-                System.out.println("No data found in Sheet1!D:D");
-                return true;
+                System.out.println("No rows in events sheet.");
+                return false;
             }
 
             int rowIndex = -1;
             for (int i = 0; i < values.size(); i++) {
-                if (values.get(i) != null && !values.get(i).isEmpty()) {
-                    String cellValue = values.get(i).get(0).toString().trim();
+                List<Object> row = values.get(i);
+                if (row != null && !row.isEmpty()) {
+                    String cellValue = row.get(0).toString().trim();
                     if (cellValue.equalsIgnoreCase(eventId.trim())) {
-                        rowIndex = i + 1; // Google Sheets rows are 1-indexed
+                        rowIndex = i + 1; // 1-based
                         break;
                     }
                 }
             }
 
             if (rowIndex == -1) {
-                System.out.println("Event ID not found in sheet: " + eventId);
-                return true;
+                System.out.println("Event ID not found in events sheet: " + eventId);
+                return false;
             }
 
-            // Attendees column (L)
+            // 2. Read existing attendees from column L
             String attendeesCell = "Sheet1!L" + rowIndex;
             int currentAttendees = 0;
-            try {
-                ValueRange attendeesResponse = sheets.spreadsheets().values()
-                        .get(SheetId11, attendeesCell)
-                        .execute();
-                List<List<Object>> attendeesValues = attendeesResponse.getValues();
-                if (attendeesValues != null && !attendeesValues.isEmpty() && !attendeesValues.get(0).isEmpty()) {
-                    currentAttendees = Integer.parseInt(attendeesValues.get(0).get(0).toString().trim());
-                }
-            } catch (Exception e) {
-                System.out.println("Failed to parse existing attendee count. Defaulting to 0.");
-            }
-
-            currentAttendees += count;
-
-            // Update attendees value
-            ValueRange attendeesBody = new ValueRange()
-                    .setValues(Arrays.asList(Arrays.asList(currentAttendees)));
-            BatchUpdateValuesRequest attendeesUpdateRequest = new BatchUpdateValuesRequest()
-                    .setValueInputOption("RAW")
-                    .setData(Arrays.asList(
-                            new ValueRange().setRange(attendeesCell).setValues(attendeesBody.getValues())
-                    ));
-            service.spreadsheets().values()
-                    .batchUpdate(SheetId11, attendeesUpdateRequest)
+            ValueRange attendeesResponse = service.spreadsheets().values()
+                    .get(SheetId11, attendeesCell)
                     .execute();
 
-            System.out.println("Row updated successfully.");
+            List<List<Object>> attendeesValues = attendeesResponse.getValues();
+            if (attendeesValues != null && !attendeesValues.isEmpty() && !attendeesValues.get(0).isEmpty()) {
+                try {
+                    currentAttendees = Integer.parseInt(attendeesValues.get(0).get(0).toString().trim());
+                } catch (NumberFormatException nfe) {
+                    currentAttendees = 0;
+                }
+            }
+
+            int newTotal = currentAttendees + count;
+
+            // 3. Write newTotal back to column L
+            ValueRange attendeesBody = new ValueRange()
+                    .setValues(Collections.singletonList(Collections.singletonList(newTotal)));
+
+            BatchUpdateValuesRequest updateReq = new BatchUpdateValuesRequest()
+                    .setValueInputOption("RAW")
+                    .setData(Collections.singletonList(
+                            new ValueRange()
+                                    .setRange(attendeesCell)
+                                    .setValues(attendeesBody.getValues())
+                    ));
+
+            service.spreadsheets().values()
+                    .batchUpdate(SheetId11, updateReq)
+                    .execute();
+
+            // 4. invalidate cache AFTER successful write
             invalidateEventsCache();
             return true;
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("Row update failed gracefully. Event ID: " + eventId);
-            return true;
+            return false;
         }
     }
 
@@ -2566,7 +2570,11 @@ public class GSheetUserDetailsUtil {
         cachedEventsAt = now;
         return cachedEventsRows;
     }
-    /** filter the cached events for multiple stores without more API calls */
+
+    public void warmEntireEventsCache() throws Exception {
+        getAllEventRows(); // this fills cachedEventsRows and cachedEventsAt
+    }
+
     public List<Map<String, Object>> getEventsForStores(List<String> storeCodes) throws Exception {
         List<List<Object>> rows = getAllEventRows();
         if (rows.isEmpty()) return Collections.emptyList();
