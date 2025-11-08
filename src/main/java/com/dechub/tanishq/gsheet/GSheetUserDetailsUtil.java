@@ -392,103 +392,6 @@ public class GSheetUserDetailsUtil {
             return "";
         }
     }
-
-//    public List<Map<String, Object>> getCompletedEventDetails(String code) throws Exception {
-//        final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-//        Sheets service = getSheetService(httpTransport);
-//// Define the range to fetch all columns
-//        String range = "Sheet1!A:U"; // Assuming columns A to L contain the necessary data
-//
-//// Fetch data from the sheet
-//        ValueRange response = service.spreadsheets().values()
-//                .get(sheetId4, range)
-//                .execute();
-//
-//        List<List<Object>> values = response.getValues();
-//        List<Map<String, Object>> events = new ArrayList<>();
-//
-//        if (values == null || values.isEmpty()) {
-//            System.out.println("No data found.");
-//            return Collections.singletonList(Map.of("status", false));
-//        }
-//
-//// Get the header row
-//        List<String> headers = values.get(0).stream()
-//                .map(Object::toString)
-//                .map(this::sanitizeHeader)
-//                .collect(Collectors.toList());
-//
-    //// Iterate over rows and extract required columns
-//        for (int i = 1; i < values.size(); i++) { // Start from 1 to skip headers
-//            List<Object> row = values.get(i);
-//            if (row.size() > 0 && code.equalsIgnoreCase(row.get(0).toString())) {
-//                Map<String, Object> event = new HashMap<>();
-//
-//                for (int j = 0; j < headers.size(); j++) {
-//                    if (j < row.size()) {
-//                        event.put(headers.get(j).toString(), row.get(j));
-//                    } else {
-//                        event.put(headers.get(j).toString(), ""); // Fill missing columns with empty string
-//                    }
-//                }
-//
-//                event.put("completedEvent", event.get("completedEvents").toString().trim().length() > 1);
-//
-//                events.add(event);
-//            }
-//        }
-//        System.out.println(events);
-//        return events;
-//    }
-
-
-//    public List<Map<String, Object>> getCompletedEventDetails(String storeCode) throws Exception {
-//        final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-//        Sheets service = getSheetService(httpTransport);
-//
-//        // Define the range assuming data is in columns A to T (20 columns)
-//        String range = "Sheet1!A:T";
-//
-//        // Fetch data
-//        ValueRange response = execWithBackoff(
-//                () -> service.spreadsheets().values().get(SheetId11, range).execute(),
-//                6
-//        );
-//
-//        List<List<Object>> values = response.getValues();
-//        List<Map<String, Object>> events = new ArrayList<>();
-//
-//        if (values == null || values.isEmpty()) {
-//            System.out.println("No data found.");
-//            return Collections.singletonList(Map.of("status", false));
-//        }
-//
-//        // Extract and sanitize headers
-//        List<String> headers = values.get(0).stream()
-//                .map(Object::toString)
-//                .map(this::sanitizeHeader) // if you want to clean headers like replacing spaces, etc.
-//                .collect(Collectors.toList());
-//
-//        for (int i = 1; i < values.size(); i++) {
-//            List<Object> row = values.get(i);
-//            if (row.size() > 1 && storeCode.equalsIgnoreCase(row.get(1).toString())) { // Store Code is at index 1
-//                Map<String, Object> event = new HashMap<>();
-//
-//                for (int j = 0; j < headers.size(); j++) {
-//                    event.put(headers.get(j), j < row.size() ? row.get(j) : "");
-//                }
-//
-//                // Optional: derived field
-//                Object completedEvents = event.getOrDefault("completedEvents", "");
-//                event.put("completedEvent", completedEvents.toString().trim().length() > 1);
-//
-//                events.add(event);
-//            }
-//        }
-
-//        System.out.println(events);
-//        return events;
-//    }
     public List<Map<String, Object>> getCompletedEventDetails(String storeCode) throws Exception {
         String range = "Sheet1!A:T";
 
@@ -740,102 +643,6 @@ public class GSheetUserDetailsUtil {
     }
 
 
-//public QrResponseDTO insertSheetEventsData(EventsDetailDTO eventsDetailDTO) {
-//    QrResponseDTO qrResponseDTO = new QrResponseDTO();
-//    try {
-//
-//        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
-//        LocalDateTime now = LocalDateTime.now();
-//        final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-//        Sheets service = getSheetService(httpTransport);
-//
-//        eventsDetailDTO.setId(eventsDetailDTO.getStoreCode() + "_" + UUID.randomUUID().toString());
-//        if (!eventsDetailDTO.getSingleCustomer()) {
-//            int inviteesCount = excelEventsUtil.uploadExcelFile(eventsDetailDTO.getFile());
-//            eventsDetailDTO.setInvitees(inviteesCount);
-//            boolean inviteesUpdated = uploadXlsxToGoogleSheet(eventsDetailDTO.getFile(),eventsDetailDTO.getId(),sheetId6);
-//            if(!inviteesUpdated){
-//                qrResponseDTO.setStatus(false);
-//                qrResponseDTO.setQrData("Invitees sheet update failed");
-//                return qrResponseDTO;
-//            }
-//        } else {
-//            eventsDetailDTO.setInvitees(1);
-//            InviteesDetailDTO inviteesDetailDTO = new InviteesDetailDTO();
-//            inviteesDetailDTO.setName(eventsDetailDTO.getName());
-//            inviteesDetailDTO.setEventId(eventsDetailDTO.getId());
-//            inviteesDetailDTO.setContact(eventsDetailDTO.getContact());
-//            boolean inviteesUpdated = insertSheetInviteesData(inviteesDetailDTO);
-//            if(!inviteesUpdated){
-//                qrResponseDTO.setStatus(false);
-//                qrResponseDTO.setQrData("Invitees sheet update failed");
-//                return qrResponseDTO;
-//            }
-//        }
-//
-//        // Initialize row data with empty values for each column
-//        int totalColumns = 16; // Adjust this based on the total number of columns
-//        List<Object> rowData = new ArrayList<>(Collections.nCopies(totalColumns, ""));
-//
-//        // Populate row data based on column indices
-//        rowData.set(0, eventsDetailDTO.getStoreCode()); // Column 1: Store Code
-//        rowData.set(1, eventsDetailDTO.getId()); // Column 2: Id
-//        rowData.set(2, eventsDetailDTO.getEventType() != null ? eventsDetailDTO.getEventType() : ""); // Column 5: Event Type
-//        rowData.set(3, eventsDetailDTO.getEventSubType() != null ? eventsDetailDTO.getEventSubType() : ""); // Column 6: Event Sub Type
-//        rowData.set(4, eventsDetailDTO.getEventName() != null ? eventsDetailDTO.getEventName() : ""); // Column 7: Event Name
-//        rowData.set(5, eventsDetailDTO.getRso() != null ? eventsDetailDTO.getRso() : ""); // Column 7: Event Name
-//
-//        rowData.set(6, eventsDetailDTO.getStartDate() != null ? eventsDetailDTO.getStartDate() : ""); // Column 8: Start Date
-//        rowData.set(7, eventsDetailDTO.getStartTime() != null ? eventsDetailDTO.getStartTime() : ""); // Column 9: Start Time
-//        rowData.set(8, eventsDetailDTO.getDescription()!=null? eventsDetailDTO.getDescription():""); // Column 3: Description
-////        rowData.set(4, eventsDetailDTO.getLocation() != null ? eventsDetailDTO.getLocation() : ""); // Column 4: Event Location
-//        rowData.set(9, eventsDetailDTO.getImage() != null ? eventsDetailDTO.getImage() : ""); // Column 10: Image
-//        rowData.set(10, eventsDetailDTO.getInvitees()); // Column 0: Invitees
-//        rowData.set(11, eventsDetailDTO.getAttendees());
-//        rowData.set(12, dtf.format(now));
-    ////        rowData.set(13, eventsDetailDTO.getImage() != null ? eventsDetailDTO.getImage() : "");
-//        rowData.set(14, eventsDetailDTO.getCommunity() != null ? eventsDetailDTO.getCommunity() : "");
-//        rowData.set(15, eventsDetailDTO.getLocation() != null ? eventsDetailDTO.getLocation() : "");
-//
-//
-//
-//        List<List<Object>> values = Collections.singletonList(rowData);
-//
-//        ValueRange body = new ValueRange()
-//                .setValues(values);
-//
-//        AppendValuesResponse appendValuesResponse = service.spreadsheets().values()
-//                .append(sheetId4, "Sheet1" + "!A2", body)
-//                .setValueInputOption("USER_ENTERED")
-//                .execute();
-//
-//        int updatedRows = appendValuesResponse.getUpdates().getUpdatedRows();
-//        if (updatedRows > 0) {
-//
-//            String imageResponse = generateQrCode(eventsDetailDTO.getId());
-//            if (imageResponse.equals("error")) {
-//                qrResponseDTO.setStatus(false);
-//                qrResponseDTO.setQrData("error in generating qr code");
-//                return qrResponseDTO;
-//            }
-//            qrResponseDTO.setStatus(true);
-//            qrResponseDTO.setQrData("data:image/png;base64,"+imageResponse);
-//            return qrResponseDTO;
-//        } else {
-//            qrResponseDTO.setStatus(false);
-//            qrResponseDTO.setQrData("Events sheet update failed");
-//            return qrResponseDTO;
-//
-//        }
-//    } catch (Exception e) {
-//        e.printStackTrace();
-//        qrResponseDTO.setStatus(false);
-//        qrResponseDTO.setQrData("error:"+e.getMessage());
-//        return qrResponseDTO;
-//    }
-//}
-
-
     public QrResponseDTO insertSheetEventsData(EventsDetailDTO eventsDetailDTO) {
         QrResponseDTO qrResponseDTO = new QrResponseDTO();
         try {
@@ -976,37 +783,7 @@ public class GSheetUserDetailsUtil {
         }
 
     }
-    //    public String generateQrCodeWithEventLocation(String eventId, String eventLocation)  {
-//        try {
-//            // Generate QR code
-//            String qrCodeText;
-//            if (eventLocation.equalsIgnoreCase("customer's house")){
-//                qrCodeText = "https://celebrations.tanishq.co.in/events/customer/" + eventId +"?ishome=true";
-//            }
-//            else {
-//                qrCodeText = "https://celebrations.tanishq.co.in/events/customer/" + eventId;
-//            }
-//            System.out.println("qr text "+qrCodeText);
-//            BufferedImage qrCodeImage = generateQRCodeImage(qrCodeText);
-//
-//            // Convert QR code to byte array
-//            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//            ImageIO.write(qrCodeImage, "png", baos);
-//            byte[] qrCodeBytes = baos.toByteArray();
-//
-//            // Encode the QR code data to Base64
-//            String base64QrCode = Base64.getEncoder().encodeToString(qrCodeBytes);
-//
-//            // Set headers
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.setContentType(MediaType.APPLICATION_JSON);
-//
-//            return base64QrCode;
-//        } catch (Exception e) {
-//            return "error";
-//        }
-//
-//    }
+
     private BufferedImage generateQRCodeImage(String text) throws WriterException {
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
         BitMatrix bitMatrix = qrCodeWriter.encode(text, BarcodeFormat.QR_CODE, 200, 200);
@@ -1212,23 +989,6 @@ public class GSheetUserDetailsUtil {
         res.add(item);
         return res;
     }
-//    private List<List<Object>> formInputAttendeesData(AttendeesDetailDTO attendeesDetailDTO) {
-//        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
-//        LocalDateTime now = LocalDateTime.now();
-//
-//        List<List<Object>> res = new ArrayList<>();
-//        List<Object> item = new ArrayList<>();
-//        item.add(attendeesDetailDTO.getId());
-//        item.add(attendeesDetailDTO.getName());
-//        item.add(attendeesDetailDTO.getPhone());
-//        item.add(attendeesDetailDTO.getLike());
-//        item.add(attendeesDetailDTO.isFirstTimeAtTanishq());
-//        item.add(dtf.format(now));
-//        item.add(false);
-//        item.add(attendeesDetailDTO.getRsoName());
-//        res.add(item);
-//        return res;
-//    }
 
     private List<List<Object>> formInputAttendeesData(AttendeesDetailDTO attendeesDetailDTO) {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
@@ -1254,205 +1014,10 @@ public class GSheetUserDetailsUtil {
     }
 
 
-//    private List<List<Object>> formInputAttendeesData(AttendeesDetailDTO dto) {
-//        List<List<Object>> values = new ArrayList<>();
-//        List<Object> row = Arrays.asList(
-//                nullToEmpty(dto.getRegion()),              // region
-//                nullToEmpty(dto.getStoreCode()),           // store code
-//                nullToEmpty(dto.getEventType()),           // event type
-//                nullToEmpty(dto.getEventId()),             // Event Id
-//                nullToEmpty(dto.getName()),                // Name
-//                nullToEmpty(dto.getPhone()),               // Contact
-//                nullToEmpty(dto.getLike()),                // Like
-//                dto.isFirstTimeAtTanishq(),                // first Time (true/false)
-//                nullToEmpty(dto.getCreatedAt()),           // Created At
-//                false,                                      // isUploadedFromExcel = false for manual input
-//                nullToEmpty(dto.getRsoName())              // rso name
-//        );
-//        values.add(row);
-//        return values;
-//    }
 
     private String nullToEmpty(String str) {
         return str == null ? "" : str;
     }
-
-
-//    public boolean updateAttendees(String eventId,int count) {
-//       try{
-//           System.out.println("Fetching row from events");
-//           // Get the values in the Id column
-//           String range = "Sheet1" + "!" + "B" + ":" + "B";
-//           final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-//           Sheets service = getSheetService(httpTransport);
-//           ValueRange response = service.spreadsheets().values()
-//                   .get(sheetId4, range)
-//                   .execute();
-//
-//           List<List<Object>> values = response.getValues();
-//           System.out.println("values: "+values.size());
-//           if (values == null || values.isEmpty()) {
-//               System.out.println("No data found.");
-//               return false;
-//           }
-//
-//           // Search for the eventId in the column
-//           int rowIndex = -1;
-//           for (int i = 0; i < values.size(); i++) {
-//               if (values.get(i)!=null&&!values.get(i).isEmpty() && values.get(i).get(0).equals(eventId)) {
-//                   System.out.println("Row Found in events");
-//                   rowIndex = i + 1; // +1 because rows are 1-indexed in Google Sheets
-//                   break;
-//               }
-//           }
-//
-//           if (rowIndex == -1) {
-//               System.out.println(eventId);
-//               System.out.println("Event ID not found.");
-//               return false;
-//           }
-//
-//           /// Get the current value of the Attendees column
-//           String attendeesCell = "Sheet1" + "!" + "L" + rowIndex;
-//           ValueRange attendeesResponse = service.spreadsheets().values()
-//                   .get(sheetId4, attendeesCell)
-//                   .execute();
-//           List<List<Object>> attendeesValues = attendeesResponse.getValues();
-//           int currentAttendees = 0;
-//           if (attendeesValues != null && !attendeesValues.isEmpty() && !attendeesValues.get(0).isEmpty()) {
-//               currentAttendees = Integer.parseInt(attendeesValues.get(0).get(0).toString());
-//           }
-//
-//// Increment the number of attendees by 1
-//           currentAttendees += count;
-//
-//// Update the Attendees column with the new value
-//           ValueRange attendeesBody = new ValueRange()
-//                   .setValues(Arrays.asList(Arrays.asList(currentAttendees)));
-//           BatchUpdateValuesRequest attendeesUpdateRequest = new BatchUpdateValuesRequest()
-//                   .setValueInputOption("RAW")
-//                   .setData(Arrays.asList(
-//                           new ValueRange().setRange(attendeesCell).setValues(Arrays.asList(Arrays.asList(currentAttendees)))
-//                   ));
-//           service.spreadsheets().values()
-//                   .batchUpdate(sheetId4, attendeesUpdateRequest)
-//                   .execute();
-//
-//// Set isDone to true if value > 1, otherwise false
-//           String isDoneCell = "Sheet1" + "!" + "Q" + rowIndex;
-//
-//
-//           boolean isDone = count > 1;
-//
-    //// Update Column P with true/false based on isDoneValue
-//           ValueRange isDoneBody = new ValueRange()
-//                   .setValues(Arrays.asList(Arrays.asList(isDone)));
-//           BatchUpdateValuesRequest isDoneUpdateRequest = new BatchUpdateValuesRequest()
-//                   .setValueInputOption("RAW")
-//                   .setData(Arrays.asList(
-//                           new ValueRange().setRange(isDoneCell).setValues(Arrays.asList(Arrays.asList(isDone)))
-//                   ));
-//           service.spreadsheets().values()
-//                   .batchUpdate(sheetId4, isDoneUpdateRequest)
-//                   .execute();
-//
-//           System.out.println("Row updated successfully.");
-//           return true;
-//
-//       }catch (Exception e){
-//           System.out.println(e.getMessage());
-//           System.out.println("Row updation failed");
-//           return false;
-//       }
-//    }
-
-//    public boolean updateAttendees(String eventId, int count) {
-//        try {
-//            System.out.println("Fetching row from events");
-//
-//            String range = "Sheet1!B:B"; // Column B
-//            final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-//            Sheets service = getSheetService(httpTransport);
-//
-//            ValueRange response = service.spreadsheets().values()
-//                    .get(sheetId4, range)
-//                    .execute();
-//
-//            List<List<Object>> values = response.getValues();
-//            if (values == null || values.isEmpty()) {
-//                System.out.println("No data found in Sheet1!B:B");
-//                return true; // Don't fail the request
-//            }
-//
-//            int rowIndex = -1;
-//            for (int i = 0; i < values.size(); i++) {
-//                if (values.get(i) != null && !values.get(i).isEmpty()) {
-//                    String cellValue = values.get(i).get(0).toString().trim();
-//                    if (cellValue.equalsIgnoreCase(eventId.trim())) {
-//                        rowIndex = i + 1; // 1-indexed
-//                        break;
-//                    }
-//                }
-//            }
-//
-//            if (rowIndex == -1) {
-//                System.out.println("Event ID not found in sheet: " + eventId);
-//                return true; // Don't throw 500; let frontend proceed
-//            }
-//
-//            // Fetch existing count
-//            String attendeesCell = "Sheet1!L" + rowIndex;
-//            int currentAttendees = 0;
-//            try {
-//                ValueRange attendeesResponse = service.spreadsheets().values()
-//                        .get(sheetId4, attendeesCell)
-//                        .execute();
-//                List<List<Object>> attendeesValues = attendeesResponse.getValues();
-//                if (attendeesValues != null && !attendeesValues.isEmpty() && !attendeesValues.get(0).isEmpty()) {
-//                    currentAttendees = Integer.parseInt(attendeesValues.get(0).get(0).toString().trim());
-//                }
-//            } catch (Exception e) {
-//                System.out.println("Failed to parse existing attendee count. Defaulting to 0.");
-//            }
-//
-//            currentAttendees += count;
-//
-//            // Update attendees
-//            ValueRange attendeesBody = new ValueRange()
-//                    .setValues(Arrays.asList(Arrays.asList(currentAttendees)));
-//            BatchUpdateValuesRequest attendeesUpdateRequest = new BatchUpdateValuesRequest()
-//                    .setValueInputOption("RAW")
-//                    .setData(Arrays.asList(
-//                            new ValueRange().setRange(attendeesCell).setValues(attendeesBody.getValues())
-//                    ));
-//            service.spreadsheets().values()
-//                    .batchUpdate(sheetId4, attendeesUpdateRequest)
-//                    .execute();
-//
-//            // Update isDone in column Q
-//            String isDoneCell = "Sheet1!Q" + rowIndex;
-//            boolean isDone = count > 1;
-//
-//            ValueRange isDoneBody = new ValueRange()
-//                    .setValues(Arrays.asList(Arrays.asList(isDone)));
-//            BatchUpdateValuesRequest isDoneUpdateRequest = new BatchUpdateValuesRequest()
-//                    .setValueInputOption("RAW")
-//                    .setData(Arrays.asList(
-//                            new ValueRange().setRange(isDoneCell).setValues(isDoneBody.getValues())
-//                    ));
-//            service.spreadsheets().values()
-//                    .batchUpdate(sheetId4, isDoneUpdateRequest)
-//                    .execute();
-//
-//            System.out.println("Row updated successfully.");
-//            return true;
-//
-//        } catch (Exception e) {
-//            e.printStackTrace(); // full stack trace for backend debugging
-//            System.out.println("Row update failed gracefully. Event ID: " + eventId);
-//            return true; // ✅ don't throw 500 — let frontend proceed
-//        }
-//    }
 
 
     public boolean updateAttendees(String eventId, int count) {
@@ -1532,59 +1097,6 @@ public class GSheetUserDetailsUtil {
             return false;
         }
     }
-
-
-//    public boolean updateDrivelink(String eventId, String link) {
-//        try {
-//            // Get the values in the Id column
-//            String range = "Sheet1" + "!" + "B" + ":" + "B";
-//            final NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-//            Sheets service = getSheetService(httpTransport);
-//            ValueRange response = service.spreadsheets().values()
-//                    .get(sheetId4, range)
-//                    .execute();
-//
-//            List<List<Object>> values = response.getValues();
-//            if (values == null || values.isEmpty()) {
-//                System.out.println("No data found.");
-//                return false;
-//            }
-//
-//            // Search for the eventId in the column
-//            int rowIndex = -1;
-//            for (int i = 0; i < values.size(); i++) {
-//                if (values.get(i).size() >0 && values.get(i).get(0).equals(eventId)) {
-//                    rowIndex = i + 1; // +1 because rows are 1-indexed in Google Sheets
-//                    break;
-//                }
-//            }
-//
-//            if (rowIndex == -1) {
-//                System.out.println("Event ID not found.");
-//                return false;
-//            }
-//            System.out.println("Row Index in sheet: "+rowIndex);
-//            // Update the Link column with the new value
-//            String linkCell = "Sheet1" + "!" + "N" + rowIndex;
-//            ValueRange body = new ValueRange()
-//                    .setValues(Arrays.asList(Arrays.asList(link)));
-//            BatchUpdateValuesRequest batchUpdateValuesRequest = new BatchUpdateValuesRequest()
-//                    .setValueInputOption("RAW")
-//                    .setData(Arrays.asList(
-//                            new ValueRange().setRange(linkCell).setValues(Arrays.asList(Arrays.asList(link)))
-//                    ));
-//
-//            service.spreadsheets().values()
-//                    .batchUpdate(sheetId4, batchUpdateValuesRequest)
-//                    .execute();
-//
-//            System.out.println("Row updated successfully.");
-//            return true;
-//        } catch (Exception e) {
-//            System.out.println("Row update failed: " + e.getMessage());
-//            return false;
-//        }
-//    }
 
     public boolean updateDrivelink(String eventId, String link) {
         try {
@@ -2271,30 +1783,6 @@ public class GSheetUserDetailsUtil {
         return responseDataDTO;
     }
 
-//    public boolean isValidUserAbm(String username, String password) throws Exception {
-//        NetHttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
-//        Sheets sheetsService = getSheetService(transport);
-//
-//        String range = "abm_login!B2:D"; // username = B, password = D
-//        ValueRange response = sheetsService.spreadsheets().values()
-//                .get(sheetId10, range)
-//                .execute();
-//
-//        List<List<Object>> values = response.getValues();
-//        if (values == null || values.isEmpty()) return false;
-//
-//        for (List<Object> row : values) {
-//            if (row.size() >= 3) {
-//                String sheetUsername = String.valueOf(row.get(0));
-//                String sheetPassword = String.valueOf(row.get(2)); // index 2 = column D
-//                if (username.equals(sheetUsername) && password.equals(sheetPassword)) {
-//                    return true;
-//                }
-//            }
-//        }
-//        return false;
-//    }
-
     public Optional<LoginResponseDTO> isValidUserAbm(String username, String password) throws Exception {
         NetHttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
         Sheets sheetsService = getSheetService(transport);
@@ -2321,32 +1809,6 @@ public class GSheetUserDetailsUtil {
         return Optional.empty();
     }
 
-
-
-//    public boolean isValidUserRbm(String username, String password) throws Exception {
-//        NetHttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
-//        Sheets sheetsService = getSheetService(transport);
-//
-//        String range = "rbm_login!B2:D"; // username = B, password = D
-//        ValueRange response = sheetsService.spreadsheets().values()
-//                .get(sheetId10, range)
-//                .execute();
-//
-//        List<List<Object>> values = response.getValues();
-//        if (values == null || values.isEmpty()) return false;
-//
-//        for (List<Object> row : values) {
-//            if (row.size() >= 3) {
-//                String sheetUsername = String.valueOf(row.get(0));
-//                String sheetPassword = String.valueOf(row.get(2)); // index 2 = column D
-//                if (username.equals(sheetUsername) && password.equals(sheetPassword)) {
-//                    return true;
-//                }
-//            }
-//        }
-//        return false;
-//    }
-
     public Optional<LoginResponseDTO> isValidUserRbm(String username, String password) throws Exception {
         NetHttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
         Sheets sheetsService = getSheetService(transport);
@@ -2372,33 +1834,6 @@ public class GSheetUserDetailsUtil {
         }
         return Optional.empty();
     }
-
-
-//    public boolean isValidUserCee(String username, String password) throws Exception {
-//        NetHttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
-//        Sheets sheetsService = getSheetService(transport);
-//
-//        String range = "cee_login!B2:D"; // username = B, password = D
-//        ValueRange response = sheetsService.spreadsheets().values()
-//                .get(sheetId10, range)
-//                .execute();
-//
-//        List<List<Object>> values = response.getValues();
-//        if (values == null || values.isEmpty()) return false;
-//
-//        for (List<Object> row : values) {
-//            if (row.size() >= 3) {
-//                String sheetUsername = String.valueOf(row.get(0));
-//                String sheetPassword = String.valueOf(row.get(2)); // index 2 = column D
-//                if (username.equals(sheetUsername) && password.equals(sheetPassword)) {
-//                    return true;
-//                }
-//            }
-//        }
-//        return false;
-//    }
-
-
     public Optional<LoginResponseDTO> isValidUserCee(String username, String password) throws Exception {
         NetHttpTransport transport = GoogleNetHttpTransport.newTrustedTransport();
         Sheets sheetsService = getSheetService(transport);
