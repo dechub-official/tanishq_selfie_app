@@ -82,35 +82,4 @@ public class EmailService {
             return false;
         }
     }
-
-
-
-//old code
-//    public boolean sendEmailWithAttachment(String to, String subject, String text, String imagePath, String videoPath)  {
-//        //throws  IOException, MessagingException
-//        try{
-//            MimeMessage message = emailSender.createMimeMessage();
-//            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-//            helper.setTo(to);
-//            helper.setSubject(subject);
-//            helper.setText(text);
-//            // Attach image
-//            Path imagePathFile = Paths.get(imagePath);
-//            byte[] imageBytes = Files.readAllBytes(imagePathFile);
-//            ByteArrayResource imageResource = new ByteArrayResource(imageBytes);
-//            helper.addAttachment("image.png", imageResource);
-//
-//            // Attach video
-//            Path videoPathFile = Paths.get(videoPath);
-//            byte[] videoBytes = Files.readAllBytes(videoPathFile);
-//            ByteArrayResource videoResource = new ByteArrayResource(videoBytes);
-//            helper.addAttachment("video.mp4", videoResource);
-//            emailSender.send(message);
-//        } catch (Exception exception){
-//
-//        }
-//        return false;
-//
-//    }
-
 }
