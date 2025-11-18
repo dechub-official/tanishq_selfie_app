@@ -45,11 +45,10 @@ public class EventsController {
     @Autowired
     private StoreSummaryCache storeSummaryCache;
 
-
-    @PostMapping("/login")
-    public EventsLoginResponseDTO eventsLogin(@RequestBody LoginDTO loginDTO) throws Exception {
-        return tanishqPageService.eventsLogin(loginDTO.getCode(),loginDTO.getPassword());
-    }
+@PostMapping("/login")
+public EventsLoginResponseDTO eventsLogin(@RequestBody LoginDTO loginDTO) throws Exception {
+    return tanishqPageService.eventsLogin(loginDTO.getCode(),loginDTO.getPassword());
+}
 
     @GetMapping("/dowload-qr/{id}")
     private QrResponseDTO downloadQr(@PathVariable("id") String eventId){
@@ -70,7 +69,7 @@ public class EventsController {
             @RequestParam(value = "code",required = false) String code,
             @RequestParam(value = "file",required = false) MultipartFile file,
             @RequestParam(value ="description",required = false) String description,
-            @RequestParam(value ="singalInvite",required = false) boolean isSingleCustomer,
+            @RequestParam(value ="singalInvite", required = false) Boolean isSingleCustomer,
             @RequestParam(value ="eventName",required = false) String eventName,
             @RequestParam(value ="eventType",required = false) String eventType,
             @RequestParam(value ="eventSubType",required = false) String eventSubType,
@@ -93,12 +92,12 @@ public class EventsController {
 
     ) {
         EventsDetailDTO eventsDetailDTO = new EventsDetailDTO();
-        if(file==null||file.isEmpty()){
+        if (file == null || file.isEmpty()) {
             eventsDetailDTO.setSingleCustomer(true);
-        }else{
-            eventsDetailDTO.setSingleCustomer(isSingleCustomer);
-
+        } else {
+            eventsDetailDTO.setSingleCustomer(Boolean.TRUE.equals(isSingleCustomer));
         }
+
         eventsDetailDTO.setStoreCode(code);
         eventsDetailDTO.setDescription(description);
         eventsDetailDTO.setFile(file);

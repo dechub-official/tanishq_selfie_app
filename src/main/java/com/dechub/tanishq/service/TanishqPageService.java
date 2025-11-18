@@ -8,6 +8,8 @@
     import com.dechub.tanishq.dto.rivaahDto.RivaahDTO;
     import com.dechub.tanishq.gdrive.GoogleDriveService;
     import com.dechub.tanishq.gsheet.GSheetUserDetailsUtil;
+    import com.dechub.tanishq.repository.EventRepository;
+    import com.dechub.tanishq.repository.StoreRepository;
     import com.dechub.tanishq.util.CommonConstants;
     import com.dechub.tanishq.util.ResponseDataDTO;
     import org.slf4j.Logger;
@@ -52,7 +54,11 @@
     
         @Autowired
         private GSheetUserDetailsUtil gSheetUserDetailsUtil;
-    
+
+        private final com.dechub.tanishq.repository.StoreRepository storeRepository;
+        private final com.dechub.tanishq.repository.EventRepository eventRepository;
+
+
         @Value("${selfie.upload.dir}")
         private String selfieDirectory;
     
@@ -81,21 +87,34 @@
     
         private final RestTemplateBuilder restTemplateBuilder;
         public RestTemplate restTemplate;
+
+
+
     
         private static final Logger log = LoggerFactory.getLogger(TanishqPageService.class);
         private final Map<String, String> passwordCache = new ConcurrentHashMap<>();
     
+//        @Autowired
+//        public TanishqPageService(RestTemplateBuilder restTemplateBuilder) {
+//            this.restTemplateBuilder = restTemplateBuilder;
+//        }
+//
+
         @Autowired
-        public TanishqPageService(RestTemplateBuilder restTemplateBuilder) {
+        public TanishqPageService(RestTemplateBuilder restTemplateBuilder,
+                                  StoreRepository storeRepository,
+                                  EventRepository eventRepository) {
             this.restTemplateBuilder = restTemplateBuilder;
+            this.storeRepository = storeRepository;
+            this.eventRepository = eventRepository;
         }
-    
+
         @PostConstruct
         public void init() {
             this.restTemplate = restTemplateBuilder.build();
             try {
                 passwordCache.clear();
-                passwordCache.putAll(gSheetUserDetailsUtil.loadAllStorePasswords());
+                passwordCache.putAll(storeRepository.loadAllStorePasswords());
                 log.info("Password cache warmed with {} entries", passwordCache.size());
             } catch (Exception e) {
                 log.warn("Could not warm password cache at startup: {}", e.getMessage());
@@ -116,12 +135,12 @@
             String correctPassword = passwordCache.get(code.toUpperCase());
             if (correctPassword == null) {
                 final String codeUpper = code.toUpperCase();
-                correctPassword = getWithRetry(() -> gSheetUserDetailsUtil.getNewPassword(codeUpper), 3, 400);
+                correctPassword = getWithRetry(() -> storeRepository.getPasswordForStore(codeUpper), 3, 400);
                 if (correctPassword != null) {
                     passwordCache.put(codeUpper, correctPassword);
                 }
             }
-    
+
             if (correctPassword == null) {
                 response.setStatus(false);
                 response.setMessage("Service temporarily unavailable. Please try again.");
@@ -140,8 +159,8 @@
                 response.setStatus(true);
                 return response;
             }
-    
-            Map<String, Object> details = gSheetUserDetailsUtil.getDataFromSheet(code.toUpperCase());
+
+            Map<String, Object> details = storeRepository.getStoreDetails(code.toUpperCase());
             if (details == null || details.isEmpty()) {
                 details = new HashMap<>();
                 details.put("storeCode", code.toUpperCase());
@@ -191,11 +210,19 @@
             responseDataDTO.setResult(userDetailResponseDTO);
             return responseDataDTO;
         }
-    
+
         public QrResponseDTO storeEventsDetails(EventsDetailDTO eventsDetailsDTO) {
-            return gSheetUserDetailsUtil.insertSheetEventsData(eventsDetailsDTO);
+            try {
+                return eventRepository.insertEvent(eventsDetailsDTO);
+            } catch (Exception e) {
+                log.error("Error storing event details", e);
+                QrResponseDTO qrResponseDTO = new QrResponseDTO();
+                qrResponseDTO.setStatus(false);
+                qrResponseDTO.setQrData("Error: " + e.getMessage());
+                return qrResponseDTO;
+            }
         }
-    
+
         public ResponseDataDTO saveImage(MultipartFile file, String storeCode) {
             ResponseDataDTO dto = new ResponseDataDTO();
     
@@ -215,7 +242,12 @@
                 if (parent != null && !parent.exists() && !parent.mkdirs()) {
                     throw new IOException("Could not create directory: " + parent);
                 }
-    
+                // after newFileName computed
+                if (newFileName.contains("..") || newFileName.contains("/") || newFileName.contains("\\")) {
+                    throw new IOException("Invalid file name");
+                }
+
+
                 file.transferTo(targetFile);
                 dto.setMessage(CommonConstants.SUCCESS_CONST);
                 dto.setResult(newFileName);
@@ -245,7 +277,7 @@
         @Scheduled(fixedDelayString = "PT10M", initialDelayString = "PT2M")
         public void refreshPasswordCache() {
             try {
-                Map<String, String> fresh = gSheetUserDetailsUtil.loadAllStorePasswords();
+                Map<String, String> fresh = storeRepository.loadAllStorePasswords();
                 passwordCache.clear();
                 passwordCache.putAll(fresh);
                 log.info("Password cache refreshed: {}", passwordCache.size());
@@ -320,9 +352,9 @@
                 dto.setResult(newFileName);
                 dto.setStatus(true);
                 dto.setFilePath(path.toString());
-                System.out.println("bride image uploaded in uploads");
+                log.info("bride image uploaded in uploads");
             } catch (IOException e) {
-                dto.setMessage("Failed to upload file: " + file.getOriginalFilename() + " - " + e.getMessage());
+                log.error("Failed to upload file: {}", file.getOriginalFilename(), e);
                 e.printStackTrace();
             }
             return dto;
@@ -419,44 +451,47 @@
         }
         public ResponseDataDTO storeAttendeesData(AttendeesDetailDTO attendeesDetailDTO) {
             ResponseDataDTO dto = new ResponseDataDTO();
+
             try {
-                int insertedCount = gSheetUserDetailsUtil.insertSheetAttendeesData(attendeesDetailDTO);
-                dto.setResult(insertedCount);
+                // 1. Insert attendee row(s)
+                int insertedCount = eventRepository.insertAttendees(attendeesDetailDTO);
 
                 if (insertedCount <= 0) {
                     dto.setStatus(false);
-                    dto.setMessage("Failed to store attendees data");
+                    dto.setMessage("Failed to store attendees");
                     return dto;
                 }
 
-                boolean summaryUpdated = gSheetUserDetailsUtil.updateAttendees(
-                        attendeesDetailDTO.getId(),
-                        insertedCount
-                );
+                // 2. Fetch event row to read existing Attendees count
+                Map<String, Object> eventRow = eventRepository.getEventById(attendeesDetailDTO.getId());
 
-                log.info("Updated attendees total in events sheet for {} ? {}", attendeesDetailDTO.getId(), summaryUpdated);
-
-                if (summaryUpdated) {
-                    // If util.updateAttendees() already invalidates cache on success,
-                    // you can skip the next line. If not, keep it:
-                    gSheetUserDetailsUtil.invalidateEventsCache();
-
-                    dto.setStatus(true);
-                    dto.setMessage("Attendees stored and event total updated");
-                } else {
-                    // we still saved each attendee row, but we didn't manage to bump col L in events sheet
-                    dto.setStatus(true);
-                    dto.setMessage("Attendees stored. Dashboard total not updated yet.");
+                int existing = 0;
+                if (eventRow != null && eventRow.get("Attendees") != null) {
+                    try {
+                        existing = Integer.parseInt(eventRow.get("Attendees").toString().trim());
+                    } catch (Exception ignored) {}
                 }
 
-            } catch (IllegalArgumentException iae) {
-                // this is usually phone validation or excel phone normalization failing
-                dto.setStatus(false);
-                dto.setMessage(iae.getMessage());
+                // 3. Compute absolute total
+                int newTotal = existing + insertedCount;
+
+                // 4. Update sheet
+                boolean updated = eventRepository.updateAttendees(attendeesDetailDTO.getId(), newTotal);
+
+                if (updated) {
+                    dto.setStatus(true);
+                    dto.setMessage("Attendees stored and total updated");
+                    eventRepository.invalidateEventsCache();
+                } else {
+                    dto.setStatus(true);
+                    dto.setMessage("Attendees stored, but total not updated in summary");
+                }
+
             } catch (Exception e) {
                 dto.setStatus(false);
                 dto.setMessage("Error: " + e.getMessage());
             }
+
             return dto;
         }
 
@@ -465,13 +500,13 @@
             int originalWidth = originalImage.getWidth();
             int originalHeight = originalImage.getHeight();
             float aspectRatio = (float) originalWidth / originalHeight;
-    
+
             int paddedWidth = targetWidth - 400;
             int paddedHeight = targetHeight - 400;
-    
+
             int newWidth = paddedWidth;
             int newHeight = paddedHeight;
-    
+
             if (originalWidth > paddedWidth || originalHeight > paddedHeight) {
                 if (originalWidth > originalHeight) {
                     newWidth = paddedWidth;
@@ -481,16 +516,16 @@
                     newWidth = Math.round(paddedHeight * aspectRatio);
                 }
             }
-    
+
             BufferedImage resizedImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
             Graphics2D g2d = resizedImage.createGraphics();
             g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
             g2d.drawImage(originalImage, 0, 0, newWidth, newHeight, null);
             g2d.dispose();
-    
+
             return resizedImage;
         }
-    
+
         public CompletedEventsResponseDTO getAllCompletedEvents(String code) {
             CompletedEventsResponseDTO out = new CompletedEventsResponseDTO();
             try {
@@ -524,7 +559,7 @@
                 }
     
                 // ⚡️ One cached read of the Events sheet, then in-memory filtering
-                List<Map<String, Object>> events = gSheetUserDetailsUtil.getEventsForStores(storeCodes);
+                List<Map<String, Object>> events = eventRepository.getEventsForStores(storeCodes);
     
                 if (events == null || events.isEmpty()) {
                     out.setStatus(false);
@@ -550,7 +585,7 @@
         }
     
         public List<?> getInvitedMember(String eventId) {
-            try { return gSheetUserDetailsUtil.getAllAttendees(eventId); }
+            try { return eventRepository.getInvitedMembers(eventId); }
             catch (Exception e){ return new ArrayList<>(); }
         }
     
@@ -702,7 +737,7 @@
         /** ✅ now uses the cached, single-fetch util for efficiency */
         public List<Map<String, Object>> getOnlyEventsForStores(List<String> storeCodes) {
             try {
-                return gSheetUserDetailsUtil.getEventsForStores(storeCodes);
+                return eventRepository.getEventsForStores(storeCodes);
             } catch (Exception e) {
                 return new ArrayList<>();
             }
@@ -733,7 +768,7 @@
             List<String> storeCodes = fetchStoresByRbm(rbmUsername);
 
             // 2. get all events for those stores from cache (SINGLE Google call)
-            List<Map<String, Object>> events = gSheetUserDetailsUtil.getEventsForStores(storeCodes);
+            List<Map<String, Object>> events = eventRepository.getEventsForStores(storeCodes);
 
             // 3. filter by date range (in memory)
             List<Map<String, Object>> filtered = filterEventsByDateRange(events, startDate, endDate);
@@ -897,11 +932,22 @@
                 }
                 return null;
             }).collect(Collectors.toList());
-    
+
             executor.invokeAll(tasks);
             executor.shutdown();
-            executor.awaitTermination(5, TimeUnit.MINUTES);
-    
+            try {
+                boolean finished = executor.awaitTermination(5, TimeUnit.MINUTES);
+                if (!finished) {
+                    log.warn("Executor did not terminate within 5 minutes — forcing shutdown");
+                    executor.shutdownNow();
+                }
+            } catch (InterruptedException ie) {
+                log.warn("Thread interrupted while waiting for executor termination", ie);
+                executor.shutdownNow();
+                Thread.currentThread().interrupt(); // restore interrupt
+            }
+
+
             StoreEventSummaryDTO total = new StoreEventSummaryDTO(
                     "TOTAL",
                     totalEvents.get(),
@@ -930,7 +976,7 @@
                                                            LocalDate endDate) throws Exception {
 
             List<Map<String, Object>> events =
-                    gSheetUserDetailsUtil.getEventsForStores(Collections.singletonList(storeCode));
+                    eventRepository.getEventsForStores(Collections.singletonList(storeCode));
 
             List<Map<String, Object>> filtered = filterEventsByDateRange(events, startDate, endDate);
 
@@ -1015,7 +1061,7 @@
         @Scheduled(fixedDelayString = "PT5M", initialDelayString = "PT30S")
         public void warmEventsCache() {
             try {
-                gSheetUserDetailsUtil.warmEntireEventsCache();
+                eventRepository.warmEntireEventsCache();
                 log.info("✅ Global events cache warmed");
             } catch (Exception e) {
                 log.warn("⚠️ Failed to warm global events cache: {}", e.getMessage());
@@ -1057,7 +1103,7 @@
                                                                         LocalDate endDate) throws Exception {
 
             // 1. read all events for those stores from cache
-            List<Map<String, Object>> events = gSheetUserDetailsUtil.getEventsForStores(storeCodes);
+            List<Map<String, Object>> events = eventRepository.getEventsForStores(storeCodes);
 
             // 2. filter by date
             List<Map<String, Object>> filtered = filterEventsByDateRange(events, startDate, endDate);

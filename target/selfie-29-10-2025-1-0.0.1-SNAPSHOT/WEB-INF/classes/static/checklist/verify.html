@@ -1,0 +1,1312 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css?family=Nunito:400,700&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'SterlingDisplay';
+            src: url('assets/fonts/SterlingDisplayRoman/SterlingDisplayRoman.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #img-out label {
+
+            transform: translateY(-8px);
+
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'nunito': ['nunito', 'sans-serif'],
+                        'sterlingdisplay': ['SterlingDisplay', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="font-nunito bg-center bg-no-repeat bg-cover h-[100vh]"
+    style="background-image: url('assets/images/verify_bg.png');">
+
+    <div class="w-full  flex top-[5%] md:m-0  md:px-10 px-5  py-0 justify-center">
+        <!-- <img src="./assets/images/landing_page_logo.png" class="scale-[0.7] translate-x-[-5%]" width="100px" alt=""> -->
+        <img src="./assets/images/rivaah_logo.png" class="scale-[0.5] " alt="">
+    </div>
+
+    <!-- Header -->
+
+
+    <!-- <nav class="container my-4">
+        <div class="grid grid-cols-12 place-items-center justify-between md:justify-center">
+            <div class="col-span-2 block md:hidden">
+                <img src="./assets/images/landing_page_logo.png" alt="" class="h-auto ml-2 max-w-[100%] md:max-w-[20%]">
+            </div>
+            <div class="col-span-10 md:col-span-12">
+                <p class="text-[30px] md:text-[40px] font-medium font-sterlingdisplay text-[#832729] leading-8 text-left md:text-center">
+                Verify your checklist</p>    
+            </div>        
+        </div>
+    </nav> -->
+    <div class="flex justify-center mb-4 mt-0">
+        <p
+            class="text-[30px] md:text-[40px] font-medium font-sterlingdisplay text-[#832729] leading-8 text-left md:text-center">
+            Verify your checklist</p>
+    </div>
+
+
+
+
+    <!------------------------------- Lehanga Details ------------------------------>
+
+    <div class="tabs-checklist md:max-w-[800px] mx-auto w-full flex flex-wrap justify-center"
+        id="lehanga-checklist-image">
+        <div class="max-w-full block mx-auto ">
+            <ul
+                class="text-[9px] md:text-sm font-medium text-center text-gray-500 md:justify-center flex flex-wrap justify-center">
+                <li class="focus-within:z-10 md:m-2 m-1 hidden" id="hairChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1  text-black  rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Hair
+                        Jewellery</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="foreheadChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Forehead
+                        Pendant</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="dropChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Earrings
+                        - Drops </a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="dropsChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Earrings
+                        - Drops </a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="studChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Earrings
+                        - Stud</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="earloopChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Ear
+                        Loops</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="nosepinChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Nose
+                        Pin</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="earnosepinChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Nose
+                        Pin</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="chokerChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Choker
+                        Necklace</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="NecklaceChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Choker
+                        Necklace</a>
+                </li>
+
+
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="ringChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Rings</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="RingsChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Rings</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="shortnecklaceChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Short
+                        Necklace</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="longnecklaceChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Long
+                        Necklace</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="LongnecklaceChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Long
+                        Necklace</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="waistbeltChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Waist
+                        Belt</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="braceletChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Bracelet</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="BraceletChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Bracelet</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="bangleChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Multiple
+                        Bangles</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="BanglesChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Multiple
+                        Bangles</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="singlebangleChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Single
+                        Statement Bangle</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="SingleBanglesChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Single
+                        Statement Bangle</a>
+                </li>
+
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="ankletChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Anklet</a>
+                </li>
+                <li class=" focus-within:z-10 md:m-2 m-1 hidden" id="toeringChecklistOption">
+                    <a href="#"
+                        class="inline-block px-2 py-1 text-black rounded-lg focus:ring-4 focus:ring-blue-300 focus:outline-none border-solid border-2 border-[#000000] font-nunito">Toe
+                        Ring</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+
+
+    <div class="image-details font-sterlingdisplay hidden md:scale-[1] md:translate-y-0 translate-y-[-10%] scale-[0.8]"
+        id="image-lehanga-details">
+        <!-- <br>
+
+        <br> -->
+
+        <div class="relative w-fit mx-auto " id="sendImage">
+            <img id="childImage" src="./assets/images/girl-free.png" alt="Tanishq"
+                class="block ml-auto mr-auto m-4 md:max-w-[700px] max-w-[381px]">
+            <form id="lehangaForm">
+                <!-- image left adjustments -->
+                <div class="absolute hidden top-[5.5%] left-[18.5%]  md:left-[26%] md:top-[6.2%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="hairOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="hair" onclick="toggleLabelColor('hair')" style="color: #832729;">
+
+                            <label for="hair" id="hairLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Hair
+                                Jewellery</label>
+                        </div>
+                        <img src="./assets/images/line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 left-full w-[60%] md:max-w-full">
+                    </div>
+                </div>
+                <div class="absolute hidden left-[20%] top-[9.5%] md:top-[10.5%] md:left-[29%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="studOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="stud" onclick="toggleLabelColor('stud')" style="color: #832729;">
+                            <label for="stud" id="studLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Earrings
+                                - Stud</label>
+                        </div>
+                        <img src="./assets/images/line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 left-full w-[40%] md:max-w-full">
+                    </div>
+                </div>
+
+                <div class="absolute hidden top-[13.7%] left-[20%] md:top-[13.5%] md:left-[27%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="dropOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="drop" onclick="toggleLabelColor('drop')" style="color: #832729;">
+                            <label for="drop" id="dropLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Earrings
+                                - Drops</label>
+                        </div>
+                        <img src="./assets/images/line.png" alt=""
+                            class="absolute top-[75%] left-[100%]  transform -translate-y-1/2 left-full w-[40%] md:max-w-full">
+                    </div>
+                </div>
+
+
+                <div class="absolute hidden top-[18%] left-[19%] md:top-[18%] md:left-[26%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="chokerOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="choker" onclick="toggleLabelColor('choker')"
+                                style="color: #832729;">
+                            <label for="choker" id="chokerLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Choker
+                                Necklace</label>
+                        </div>
+                        <img src="./assets/images/line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 left-full w-[40%] md:max-w-full">
+                    </div>
+                </div>
+
+                <div class="absolute hidden top-[37%] left-[17.5%] md:top-[38%] md:left-[26%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="bangleOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="bangle" onclick="toggleLabelColor('bangle')"
+                                style="color: #832729;">
+                            <label for="bangle" id="banglesLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Multiple
+                                Bangles</label>
+                        </div>
+                        <img src="./assets/images/bangle-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 left-full w-[50%] md:max-w-full">
+                    </div>
+                </div>
+
+                <!-- image right adjustments -->
+
+                <div class="absolute hidden -right-[6.5%] top-[4.5%] md:right-[11.5%] md:top-[5%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="foreheadOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="forehead" onclick="toggleLabelColor('forehead')"
+                                style="color: #832729;">
+                            <label for="forehead" id="foreheadLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">
+                                Forehead Pendant</label>
+                        </div>
+                        <img src="./assets/images/right-top-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[40%] md:max-w-full">
+                    </div>
+                </div>
+                <div class="absolute hidden right-[0%] top-[7.9%]  md:right-[9.5%] md:top-[8%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="earloopOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="earloop" onclick="toggleLabelColor('earloop')"
+                                style="color: #832729;">
+                            <label for="earloop" id="earloopLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">
+                                Ear Loops</label>
+                        </div>
+                        <img src="./assets/images/right-top-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[60%] md:w-full md:max-w-full">
+                    </div>
+                </div>
+
+
+                <div class="absolute hidden right-[7.7%] top-[11.5%] md:right-[20.5%] md:top-[11.4%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="nosepinOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="nosepin" onclick="toggleLabelColor('nosepin')"
+                                style="color: #832729;">
+                            <label for="nosepin" id="nosepinLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">
+                                Nose Pin</label>
+                        </div>
+                        <img src="./assets/images/right-top-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[60%] md:max-w-full">
+                    </div>
+                </div>
+
+                <div class="absolute hidden -right-[9%] top-[17.5%] md:right-[4%] md:top-[18%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="shortnecklaceOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="shortnecklace" onclick="toggleLabelColor('shortnecklace')"
+                                style="color: #832729;">
+                            <label for="shortnecklace" id="shortnecklaceLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Short
+                                Necklace</label>
+                        </div>
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[60%] md:w-full md:max-w-full">
+                    </div>
+                </div>
+
+
+                <div class="absolute hidden -right-[10%] top-[22%] md:right-[5%] md:top-[23.5%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="longnecklaceOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="longnecklace" onclick="toggleLabelColor('longnecklace')"
+                                style="color: #832729;">
+                            <label for="longnecklace" id="longnecklaceLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Long
+                                Necklace</label>
+                        </div>
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[60%] md:w-full md:max-w-full">
+                    </div>
+                </div>
+
+                <div class="absolute hidden -right-[5%] top-[34%] md:right-[14%] md:top-[34%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="waistbeltOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="waistbelt" onclick="toggleLabelColor('waistbelt')"
+                                style="color: #832729;">
+                            <label for="waistbelt" id="waistbeltLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Waist
+                                Belt</label>
+                        </div>
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[100%] md:max-w-full">
+                    </div>
+                </div>
+                <div class="absolute hidden left-[35%] top-[42%] md:right-[8%] md:left-[unset] md:top-[41.6%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="braceletOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="bracelet" onclick="toggleLabelColor('singlebangle')"
+                                style="color: #832729;">
+                            <label for="bracelet" id="braceletLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Bracelet</label>
+                        </div>
+                        <img src="./assets/images/bangle-line.png" alt=""
+                            class="absolute top-[75%] block md:hidden transform -translate-y-1/2 left-full w-[70%] md:max-w-full">
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute md:block hidden top-[75%] transform -translate-y-1/2 right-full w-[130%] md:max-w-full">
+                    </div>
+                </div>
+                <div class="absolute hidden -right-[12%] top-[42%] md:right-[5%] md:top-[44%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="singlebangleOption">
+                    <div class="relative top-3">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="singlebangle" onclick="toggleLabelColor('singlebangle')"
+                                style="color: #832729;">
+                            <label for="singlebangle" id="singlebangleLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Single
+                                Bangle</label>
+                        </div>
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[80%] md:max-w-full">
+                    </div>
+                </div>
+
+                <div class="absolute hidden -right-[2%] top-[49%] md:right-[28%] md:top-[50%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="ringOption">
+                    <div class="relative">
+                        <div class="border-2 border-[#818181] rounded px-4 md:px-1 inline" id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="ring" onclick="toggleLabelColor('ring')" style="color: #832729;">
+                            <label for="ring" id="ringLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Rings</label>
+                        </div>
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[80%] md:w-full md:max-w-full">
+                    </div>
+                </div>
+
+                <div class="absolute hidden right-[-1%] bottom-[15%] md:right-[-8%] md:bottom-[11%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="ankletOption">
+
+                    <div class="relative">
+                        <div class="border-2 border-[#818181] rounded md:px-6 px-1 inline" id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="anklet" onclick="toggleLabelColor('anklet')"
+                                style="color: #832729;">
+                            <label for="anklet" id="ankletLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Anklet</label>
+                        </div>
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[80%] md:max-w-full">
+                    </div>
+                </div>
+
+                <div class="absolute hidden -right-[2%] bottom-[10%] md:right-[-8%] md:bottom-[15%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="toeringOption">
+                    <div class="relative">
+                        <div class="border-2 border-[#818181] rounded md:px-6 px-1 inline" id="image-parts">
+                            <input checked
+                                class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="toering" onclick="toggleLabelColor('toering')"
+                                style="color: #832729;">
+                            <label for="toering" id="toeringLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Toe
+                                Ring</label>
+                        </div>
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[80%] md:max-w-full">
+                    </div>
+
+                </div>
+
+
+
+
+            </form>
+        </div>
+    </div>
+
+
+
+    <!------------------------------- Gown Details ------------------------------>
+
+    <div class="image-details font-sterlingdisplay  absolute  left-[-200%]" id="img-out">
+
+    </div>
+    <div class="image-details font-sterlingdisplay hidden" id="image-gown-details">
+        <div class="relative w-fit  mx-auto md:scale-[1] scale-[0.8] ">
+            <img id="childImage" src="./assets/images/Gown.png" alt="Tanishq"
+                class="block ml-auto mr-auto m-4 md:max-w-[700px] max-w-[350px]">
+            <form id="gownForm">
+                <!-- image left adjustments -->
+                <div class="absolute top-[5.5%] left-[21.5%]  md:left-[28.5%] md:top-[7.5%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="gownhairOption">
+                    <div class="relative ">
+                        <div class="border-2  border-[#818181] relative rounded px-2 md:px-3   flex justify-center items-center flex-nowrap"
+                            id="gownhairimage-parts">
+                            <input checked disabled
+                                class="checkbox-field border-2   mr-2 border-highlight md:my-[6px] my-[2px]  max-w-[12px] max-h-[12px] cursor-pointer  left-1  rounded-full"
+                                type="checkbox" id="gownhair" onclick="toggleLabelColor('gownhair')"
+                                style="color: #832729;">
+
+                            <label for="gownhair" id="gownhairLabel"
+                                class="text-[11px] inline  md:text-[14px] md:my-[6px] my-[2px]   w-fit bottom-[20%] right-0    font-[600] md:font-[500] tracking-normal">Hair
+                                Jewellery</label>
+                        </div>
+                        <img src="./assets/images/line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 left-full w-[40%] md:max-w-full">
+                    </div>
+                </div>
+                <div class="absolute left-[15%] top-[12.5%] md:top-[13%] md:left-[25%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="gownstudOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px]  flex justify-center items-center inline"
+                            id="gownstudimage-parts">
+                            <input checked disabled
+                                class="checkbox-field border-2 border-highlight md:my-[6px] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="gownstud" onclick="toggleLabelColor('gownstud')"
+                                style="color: #832729;">
+                            <label for="gownstud" id="gownstudLabel"
+                                class="text-[11px] md:text-[14px] md:my-[6px] leading-[0] font-[600] md:font-[500] tracking-normal">Earrings
+                                - Stud</label>
+                        </div>
+                        <img src="./assets/images/line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 left-full w-[50%] md:max-w-full">
+                    </div>
+                </div>
+                <div class="absolute left-[15%] top-[16.5%] md:top-[16%] md:left-[25%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="gowndropsOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="gowndropsimage-parts">
+                            <input checked disabled
+                                class="checkbox-field border-2 border-highlight w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="gowndrops" onclick="toggleLabelColor('gowndrops')"
+                                style="color: #832729;">
+                            <label for="gowndrops" id="gowndropsLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Earrings
+                                - Drops</label>
+                        </div>
+                        <img src="./assets/images/line.png" alt=""
+                            class="absolute top-[35%] transform -translate-y-1/2 left-full w-[50%] md:max-w-full">
+                    </div>
+                </div>
+
+                <div class="absolute left-[20%] top-[20.5%] md:top-[19%] md:left-[27%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="gownNecklaceOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="gownNecklaceimage-parts">
+                            <input checked disabled
+                                class="checkbox-field border-2 border-highlight w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="gownNecklace" onclick="toggleLabelColor('gownNecklace')"
+                                style="color: #832729;">
+                            <label for="gownNecklace" id="gownNecklaceLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Choker
+                                Necklace </label>
+                        </div>
+                        <img src="./assets/images/line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 left-full w-[50%] md:max-w-full">
+                    </div>
+                </div>
+                <div class="absolute top-[31%] left-[3%] md:top-[34%] md:left-[16%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="gownBanglesOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="gownBanglesimage-parts">
+                            <input checked disabled
+                                class="checkbox-field border-2 border-highlight w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="gownBangles" onclick="toggleLabelColor('gownBangles')"
+                                style="color: #832729;">
+                            <label for="gownBangles" id="gownBanglesLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Multiple
+                                Bangles</label>
+                        </div>
+                        <img src="./assets/images/line.png" alt=""
+                            class="absolute top-[75%] left-[100%] transform -translate-y-1/2 left-full w-[40%] md:max-w-full">
+                    </div>
+                </div>
+
+                <div class="absolute top-[35%] left-[9%] md:top-[36.7%] md:left-[15%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="gownSingleBanglesOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="gownSingleBanglesimage-parts">
+                            <input checked disabled
+                                class="checkbox-field border-2 border-highlight w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="gownSingleBangles" onclick="toggleLabelColor('gownSingleBangles')"
+                                style="color: #832729;">
+                            <label for="gownSingleBangles" id="gownSingleBanglesLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Single
+                                Statement Bangle</label>
+                        </div>
+                        <img src="./assets/images/line.png" alt=""
+                            class="absolute top-[75%] left-[100%] transform -translate-y-1/2 left-full w-[18%] md:w-[40%] md:max-w-full">
+                    </div>
+                </div>
+
+
+
+
+                <!-- image right adjustments -->
+                <div class="absolute right-[56%] top-[39%] md:right-[62%] md:top-[39%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="gownRingsOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="gownRingsimage-parts">
+                            <input checked disabled
+                                class="checkbox-field border-2 border-highlight w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="gownRings" onclick="toggleLabelColor('gownRings')"
+                                style="color: #832729;">
+                            <label for="gownRings" id="gownRingsLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Rings</label>
+                        </div>
+                        <img src="./assets/images/line.png" alt=""
+                            class="absolute  top-[75%] transform -translate-y-1/2 left-full w-[40%] md:w-[100%] md:max-w-full">
+                    </div>
+                </div>
+                <!-- <div class="absolute right-[52%] top-[37%] md:right-[62%] md:top-[39%] -translate-x-1/2 -translate-y-1/2 items-center hidden">
+                    <div class="relative">
+                        <div class="border-2 border-[#818181] rounded px-6 md:px-1 " id="image-parts">
+                            <input checked disabled class="checkbox-field border-2 border-highlight w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full" type="checkbox" id="gownring" onclick="toggleLabelColor('gownring')" style="color: #832729;">
+                            <label for="gownring" id="gownringLabel" class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Rings</label>
+                        </div>
+                        <img src="./assets/images/line.png" alt="" class="absolute top-[75%] transform -translate-y-1/2 left-full w-[40%] md:w-[100%] md:max-w-full">
+                    </div>
+                </div> -->
+
+                <div class="absolute -right-[19%] top-[7%] md:right-[6.5%] md:top-[9%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="gownforhedOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="gownforhedimage-parts">
+                            <input checked disabled
+                                class="checkbox-field border-2 border-highlight w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="gownforhed" onclick="toggleLabelColor('gownforhed')"
+                                style="color: #832729;">
+                            <label for="gownforhed" id="gownforhedLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Forehead
+                                Pedent</label>
+                        </div>
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[85%] md:max-w-full">
+                    </div>
+                </div>
+
+
+                <div class="absolute -right-[5%] top-[11%] md:right-[13%] md:top-[12%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="gownearloopOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="gownearloopimage-parts">
+                            <input checked disabled
+                                class="checkbox-field border-2 border-highlight w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="gownearloop" onclick="toggleLabelColor('gownearloop')"
+                                style="color: #832729;">
+                            <label for="gownearloop" id="gownearloopLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Ear
+                                Loop</label>
+                        </div>
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[85%] md:max-w-full">
+                    </div>
+                </div>
+                <div class="absolute -right-[0%] top-[15%] md:right-[19%] md:top-[15%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="gownearnosepinOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="gownearnosepinimage-parts">
+                            <input checked disabled
+                                class="checkbox-field border-2 border-highlight w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="gownearnosepin" onclick="toggleLabelColor('gownearnosepin')"
+                                style="color: #832729;">
+                            <label for="gownearnosepin" id="gownearnosepinLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Nose
+                                Pin</label>
+                        </div>
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[85%] md:max-w-full">
+                    </div>
+                </div>
+                <div class="absolute top-[23.6%] left-[23%] md:top-[22%] md:left-[26%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="gownshortnecklaceOption">
+                    <div class="relative ">
+                        <div
+                            class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline">
+                            <input checked disabled
+                                class="checkbox-field border-2 border-highlight w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="gownshortnecklace" onclick="toggleLabelColor('gownshortnecklace')"
+                                style="color: #832729;">
+                            <label for="gownshortnecklace" id="gownshortnecklaceLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Short
+                                Necklace</label>
+                        </div>
+                        <img src="./assets/images/line.png" alt=""
+                            class="absolute top-[60%] left-[100%] transform -translate-y-1/2 left-full w-[30%] md:w-[80%] md:max-w-full">
+                    </div>
+                </div>
+
+                <div class="absolute -right-[19%] top-[23%] md:top-[24.7%] md:left-[26%] md:right-[unset] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="gownLongnecklaceOption">
+                    <div class="relative ">
+                        <div
+                            class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline">
+                            <input checked disabled
+                                class="checkbox-field border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="gownLongnecklace" onclick="toggleLabelColor('gownLongnecklace')"
+                                style="color: #832729;">
+                            <label for="gownLongnecklace" id="gownLongnecklaceLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Long
+                                Necklace</label>
+                        </div>
+                        <img src="./assets/images/line.png" alt=""
+                            class="absolute  md:block hidden md:top-[60%] left-[100%] transform -translate-y-1/2 left-full w-[18%] md:w-[80%] md:max-w-full">
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute  md:hidden block top-[75%] transform -translate-y-1/2 right-full w-[85%] md:max-w-full">
+                    </div>
+                </div>
+                <div class="absolute -right-[6%] top-[27%] md:right-[2%] md:top-[27%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="gownBraceletOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="gownBraceletimage-parts">
+                            <input checked disabled
+                                class="checkbox-field border-2 border-highlight w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="gownBracelet" onclick="toggleLabelColor('gownBracelet')"
+                                style="color: #832729;">
+                            <label for="gownBracelet" id="gownBraceletLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Bracelet</label>
+                        </div>
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[40%] md:w-[85%] md:max-w-full">
+                    </div>
+                </div>
+
+                <div class="absolute -right-[8%] top-[38%] md:right-[13%] md:top-[38%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                    id="gownWaistbeltOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="gownWaistbeltimage-parts">
+                            <input checked disabled
+                                class="checkbox-field border-2 border-highlight w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="gownWaistbelt" onclick="toggleLabelColor('gownWaistbelt')"
+                                style="color: #832729;">
+                            <label for="gownWaistbelt" id="gownWaistbeltLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Waist
+                                Belt</label>
+                        </div>
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[100%] md:max-w-[100%]">
+                    </div>
+                </div>
+
+                <div class="absolute -right-[19%] top-[89%] md:right-[5%] md:top-[78%]  -translate-x-1/2 -translate-y-1/2 items-center hidden hidden"
+                    id="gownToeringOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="gownToeringimage-parts">
+                            <input checked disabled
+                                class="checkbox-field border-2 border-highlight w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="gownToering" onclick="toggleLabelColor('gownToering')"
+                                style="color: #832729;">
+                            <label for="gownToering" id="gownToeringLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Toe
+                                Ring</label>
+                        </div>
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[535%] md:max-w-[100%]">
+                    </div>
+                </div>
+
+                <div class="absolute -right-[17%] top-[83%] md:right-[5%] md:top-[83%]  -translate-x-1/2 -translate-y-1/2 items-center hidden hidden"
+                    id="gownAnkeletOption">
+                    <div class="relative ">
+                        <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                            id="gownAnkeletimage-parts">
+                            <input checked disabled
+                                class="checkbox-field border-2 border-highlight w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                type="checkbox" id="gownAnkelet" onclick="toggleLabelColor('gownAnkelet')"
+                                style="color: #832729;">
+                            <label for="gownAnkelet" id="gownAnkeletLabel"
+                                class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Anklet</label>
+                        </div>
+                        <img src="./assets/images/right-line.png" alt=""
+                            class="absolute top-[75%] transform -translate-y-1/2 right-full w-[535%] md:max-w-[100%]">
+                    </div>
+                </div>
+            </form>
+        </div>
+
+
+    </div>
+
+
+    <!------------------------------- Saree Details ------------------------------>
+
+
+    <div class="image-details font-sterlingdisplay hidden" id="image-saree-details">
+
+
+        <div class="image-details font-sterlingdisplay " id="image-saree-details">
+            <div class="relative w-fit mx-auto md:scale-[1] scale-[0.8]">
+                <img id="childImage" src="./assets/images/saree.png" alt="Tanishq"
+                    class="block  md:max-w-[700px] max-w-[350px]">
+                <form id="sareeForm">
+                    <!-- image left adjustments -->
+                    <div class="absolute top-[7%] left-[17.5%]  md:left-[31%] md:top-[7.5%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareehairOption">
+                        <div class="relative ">
+                            <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                                id="sareehairimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareehair" onclick="toggleLabelColor('sareehair')"
+                                    style="color: #832729;">
+
+                                <label for="sareehair" id="sareehairLabel"
+                                    class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Hair
+                                    Jewellery</label>
+                            </div>
+                            <img src="./assets/images/line.png" alt=""
+                                class="absolute top-[75%] transform -translate-y-1/2 left-full max-w-full">
+                        </div>
+                    </div>
+                    <div class="absolute left-[16.9%] top-[10%] md:top-[11.2%] md:left-[27%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareestudOption">
+                        <div class="relative ">
+                            <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                                id="sareestudimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareestud" onclick="toggleLabelColor('sareestud')"
+                                    style="color: #832729;">
+                                <label for="sareestud" id="sareestudLabel"
+                                    class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Earrings
+                                    - Stud</label>
+                            </div>
+                            <img src="./assets/images/line.png" alt=""
+                                class="absolute top-[75%] transform -translate-y-1/2 left-full w-[40%] md:max-w-full">
+                        </div>
+                    </div>
+
+
+                    <div class="absolute left-[16%] top-[13.7%] md:top-[13.8%] md:left-[25%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareedropOption">
+                        <div class="relative ">
+                            <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                                id="sareedropimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareedrop" onclick="toggleLabelColor('sareedrop')"
+                                    style="color: #832729;">
+                                <label for="sareedrop" id="sareedropLabel"
+                                    class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Earrings
+                                    - Drops</label>
+                            </div>
+                            <img src="./assets/images/line.png" alt=""
+                                class="absolute top-[75%] transform -translate-y-1/2 left-full w-[40%] md:max-w-full">
+                        </div>
+                    </div>
+
+
+                    <div class="absolute top-[18%] left-[16%] md:top-[20%] md:left-[26%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareechokerOption">
+                        <div class="relative ">
+                            <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                                id="sareechokerimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareechoker" onclick="toggleLabelColor('sareechoker')"
+                                    style="color: #832729;">
+                                <label for="sareechoker" id="sareechokerLabel"
+                                    class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Choker
+                                    Necklace</label>
+                            </div>
+                            <img src="./assets/images/line.png" alt=""
+                                class="absolute top-[75%] transform -translate-y-1/2 left-full w-[40%] md:max-w-full">
+                        </div>
+                    </div>
+
+                    <div class="absolute top-[37%] left-[13.5%] md:top-[38%] md:left-[23%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareebangleOption">
+                        <div class="relative ">
+                            <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                                id="sareebangleimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareebangle" onclick="toggleLabelColor('sareebangle')"
+                                    style="color: #832729;">
+                                <label for="sareebangle" id="sareebangleLabel"
+                                    class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Multiple
+                                    Bangles</label>
+                            </div>
+                            <img src="./assets/images/bangle-line.png" alt=""
+                                class="absolute top-[75%] transform -translate-y-1/2 left-full w-[60%] md:max-w-full">
+                        </div>
+                    </div>
+
+                    <!-- image right adjustments -->
+
+                    <div class="absolute -right-[12.5%] top-[2.5%] md:right-[11.5%] md:top-[4%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareeforeheadOption">
+                        <div class="relative ">
+                            <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                                id="sareeforeheadimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareeforehead" onclick="toggleLabelColor('sareeforehead')"
+                                    style="color: #832729;">
+                                <label for="sareeforehead" id="sareeforeheadLabel"
+                                    class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">
+                                    Forehead Pendant</label>
+                            </div>
+                            <img src="./assets/images/right-top-line.png" alt=""
+                                class="absolute top-[75%] transform -translate-y-1/2 right-full w-[50%] md:max-w-full">
+                        </div>
+                    </div>
+                    <div class="absolute right-[2%] top-[9%]  md:right-[14%] md:top-[9.5%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareeearloopOption">
+                        <div class="relative ">
+                            <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-start "
+                                id="sareeearloopimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareeearloop" onclick="toggleLabelColor('sareeearloop')"
+                                    style="color: #832729;">
+                                <label for="sareeearloop" id="sareeearloopLabel"
+                                    class="text-[11px] mt-1 md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">
+                                    Ear Loops</label>
+                            </div>
+                            <img src="./assets/images/right-top-line.png" alt=""
+                                class="absolute top-[75%] transform -translate-y-1/2 right-full w-[50%] md:w-[80%] md:max-w-full">
+                        </div>
+                    </div>
+
+
+                    <div class="absolute right-[4%] top-[12.8%] md:right-[21%] md:top-[12%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareenosepinOption">
+                        <div class="relative ">
+                            <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                                id="sareenosepinimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareenosepin" onclick="toggleLabelColor('sareenosepin')"
+                                    style="color: #832729;">
+                                <label for="sareenosepin" id="sareenosepinLabel"
+                                    class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">
+                                    Nose Pin</label>
+                            </div>
+                            <img src="./assets/images/right-top-line.png" alt=""
+                                class="absolute top-[75%]  transform -translate-y-1/2 right-full w-[80%] md:max-w-full">
+                        </div>
+                    </div>
+
+                    <div class="absolute -right-[14%] top-[21%] md:right-[4%] md:top-[21.5%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareeshortnecklaceOption">
+                        <div class="relative ">
+                            <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                                id="sareeshortnecklaceimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareeshortnecklace"
+                                    onclick="toggleLabelColor('sareeshortnecklace')" style="color: #832729;">
+                                <label for="sareeshortnecklace" id="sareeshortnecklaceLabel"
+                                    class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Short
+                                    Necklace</label>
+                            </div>
+                            <img src="./assets/images/right-line.png" alt=""
+                                class="absolute top-[75%] transform -translate-y-1/2 right-full max-w-full">
+                        </div>
+                    </div>
+
+
+                    <div class="absolute -right-[14%] top-[27%] md:right-[3%] md:top-[26%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareelongnecklaceOption">
+                        <div class="relative ">
+                            <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                                id="sareelongnecklaceimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareelongnecklace"
+                                    onclick="toggleLabelColor('sareelongnecklace')" style="color: #832729;">
+                                <label for="sareelongnecklace" id="sareelongnecklaceLabel"
+                                    class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Long
+                                    Necklace</label>
+                            </div>
+                            <img src="./assets/images/right-line.png" alt=""
+                                class="absolute top-[75%] transform -translate-y-1/2 right-full max-w-full">
+                        </div>
+                    </div>
+
+                    <div class="absolute -right-[10%] top-[35%] md:right-[10%] md:top-[36%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareewaistbeltOption">
+                        <div class="relative ">
+                            <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                                id="sareewaistbeltimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareewaistbelt" onclick="toggleLabelColor('sareewaistbelt')"
+                                    style="color: #832729;">
+                                <label for="sareewaistbelt" id="sareewaistbeltLabel"
+                                    class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Waist
+                                    Belt</label>
+                            </div>
+                            <img src="./assets/images/right-line.png" alt=""
+                                class="absolute top-[75%] transform -translate-y-1/2 right-full w-[100%] md:w-full md:max-w-full">
+                        </div>
+                    </div>
+
+
+                    <div class="absolute -right-[7%] top-[43.5%] md:right-[5%] md:top-[43.3%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareebraceletOption">
+                        <div class="relative ">
+                            <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                                id="sareebraceletimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareebracelet" onclick="toggleLabelColor('sareebracelet')"
+                                    style="color: #832729;">
+                                <label for="sareebracelet" id="sareebraceletLabel"
+                                    class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Bracelet</label>
+                            </div>
+                            <img src="./assets/images/right-line.png" alt=""
+                                class="absolute top-[75%] transform -translate-y-1/2 right-full max-w-[60%] md:max-w-full">
+                        </div>
+                    </div>
+
+                    <div class="absolute -right-[20%] top-[48.5%] md:right-[0%] md:top-[46.5%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareesinglebangleOption">
+                        <div class="relative ">
+                            <div class="border-2 border-[#818181] rounded px-2 md:px-3 py-[2px] md:py-[6px] flex justify-center items-center inline"
+                                id="sareesinglebangleimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareesinglebangle"
+                                    onclick="toggleLabelColor('sareesinglebangle')" style="color: #832729;">
+                                <label for="sareesinglebangle" id="sareesinglebangleLabel"
+                                    class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Single
+                                    Bangle</label>
+                            </div>
+                            <img src="./assets/images/right-line.png" alt=""
+                                class="absolute top-[75%] transform -translate-y-1/2 right-full w-[80%]  max-w-[50%] md:max-w-full">
+                        </div>
+                    </div>
+
+                    <div class="absolute -right-[19%] top-[54%] md:right-[12%] md:top-[54%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareeringOption">
+                        <div class="relative">
+                            <div class="border-2 border-[#818181] rounded px-6 md:px-3 inline"
+                                id="sareeringimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareering" onclick="toggleLabelColor('sareering')"
+                                    style="color: #832729;">
+                                <label for="sareering" id="sareeringLabel"
+                                    class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Rings</label>
+                            </div>
+                            <img src="./assets/images/right-line.png" alt=""
+                                class="absolute top-[75%] transform -translate-y-1/2 right-full w-[50%] md:max-w-full">
+                        </div>
+                    </div>
+
+                    <div class="absolute right-[4%] bottom-[8%] md:right-[3%] md:bottom-[8%] -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareeankletOption">
+                        <div class="relative">
+                            <div class="border-2 border-[#818181] rounded md:px-6 px-1 inline"
+                                id="sareeankletimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareeanklet" onclick="toggleLabelColor('sareeanklet')"
+                                    style="color: #832729;">
+                                <label for="sareeanklet" id="sareeankletLabel"
+                                    class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Anklet</label>
+                            </div>
+                            <img src="./assets/images/right-line.png" alt=""
+                                class="absolute top-[75%] transform -translate-y-1/2 right-full w-[100%] md:max-w-full">
+                        </div>
+                    </div>
+
+
+                    <div class="absolute right-[-8%] bottom-[2%] md:right-[-1%] md:bottom-[3%]  -translate-x-1/2 -translate-y-1/2 items-center hidden"
+                        id="sareetoeringOption">
+                        <div class="relative">
+                            <div class="border-2 border-[#818181] rounded md:px-6 px-1 inline"
+                                id="sareetoeringimage-parts">
+                                <input checked
+                                    class="checkbox-field checked border-2 border-[#ccc] w-[12px] h-[12px] cursor-pointer relative mr-1 rounded-full"
+                                    type="checkbox" id="sareetoering" onclick="toggleLabelColor('sareetoering')"
+                                    style="color: #832729;">
+                                <label for="sareetoering" id="sareetoeringLabel"
+                                    class="text-[11px] md:text-[14px] leading-[0] font-[600] md:font-[500] tracking-normal">Toe
+                                    Ring</label>
+                            </div>
+                            <img src="./assets/images/right-line.png" alt=""
+                                class="absolute top-[75%] transform -translate-y-1/2 right-full  w-[100%] md:max-w-full">
+                        </div>
+                    </div>
+
+
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+
+
+
+
+
+    <div class="image-details md:translate-y-0 translate-y-[-125%]">
+        <div class="flex justify-center items-center gap-3">
+            <button type="button"
+                class="focus:outline-none flex items-center gap-x-2 text-white bg-[#832729] hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-lg px-4 py-1 mb-2 border-2 border-solid border-[#832729] hover:text-white font-nunito"
+                onclick="captureAndSend()">Confirm & Share
+                <span id="loader" class="hidden">
+                    <svg version="1.1" id="L9" width="25px" height="25px" xmlns="http://www.w3.org/2000/svg"
+                        xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 100 100"
+                        enable-background="new 0 0 0 0" xml:space="preserve">
+                        <path fill="#fff"
+                            d="M73,50c0-12.7-10.3-23-23-23S27,37.3,27,50 M30.9,50c0-10.5,8.5-19.1,19.1-19.1S69.1,39.5,69.1,50">
+                            <animateTransform attributeName="transform" attributeType="XML" type="rotate" dur="1s"
+                                from="0 50 50" to="360 50 50" repeatCount="indefinite" />
+                        </path>
+                    </svg>
+                </span>
+            </button>
+            <a href="/create.html">
+                <button type="button"
+                    class="focus:outline-none text-[#832729] bg-white hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-lg px-4 py-1 mb-2 border-2 border-solid border-[#832729] hover:text-white font-nunito">Go-back
+                    to Edit</button>
+            </a>
+        </div>
+
+    </div>
+
+
+
+    <footer class="">
+        <div class="w-full max-w-screen-xl mx-auto p-2 md:py-4 text-center">
+            <span class="block text-[9px] md:text-sm text-gray-500">© <a href="#"
+                    class="hover:underline text-[#832729]">Titan Company Limited</a></span>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+
+    <script>
+        let urlParams = '';
+
+        window.onload = function () {
+            urlParams = new URLSearchParams(window.location.search);
+            let jsonData = urlParams.get('data');
+            let id = urlParams.get('id');
+
+            console.log(jsonData)
+
+            if (jsonData) {
+                // let data = JSON.parse(jsonData);
+                let selectedOptions = jsonData.split(",");
+                let selectedList = id;
+
+                if (selectedList === 'gown') {
+                    document.getElementById('image-gown-details').classList.remove('hidden');
+                } else if (selectedList === 'lehanga') {
+                    document.getElementById('image-lehanga-details').classList.remove('hidden');
+                } else {
+                    document.getElementById('image-saree-details').classList.remove('hidden');
+
+                }
+
+
+                selectedOptions.forEach(function (option) {
+                    let checkbox = document.getElementById(option);
+                    console.log(option);
+                    if (checkbox) {
+                        let label = document.querySelector('label[for="' + option + '"]');
+
+                        if (label && label.getAttribute('for') === checkbox.id) {
+
+
+                            let container = document.getElementById(option + 'Option');
+                            console.log(option.replace("gown", "").replace("saree", "") + 'ChecklistOption');
+
+                            let checklistContainer = document.getElementById(option.replace("gown", "").replace("saree", "") + 'ChecklistOption');
+
+
+
+                            if (container || checklistContainer) {
+                                console.log(option + 'Option');
+
+                                container.classList.remove('hidden');
+                                checklistContainer.classList.remove('hidden');
+
+                            }
+                        }
+
+                    }
+                });
+            }
+
+        };
+
+
+        function captureAndSend() {
+            const loader = document.getElementById("loader")
+
+            loader.classList.remove("hidden")
+            const gownDiv = document.getElementById('image-gown-details');
+            const lehangaDiv = document.getElementById('image-lehanga-details');
+            const sareeDiv = document.getElementById('image-saree-details');
+
+            let divToCapture;
+
+            if (!gownDiv.classList.contains('hidden')) {
+                divToCapture = gownDiv;
+            } else if (!lehangaDiv.classList.contains('hidden')) {
+                divToCapture = lehangaDiv;
+            } else {
+                divToCapture = sareeDiv;
+            }
+            document.getElementById("img-out").innerHTML = divToCapture.innerHTML
+            divToCapture = document.getElementById("img-out");
+
+
+
+
+            if (divToCapture) {
+                html2canvas(divToCapture).then(canvas => {
+                    // Optionally, append the canvas to the document for preview/debugging
+                    document.body.appendChild(canvas);
+
+                    // Capture the image data as a Blob
+                    canvas.toBlob(blob => {
+                        const formData = new FormData();
+                        formData.append('file', blob, 'captured-image.png');
+
+                        // Create a new XMLHttpRequest to send the image
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('POST', 'https://celebrations.tanishq.co.in/tanishq/selfie/brideImage', true);
+                        xhr.onload = function () {
+                            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                                const response = JSON.parse(xhr.responseText);
+                                console.log(response);
+                                if (response.message === 'SUCCESS') {
+                                    console.log('Image saved successfully');
+                                    console.log('File Path:', response.filePath);
+                                    localStorage.setItem("Image", response.filePath)
+                                    window.location.href = 'form.html';
+                                } else {
+                                    console.error('Failed to save image:', response.message);
+                                }
+                            }
+                        };
+                        xhr.send(formData);
+                        // loader.classList.add("hidden")
+                        // Remove the canvas element after sending the data (optional)
+                        canvas.remove();
+                    }, 'image/png');
+                });
+            }
+
+
+
+        }
+
+
+
+
+
+
+
+    </script>
+
+
+
+
+
+
+
+
+</body>
+
+</html>

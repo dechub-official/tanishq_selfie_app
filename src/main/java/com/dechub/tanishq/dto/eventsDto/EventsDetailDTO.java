@@ -23,8 +23,8 @@ public class EventsDetailDTO {
     private String startTime;
     private String description;
     private String image;
-    private int invitees;
-    private int attendees;
+    private Integer invitees;
+    private Integer attendees;
     private LocalDateTime createdAt;
     private String completedEventsDriveLink;
     private String community;
@@ -158,19 +158,19 @@ public class EventsDetailDTO {
         this.image = image;
     }
 
-    public int getInvitees() {
+    public Integer getInvitees() {
         return invitees;
     }
 
-    public void setInvitees(int invitees) {
+    public void setInvitees(Integer invitees) {
         this.invitees = invitees;
     }
 
-    public int getAttendees() {
+    public Integer getAttendees() {
         return attendees;
     }
 
-    public void setAttendees(int attendees) {
+    public void setAttendees(Integer attendees) {
         this.attendees = attendees;
     }
 
