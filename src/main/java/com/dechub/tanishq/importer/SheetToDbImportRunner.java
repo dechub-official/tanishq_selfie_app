@@ -4,6 +4,7 @@ import com.dechub.tanishq.dto.ExcelStoreDTO;
 import com.dechub.tanishq.gsheet.GSheetUserDetailsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -29,140 +30,194 @@ public class SheetToDbImportRunner implements CommandLineRunner {
     private final Logger log = LoggerFactory.getLogger(SheetToDbImportRunner.class);
     private final GSheetUserDetailsUtil gsheet;
     private final NamedParameterJdbcTemplate jdbc;
+    private final StoreImportService storeImportService;
+    private final InviteeImportService inviteeImportService;
+    private final AttendeeImportService attendeeImportService;
 
     // chunk size for batchUpdate (tune if needed)
     private static final int BATCH_SIZE = 1000;
 
-    public SheetToDbImportRunner(GSheetUserDetailsUtil gsheet, NamedParameterJdbcTemplate jdbc) {
+    // inject the sheet id for stores tab (from application properties)
+    @Value("${google.sheet.dechub.store.details.id}")
+    private String storeSheetId;
+    @Value("${google.sheet.dechub.events_invitees.details.id}")
+    private String inviteesSheetId;
+
+    @Value("${google.sheet.dechub.events_attendees.details.id}")
+    private String attendeeSheetId;
+
+    public SheetToDbImportRunner(GSheetUserDetailsUtil gsheet,
+                                 NamedParameterJdbcTemplate jdbc,
+                                 StoreImportService storeImportService,
+                                 InviteeImportService inviteeImportService, AttendeeImportService attendeeImportService) {
         this.gsheet = gsheet;
         this.jdbc = jdbc;
+        this.storeImportService = storeImportService;
+        this.inviteeImportService = inviteeImportService;
+        this.attendeeImportService = attendeeImportService;
     }
-
     @Override
     @Transactional
     public void run(String... args) {
+//        try {
+//            // <-- NEW: import stores into MySQL before proceeding
+//            log.info("SheetToDbImportRunner: starting store import into MySQL (sheet id: {})...", storeSheetId);
+//            try {
+//                storeImportService.importStores(storeSheetId);
+//                log.info("SheetToDbImportRunner: store import finished.");
+//            } catch (Exception e) {
+//                log.error("SheetToDbImportRunner: store import failed", e);
+//                // continue: we still try events import — but stores table may be empty
+//            }
+//
+//            log.info("SheetToDbImportRunner: fetching store list from Sheets...");
+//            List<ExcelStoreDTO> stores = gsheet.getData();
+//            if (stores == null || stores.isEmpty()) {
+//                log.warn("SheetToDbImportRunner: no stores found in sheet - nothing to import.");
+//                return;
+//            }
+//
+//            List<String> storeCodes = stores.stream()
+//                    .map(ExcelStoreDTO::getStoreCode)
+//                    .filter(Objects::nonNull)
+//                    .map(String::trim)
+//                    .filter(s -> !s.isEmpty())
+//                    .collect(Collectors.toList());
+//
+//            if (storeCodes.isEmpty()) {
+//                log.warn("SheetToDbImportRunner: no valid store codes found - aborting.");
+//                return;
+//            }
+//
+//            log.info("SheetToDbImportRunner: fetching events for {} stores...", storeCodes.size());
+//            List<Map<String, Object>> events = gsheet.getEventsForStores(storeCodes);
+//
+//            if (events == null || events.isEmpty()) {
+//                log.warn("SheetToDbImportRunner: no events found to import.");
+//                return;
+//            }
+//
+//            // log first row keys to help debug header name mismatches
+//            log.info("SheetToDbImportRunner: example event keys: {}", events.get(0).keySet());
+//
+//            final String sql = "INSERT INTO events_master (" +
+//                    "event_id, created_at, store_code, region, event_type, event_sub_type, event_name, rso, start_date, image, invitees, attendees, completed_events_link, community, location, is_attendees_uploaded, sale, advance, ghs_rga, gmb, drive_link, diamond_awareness, ghs_flag" +
+//                    ") VALUES (" +
+//                    ":event_id, :created_at, :store_code, :region, :event_type, :event_sub_type, :event_name, :rso, :start_date, :image, :invitees, :attendees, :completed_events_link, :community, :location, :is_attendees_uploaded, :sale, :advance, :ghs_rga, :gmb, :drive_link, :diamond_awareness, :ghs_flag" +
+//                    ") ON DUPLICATE KEY UPDATE " +
+//                    "store_code = VALUES(store_code), region = VALUES(region), event_type = VALUES(event_type), event_sub_type = VALUES(event_sub_type), event_name = VALUES(event_name), rso = VALUES(rso), start_date = VALUES(start_date), image = VALUES(image), invitees = VALUES(invitees), attendees = VALUES(attendees), completed_events_link = VALUES(completed_events_link), community = VALUES(community), location = VALUES(location), is_attendees_uploaded = VALUES(is_attendees_uploaded), sale = VALUES(sale), advance = VALUES(advance), ghs_rga = VALUES(ghs_rga), gmb = VALUES(gmb), drive_link = VALUES(drive_link), diamond_awareness = VALUES(diamond_awareness), ghs_flag = VALUES(ghs_flag)";
+//
+//            List<Map<String, Object>> prepared = new ArrayList<>(events.size());
+//            int skipped = 0;
+//            for (Map<String, Object> e : events) {
+//                try {
+//                    Map<String, Object> p = new HashMap<>();
+//                    String eventId = Optional.ofNullable(e.getOrDefault("EventId", e.get("Id"))).map(Object::toString).orElse(null);
+//                    if (eventId == null || eventId.trim().isEmpty()) {
+//                        // skip if no event id found
+//                        skipped++;
+//                        log.debug("Skipping event row because missing eventId: {}", e);
+//                        continue;
+//                    }
+//                    p.put("event_id", eventId.trim());
+//
+//                    // parse createdAt safely
+//                    Timestamp createdAtTs = parseCreatedAt(e.getOrDefault("CreatedAt", e.get("createdAt")));
+//                    p.put("created_at", createdAtTs);
+//
+//                    p.put("store_code", Optional.ofNullable(e.get("StoreCode")).map(Object::toString).orElse("").trim());
+//                    p.put("region", Optional.ofNullable(e.get("Region")).map(Object::toString).orElse(null));
+//                    p.put("event_type", Optional.ofNullable(e.get("EventType")).map(Object::toString).orElse(null));
+//                    p.put("event_sub_type", Optional.ofNullable(e.get("EventSubType")).map(Object::toString).orElse(null));
+//                    p.put("event_name", Optional.ofNullable(e.get("EventName")).map(Object::toString).orElse(null));
+//                    p.put("rso", Optional.ofNullable(e.get("RSO")).map(Object::toString).orElse(null));
+//
+//                    // start_date (date-only)
+//                    String sd = Optional.ofNullable(e.get("StartDate")).map(Object::toString).orElse("").trim();
+//                    if (!sd.isEmpty()) {
+//                        try {
+//                            LocalDate ld = LocalDate.parse(sd.replaceAll("/", "-"));
+//                            p.put("start_date", Date.valueOf(ld));
+//                        } catch (Exception ex) {
+//                            p.put("start_date", null);
+//                        }
+//                    } else {
+//                        p.put("start_date", null);
+//                    }
+//
+//                    p.put("image", Optional.ofNullable(e.get("Image")).map(Object::toString).orElse(null));
+//                    p.put("invitees", safeInt(e.get("Invitees")));
+//                    p.put("attendees", safeInt(e.get("Attendees")));
+//                    p.put("completed_events_link", Optional.ofNullable(e.get("completedEvents")).map(Object::toString).orElse(null));
+//                    p.put("community", Optional.ofNullable(e.get("Community")).map(Object::toString).orElse(null));
+//                    p.put("location", Optional.ofNullable(e.get("location")).map(Object::toString).orElse(null));
+//                    p.put("is_attendees_uploaded", safeBoolean(e.get("isAttendeesUploaded")));
+//                    p.put("sale", safeDecimal(e.get("sale")));
+//                    p.put("advance", safeDecimal(e.get("advance")));
+//                    p.put("ghs_rga", safeDecimal(e.get("ghs/rga")));
+//                    p.put("gmb", safeDecimal(e.get("gmb")));
+//                    p.put("drive_link", Optional.ofNullable(e.get("Drive link")).map(Object::toString).orElse(null));
+//                    p.put("diamond_awareness", safeBoolean(e.get("Diamond Awareness")));
+//                    p.put("ghs_flag", safeBoolean(e.get("GHS")));
+//
+//                    prepared.add(p);
+//                } catch (Exception rowEx) {
+//                    skipped++;
+//                    log.warn("Skipping row due to parsing error: {} -- error: {}", e, rowEx.getMessage());
+//                }
+//            }
+//
+//            log.info("SheetToDbImportRunner: prepared {} rows, skipped {} bad rows.", prepared.size(), skipped);
+//
+//            // chunked batch updates
+//            int totalInserted = 0;
+//            for (int i = 0; i < prepared.size(); i += BATCH_SIZE) {
+//                int end = Math.min(prepared.size(), i + BATCH_SIZE);
+//                List<Map<String, Object>> chunk = prepared.subList(i, end);
+//                try {
+//                    int[] r = jdbc.batchUpdate(sql, chunk.toArray(new Map[0]));
+//                    int successCount = Arrays.stream(r).sum();
+//                    totalInserted += successCount;
+//                    log.info("Inserted/updated chunk {}..{} -> {} rows affected", i, end - 1, successCount);
+//                } catch (Exception chunkEx) {
+//                    log.error("Failed inserting chunk {}..{} ({} rows). Error: {}", i, end - 1, chunk.size(), chunkEx.getMessage());
+//                    // optionally you could try per-row here, but we skip to keep startup healthy
+//                }
+//            }
+//
+//            log.info("SheetToDbImportRunner: import finished. total prepared={}, totalAffected={}, skipped={}",
+//                    prepared.size(), totalInserted, skipped);
+//
+//        } catch (Exception ex) {
+//            // do NOT throw - keep app running; log full stacktrace
+//            log.error("SheetToDbImportRunner: unexpected failure during import", ex);
+//        }
+//        try {
+//            if (inviteesSheetId != null && !inviteesSheetId.isBlank()) {
+//                log.info("SheetToDbImportRunner: starting invitees import from sheet id {}", inviteesSheetId);
+//                inviteeImportService.importInviteesFromSheet(inviteesSheetId);
+//                log.info("SheetToDbImportRunner: invitees import finished.");
+//            } else {
+//                log.warn("SheetToDbImportRunner: inviteesSheetId not configured, skipping invitees import");
+//            }
+//        } catch (Exception ie) {
+//            log.error("SheetToDbImportRunner: invitees import failed", ie);
+//            // continue — do not fail startup
+//        }
+//        try {
+//            inviteeImportService.importInviteesFromSheet(inviteesSheetId);
+//            log.info("Invitees imported.");
+//        } catch (Exception e) {
+//            log.error("Invitee import failed", e);
+//        }
+
+// NEW: import attendees
         try {
-            log.info("SheetToDbImportRunner: fetching store list from Sheets...");
-            List<ExcelStoreDTO> stores = gsheet.getData();
-            if (stores == null || stores.isEmpty()) {
-                log.warn("SheetToDbImportRunner: no stores found in sheet - nothing to import.");
-                return;
-            }
-
-            List<String> storeCodes = stores.stream()
-                    .map(ExcelStoreDTO::getStoreCode)
-                    .filter(Objects::nonNull)
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .collect(Collectors.toList());
-
-            if (storeCodes.isEmpty()) {
-                log.warn("SheetToDbImportRunner: no valid store codes found - aborting.");
-                return;
-            }
-
-            log.info("SheetToDbImportRunner: fetching events for {} stores...", storeCodes.size());
-            List<Map<String, Object>> events = gsheet.getEventsForStores(storeCodes);
-
-            if (events == null || events.isEmpty()) {
-                log.warn("SheetToDbImportRunner: no events found to import.");
-                return;
-            }
-
-            // log first row keys to help debug header name mismatches
-            log.info("SheetToDbImportRunner: example event keys: {}", events.get(0).keySet());
-
-            final String sql = "INSERT INTO events_master (" +
-                    "event_id, created_at, store_code, region, event_type, event_sub_type, event_name, rso, start_date, image, invitees, attendees, completed_events_link, community, location, is_attendees_uploaded, sale, advance, ghs_rga, gmb, drive_link, diamond_awareness, ghs_flag" +
-                    ") VALUES (" +
-                    ":event_id, :created_at, :store_code, :region, :event_type, :event_sub_type, :event_name, :rso, :start_date, :image, :invitees, :attendees, :completed_events_link, :community, :location, :is_attendees_uploaded, :sale, :advance, :ghs_rga, :gmb, :drive_link, :diamond_awareness, :ghs_flag" +
-                    ") ON DUPLICATE KEY UPDATE " +
-                    "store_code = VALUES(store_code), region = VALUES(region), event_type = VALUES(event_type), event_sub_type = VALUES(event_sub_type), event_name = VALUES(event_name), rso = VALUES(rso), start_date = VALUES(start_date), image = VALUES(image), invitees = VALUES(invitees), attendees = VALUES(attendees), completed_events_link = VALUES(completed_events_link), community = VALUES(community), location = VALUES(location), is_attendees_uploaded = VALUES(is_attendees_uploaded), sale = VALUES(sale), advance = VALUES(advance), ghs_rga = VALUES(ghs_rga), gmb = VALUES(gmb), drive_link = VALUES(drive_link), diamond_awareness = VALUES(diamond_awareness), ghs_flag = VALUES(ghs_flag)";
-
-            List<Map<String, Object>> prepared = new ArrayList<>(events.size());
-            int skipped = 0;
-            for (Map<String, Object> e : events) {
-                try {
-                    Map<String, Object> p = new HashMap<>();
-                    String eventId = Optional.ofNullable(e.getOrDefault("EventId", e.get("Id"))).map(Object::toString).orElse(null);
-                    if (eventId == null || eventId.trim().isEmpty()) {
-                        // skip if no event id found
-                        skipped++;
-                        log.debug("Skipping event row because missing eventId: {}", e);
-                        continue;
-                    }
-                    p.put("event_id", eventId.trim());
-
-                    // parse createdAt safely
-                    Timestamp createdAtTs = parseCreatedAt(e.getOrDefault("CreatedAt", e.get("createdAt")));
-                    p.put("created_at", createdAtTs);
-
-                    p.put("store_code", Optional.ofNullable(e.get("StoreCode")).map(Object::toString).orElse("").trim());
-                    p.put("region", Optional.ofNullable(e.get("Region")).map(Object::toString).orElse(null));
-                    p.put("event_type", Optional.ofNullable(e.get("EventType")).map(Object::toString).orElse(null));
-                    p.put("event_sub_type", Optional.ofNullable(e.get("EventSubType")).map(Object::toString).orElse(null));
-                    p.put("event_name", Optional.ofNullable(e.get("EventName")).map(Object::toString).orElse(null));
-                    p.put("rso", Optional.ofNullable(e.get("RSO")).map(Object::toString).orElse(null));
-
-                    // start_date (date-only)
-                    String sd = Optional.ofNullable(e.get("StartDate")).map(Object::toString).orElse("").trim();
-                    if (!sd.isEmpty()) {
-                        try {
-                            LocalDate ld = LocalDate.parse(sd.replaceAll("/", "-"));
-                            p.put("start_date", Date.valueOf(ld));
-                        } catch (Exception ex) {
-                            p.put("start_date", null);
-                        }
-                    } else {
-                        p.put("start_date", null);
-                    }
-
-                    p.put("image", Optional.ofNullable(e.get("Image")).map(Object::toString).orElse(null));
-                    p.put("invitees", safeInt(e.get("Invitees")));
-                    p.put("attendees", safeInt(e.get("Attendees")));
-                    p.put("completed_events_link", Optional.ofNullable(e.get("completedEvents")).map(Object::toString).orElse(null));
-                    p.put("community", Optional.ofNullable(e.get("Community")).map(Object::toString).orElse(null));
-                    p.put("location", Optional.ofNullable(e.get("location")).map(Object::toString).orElse(null));
-                    p.put("is_attendees_uploaded", safeBoolean(e.get("isAttendeesUploaded")));
-                    p.put("sale", safeDecimal(e.get("sale")));
-                    p.put("advance", safeDecimal(e.get("advance")));
-                    p.put("ghs_rga", safeDecimal(e.get("ghs/rga")));
-                    p.put("gmb", safeDecimal(e.get("gmb")));
-                    p.put("drive_link", Optional.ofNullable(e.get("Drive link")).map(Object::toString).orElse(null));
-                    p.put("diamond_awareness", safeBoolean(e.get("Diamond Awareness")));
-                    p.put("ghs_flag", safeBoolean(e.get("GHS")));
-
-                    prepared.add(p);
-                } catch (Exception rowEx) {
-                    skipped++;
-                    log.warn("Skipping row due to parsing error: {} -- error: {}", e, rowEx.getMessage());
-                }
-            }
-
-            log.info("SheetToDbImportRunner: prepared {} rows, skipped {} bad rows.", prepared.size(), skipped);
-
-            // chunked batch updates
-            int totalInserted = 0;
-            for (int i = 0; i < prepared.size(); i += BATCH_SIZE) {
-                int end = Math.min(prepared.size(), i + BATCH_SIZE);
-                List<Map<String, Object>> chunk = prepared.subList(i, end);
-                try {
-                    int[] r = jdbc.batchUpdate(sql, chunk.toArray(new Map[0]));
-                    int successCount = Arrays.stream(r).sum();
-                    totalInserted += successCount;
-                    log.info("Inserted/updated chunk {}..{} -> {} rows affected", i, end - 1, successCount);
-                } catch (Exception chunkEx) {
-                    log.error("Failed inserting chunk {}..{} ({} rows). Error: {}", i, end - 1, chunk.size(), chunkEx.getMessage());
-                    // optionally you could try per-row here, but we skip to keep startup healthy
-                }
-            }
-
-            log.info("SheetToDbImportRunner: import finished. total prepared={}, totalAffected={}, skipped={}",
-                    prepared.size(), totalInserted, skipped);
-
-        } catch (Exception ex) {
-            // do NOT throw - keep app running; log full stacktrace
-            log.error("SheetToDbImportRunner: unexpected failure during import", ex);
+            log.info("SheetToDbImportRunner: starting attendees import into MySQL (sheet id: {})...", attendeeSheetId);
+            attendeeImportService.importAttendeesFromSheet(attendeeSheetId);
+            log.info("SheetToDbImportRunner: attendees import finished.");
+        } catch (Exception e) {
+            log.error("SheetToDbImportRunner: attendees import failed", e);
         }
     }
 
@@ -240,4 +295,6 @@ public class SheetToDbImportRunner implements CommandLineRunner {
         String s = o.toString().trim().toLowerCase();
         return s.equals("true") || s.equals("yes") || s.equals("1") || s.equals("y");
     }
+
+
 }

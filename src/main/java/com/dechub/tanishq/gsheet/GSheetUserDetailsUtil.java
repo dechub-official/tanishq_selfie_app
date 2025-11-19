@@ -2044,4 +2044,27 @@ public class GSheetUserDetailsUtil {
         }
         return out;
     }
+
+    public ValueRange getValues(String spreadsheetId, String range) throws Exception {
+        // If you already have an execWithBackoff(Callable<T>, int) method in this class, use it:
+        try {
+            return execWithBackoff(
+                    () -> sheets.spreadsheets().values().get(spreadsheetId, range).execute(),
+                    6
+            );
+        } catch (NoSuchMethodError | IllegalArgumentException ex) {
+            // Fallback if execWithBackoff signature differs — call directly with simple retry
+            int tries = 3;
+            Exception last = null;
+            for (int i = 0; i < tries; i++) {
+                try {
+                    return sheets.spreadsheets().values().get(spreadsheetId, range).execute();
+                } catch (Exception e) {
+                    last = e;
+                    Thread.sleep(500L * (i+1));
+                }
+            }
+            throw last;
+        }
+    }
 }
