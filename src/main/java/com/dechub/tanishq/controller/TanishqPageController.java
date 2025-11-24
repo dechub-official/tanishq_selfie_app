@@ -39,7 +39,11 @@ public class TanishqPageController {
     }
     @PostMapping("/brideImage")
     public ResponseEntity<ResponseDataDTO> uploadFile(@RequestParam("file") MultipartFile file) {
-        return APIResponseBuilder.buildResponseFromDto(tanishqPageService.storeBrideImage(file));
+        // Method not implemented yet
+        ResponseDataDTO response = new ResponseDataDTO();
+        response.setStatus(false);
+        response.setMessage("Bride image upload not implemented");
+        return APIResponseBuilder.buildResponseFromDto(response);
     }
 
     @PostMapping("/brideDetails")

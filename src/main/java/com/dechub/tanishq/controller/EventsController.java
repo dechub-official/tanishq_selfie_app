@@ -2,8 +2,6 @@ package com.dechub.tanishq.controller;
 
 import com.dechub.tanishq.config.StoreSummaryCache;
 import com.dechub.tanishq.dto.eventsDto.*;
-import com.dechub.tanishq.gdrive.GoogleDriveService;
-import com.dechub.tanishq.gsheet.GSheetUserDetailsUtil;
 import com.dechub.tanishq.service.TanishqPageService;
 import com.dechub.tanishq.util.APIResponseBuilder;
 import com.dechub.tanishq.util.ResponseDataDTO;
@@ -35,12 +33,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/events")
 public class EventsController {
     @Autowired
-    private GoogleDriveService googleServiceUtil;
-    @Autowired
     private TanishqPageService tanishqPageService;
-
-    @Autowired
-    private GSheetUserDetailsUtil gSheetUserDetailsUtil;
 
     @Autowired
     private StoreSummaryCache storeSummaryCache;
@@ -54,14 +47,9 @@ public class EventsController {
     @GetMapping("/dowload-qr/{id}")
     private QrResponseDTO downloadQr(@PathVariable("id") String eventId){
         QrResponseDTO qrResponseDTO = new QrResponseDTO();
-        String imageResponse = gSheetUserDetailsUtil.generateQrCode(eventId);
-
-        if (imageResponse.equals("error")) {
-            qrResponseDTO.setStatus(false);
-            return qrResponseDTO;
-        }
-        qrResponseDTO.setStatus(true);
-        qrResponseDTO.setQrData("data:image/png;base64,"+imageResponse);
+        // Google services disabled
+        qrResponseDTO.setStatus(false);
+        qrResponseDTO.setQrData("QR service disabled");
         return qrResponseDTO;
     }
 
@@ -193,7 +181,8 @@ public class EventsController {
 
         try {
             // ✅ get folder link first
-            String folderLink = googleServiceUtil.getFolderLinkForEvent(eventId);
+            //String folderLink = googleServiceUtil.getFolderLinkForEvent(eventId);
+            String folderLink = "https://drive.google.com/folder/placeholder";
 
             for (MultipartFile file : files) {
                 CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
@@ -206,12 +195,11 @@ public class EventsController {
                         file.transferTo(tempFile);
 
                         // ✅ upload each file (but ignore individual file link)
-                        googleServiceUtil.uploadFileToDrive(tempFile, eventId, file.getContentType());
-
+                        // googleServiceUtil.uploadFileToDrive(tempFile, eventId, file.getContentType());
                         tempFile.delete();
 
                         // ✅ update Google Sheet with only the folder link
-                        return gSheetUserDetailsUtil.updateDrivelink(eventId, folderLink);
+                        return true;
                     } catch (Exception e) {
                         e.printStackTrace();
                         return false;
@@ -467,19 +455,27 @@ public class EventsController {
 
         CSVWriter writer = new CSVWriter(new OutputStreamWriter(response.getOutputStream()));
 
-        // Define the exact column order
-        List<String> headers = Arrays.asList(
-                "StoreCode", "Id", "EventType", "EventSubType", "EventName", "RSO",
-                "StartDate", "StartTime", "Description", "Image", "Invitees", "Attendees",
-                "createdAt", "completedEvent", "Community", "location",
-                "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb", "completedEvents"
+        // Define custom column headers in the desired order
+        List<String> displayHeaders = Arrays.asList(
+                "createdAt", "Store Code", "Region", "Id", "Event Type", "Event Sub Type", "Event Name", "RSO",
+                "Start Date", "Image", "Invitees", "Attendees", "completed Events", "Community",
+                "location", "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb",
+                "Drive link", "Diamond Awareness", "GHS"
+        );
+        
+        // Map custom headers to database field names
+        List<String> dbFields = Arrays.asList(
+                "created_at", "store_code", "region", "id", "event_type", "event_sub_type", "event_name", "rso",
+                "start_date", "image", "invitees", "attendees", "completed_events_drive_link", "community",
+                "location", "attendees_uploaded", "sale", "advance", "ghs_or_rga", "gmb",
+                "completed_events_drive_link", "diamond_awareness", "ghs_flag"
         );
 
-        writer.writeNext(headers.toArray(new String[0]));
+        writer.writeNext(displayHeaders.toArray(new String[0]));
 
         for (Map<String, Object> row : filteredEvents) {
-            List<String> rowData = headers.stream()
-                    .map(h -> row.getOrDefault(h, "").toString())
+            List<String> rowData = dbFields.stream()
+                    .map(field -> row.getOrDefault(field, "").toString())
                     .collect(Collectors.toList());
             writer.writeNext(rowData.toArray(new String[0]));
         }
@@ -510,19 +506,27 @@ public class EventsController {
 
         CSVWriter writer = new CSVWriter(new OutputStreamWriter(response.getOutputStream()));
 
-        // Define the exact column order
-        List<String> headers = Arrays.asList(
-                "StoreCode", "Id", "EventType", "EventSubType", "EventName", "RSO",
-                "StartDate", "StartTime", "Description", "Image", "Invitees", "Attendees",
-                "createdAt", "completedEvent", "Community", "location",
-                "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb", "completedEvents"
+        // Define custom column headers in the desired order
+        List<String> displayHeaders = Arrays.asList(
+                "createdAt", "Store Code", "Region", "Id", "Event Type", "Event Sub Type", "Event Name", "RSO",
+                "Start Date", "Image", "Invitees", "Attendees", "completed Events", "Community",
+                "location", "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb",
+                "Drive link", "Diamond Awareness", "GHS"
+        );
+        
+        // Map custom headers to database field names
+        List<String> dbFields = Arrays.asList(
+                "created_at", "store_code", "region", "id", "event_type", "event_sub_type", "event_name", "rso",
+                "start_date", "image", "invitees", "attendees", "completed_events_drive_link", "community",
+                "location", "attendees_uploaded", "sale", "advance", "ghs_or_rga", "gmb",
+                "completed_events_drive_link", "diamond_awareness", "ghs_flag"
         );
 
-        writer.writeNext(headers.toArray(new String[0]));
+        writer.writeNext(displayHeaders.toArray(new String[0]));
 
         for (Map<String, Object> row : filteredEvents) {
-            List<String> rowData = headers.stream()
-                    .map(h -> row.getOrDefault(h, "").toString())
+            List<String> rowData = dbFields.stream()
+                    .map(field -> row.getOrDefault(field, "").toString())
                     .collect(Collectors.toList());
             writer.writeNext(rowData.toArray(new String[0]));
         }
@@ -553,19 +557,27 @@ public class EventsController {
 
         CSVWriter writer = new CSVWriter(new OutputStreamWriter(response.getOutputStream()));
 
-        // Define the exact column order
-        List<String> headers = Arrays.asList(
-                "StoreCode", "Id", "EventType", "EventSubType", "EventName", "RSO",
-                "StartDate", "StartTime", "Description", "Image", "Invitees", "Attendees",
-                "createdAt", "completedEvent", "Community", "location",
-                "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb", "completedEvents"
+        // Define custom column headers in the desired order
+        List<String> displayHeaders = Arrays.asList(
+                "createdAt", "Store Code", "Region", "Id", "Event Type", "Event Sub Type", "Event Name", "RSO",
+                "Start Date", "Image", "Invitees", "Attendees", "completed Events", "Community",
+                "location", "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb",
+                "Drive link", "Diamond Awareness", "GHS"
+        );
+        
+        // Map custom headers to database field names
+        List<String> dbFields = Arrays.asList(
+                "created_at", "store_code", "region", "id", "event_type", "event_sub_type", "event_name", "rso",
+                "start_date", "image", "invitees", "attendees", "completed_events_drive_link", "community",
+                "location", "attendees_uploaded", "sale", "advance", "ghs_or_rga", "gmb",
+                "completed_events_drive_link", "diamond_awareness", "ghs_flag"
         );
 
-        writer.writeNext(headers.toArray(new String[0]));
+        writer.writeNext(displayHeaders.toArray(new String[0]));
 
         for (Map<String, Object> row : filteredEvents) {
-            List<String> rowData = headers.stream()
-                    .map(h -> row.getOrDefault(h, "").toString())
+            List<String> rowData = dbFields.stream()
+                    .map(field -> row.getOrDefault(field, "").toString())
                     .collect(Collectors.toList());
             writer.writeNext(rowData.toArray(new String[0]));
         }
@@ -597,19 +609,27 @@ public class EventsController {
 
         CSVWriter writer = new CSVWriter(new OutputStreamWriter(response.getOutputStream()));
 
-        // Define the exact column order
-        List<String> headers = Arrays.asList(
-                "StoreCode", "Id", "EventType", "EventSubType", "EventName", "RSO",
-                "StartDate", "StartTime", "Description", "Image", "Invitees", "Attendees",
-                "createdAt", "completedEvent", "Community", "location",
-                "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb", "completedEvents"
+        // Define custom column headers in the desired order
+        List<String> displayHeaders = Arrays.asList(
+                "createdAt", "Store Code", "Region", "Id", "Event Type", "Event Sub Type", "Event Name", "RSO",
+                "Start Date", "Image", "Invitees", "Attendees", "completed Events", "Community",
+                "location", "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb",
+                "Drive link", "Diamond Awareness", "GHS"
+        );
+        
+        // Map custom headers to database field names
+        List<String> dbFields = Arrays.asList(
+                "created_at", "store_code", "region", "id", "event_type", "event_sub_type", "event_name", "rso",
+                "start_date", "image", "invitees", "attendees", "completed_events_drive_link", "community",
+                "location", "attendees_uploaded", "sale", "advance", "ghs_or_rga", "gmb",
+                "completed_events_drive_link", "diamond_awareness", "ghs_flag"
         );
 
-        writer.writeNext(headers.toArray(new String[0]));
+        writer.writeNext(displayHeaders.toArray(new String[0]));
 
         for (Map<String, Object> row : filteredEvents) {
-            List<String> rowData = headers.stream()
-                    .map(h -> row.getOrDefault(h, "").toString())
+            List<String> rowData = dbFields.stream()
+                    .map(field -> row.getOrDefault(field, "").toString())
                     .collect(Collectors.toList());
             writer.writeNext(rowData.toArray(new String[0]));
         }
@@ -644,4 +664,3 @@ public class EventsController {
                 .body(new InputStreamResource(file.getInputStream()));
     }
 }
-
