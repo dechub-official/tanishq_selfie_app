@@ -1,0 +1,648 @@
+    },
+    {
+      "name": "3. Create Event (Bulk Invitees Excel)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "code",
+              "value": "{{storeCode}}",
+              "type": "text"
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "src": "/path/to/invitees.xlsx"
+            },
+            {
+              "key": "eventName",
+              "value": "Diwali Festival Celebration",
+              "type": "text"
+            },
+            {
+              "key": "eventType",
+              "value": "Festival",
+              "type": "text"
+            },
+            {
+              "key": "eventSubType",
+              "value": "Diwali",
+              "type": "text"
+            },
+            {
+              "key": "RSO",
+              "value": "Suresh Reddy",
+              "type": "text"
+            },
+            {
+              "key": "date",
+              "value": "2025-10-24",
+              "type": "text"
+            },
+            {
+              "key": "time",
+              "value": "10:00",
+              "type": "text"
+            },
+            {
+              "key": "location",
+              "value": "Store Premises",
+              "type": "text"
+            },
+            {
+              "key": "Community",
+              "value": "All",
+              "type": "text"
+            },
+            {
+              "key": "region",
+              "value": "South",
+              "type": "text"
+            },
+            {
+              "key": "singalInvite",
+              "value": "false",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/events/upload",
+          "host": ["{{baseUrl}}"],
+          "path": ["events", "upload"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "4. Generate QR Code",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/events/dowload-qr/{{eventId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["events", "dowload-qr", "{{eventId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "5. QR Code Scan (Show Form)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/events/customer/{{eventId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["events", "customer", "{{eventId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "6. Store Attendee (Single)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "eventId",
+              "value": "{{eventId}}",
+              "type": "text"
+            },
+            {
+              "key": "name",
+              "value": "Ramesh Kumar",
+              "type": "text"
+            },
+            {
+              "key": "phone",
+              "value": "9876543210",
+              "type": "text"
+            },
+            {
+              "key": "like",
+              "value": "Diamond Necklace",
+              "type": "text"
+            },
+            {
+              "key": "firstTimeAtTanishq",
+              "value": "true",
+              "type": "text"
+            },
+            {
+              "key": "rsoName",
+              "value": "Suresh",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/events/attendees",
+          "host": ["{{baseUrl}}"],
+          "path": ["events", "attendees"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "7. Store Attendees (Bulk Excel)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "eventId",
+              "value": "{{eventId}}",
+              "type": "text"
+            },
+            {
+              "key": "file",
+              "type": "file",
+              "src": "/path/to/attendees.xlsx"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/events/attendees",
+          "host": ["{{baseUrl}}"],
+          "path": ["events", "attendees"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "8. Get Completed Events",
+      "item": [
+        {
+          "name": "8.1 Get All Events for Store",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"storeCode\": \"{{storeCode}}\",\n  \"startDate\": \"\",\n  \"endDate\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/getevents",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "getevents"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8.2 Get Events with Date Filter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"storeCode\": \"{{storeCode}}\",\n  \"startDate\": \"2025-10-01\",\n  \"endDate\": \"2025-10-31\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/getevents",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "getevents"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8.3 Regional Manager Get All Stores",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"storeCode\": \"SOUTH1\",\n  \"startDate\": \"\",\n  \"endDate\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/getevents",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "getevents"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "9. Upload Event Photos (S3)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "eventId",
+              "value": "{{eventId}}",
+              "type": "text"
+            },
+            {
+              "key": "files",
+              "type": "file",
+              "src": "/path/to/photo1.jpg"
+            },
+            {
+              "key": "files",
+              "type": "file",
+              "src": "/path/to/photo2.jpg"
+            },
+            {
+              "key": "files",
+              "type": "file",
+              "src": "/path/to/photo3.jpg"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/events/uploadCompletedEvents",
+          "host": ["{{baseUrl}}"],
+          "path": ["events", "uploadCompletedEvents"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "10. Update Sale Amount",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "eventCode",
+              "value": "{{eventId}}",
+              "type": "text"
+            },
+            {
+              "key": "sale",
+              "value": "250000",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/events/updateSaleOfAnEvent",
+          "host": ["{{baseUrl}}"],
+          "path": ["events", "updateSaleOfAnEvent"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "11. Update Advance Amount",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "eventCode",
+              "value": "{{eventId}}",
+              "type": "text"
+            },
+            {
+              "key": "advance",
+              "value": "75000",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/events/updateAdvanceOfAnEvent",
+          "host": ["{{baseUrl}}"],
+          "path": ["events", "updateAdvanceOfAnEvent"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "12. Update GHS/RGA",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "eventCode",
+              "value": "{{eventId}}",
+              "type": "text"
+            },
+            {
+              "key": "ghsRga",
+              "value": "5",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/events/updateGhsRgaOfAnEvent",
+          "host": ["{{baseUrl}}"],
+          "path": ["events", "updateGhsRgaOfAnEvent"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "13. Update GMB",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "eventCode",
+              "value": "{{eventId}}",
+              "type": "text"
+            },
+            {
+              "key": "gmb",
+              "value": "3",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/events/updateGmbOfAnEvent",
+          "host": ["{{baseUrl}}"],
+          "path": ["events", "updateGmbOfAnEvent"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "14. Get Invited Members",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "eventCode",
+              "value": "{{eventId}}",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/events/getinvitedmember",
+          "host": ["{{baseUrl}}"],
+          "path": ["events", "getinvitedmember"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "15. Get Stores by Region",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/events/getStoresByRegion/South",
+          "host": ["{{baseUrl}}"],
+          "path": ["events", "getStoresByRegion", "South"]
+        }
+      },
+      "response": []
+    }
+  ]
+}
+{
+  "info": {
+    "name": "Tanishq Events Controller - Complete Test Suite",
+    "description": "Comprehensive API tests for Events Controller before production",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "eventId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "storeCode",
+      "value": "STORE001",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Manager Login",
+      "item": [
+        {
+          "name": "1.1 Valid Store Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{storeCode}}\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Invalid Credentials",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{storeCode}}\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 Regional Manager Login (RBM)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"SOUTH1\",\n  \"password\": \"rbm_password\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/events/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["events", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Create Event (Single Invite)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "code",
+              "value": "{{storeCode}}",
+              "type": "text"
+            },
+            {
+              "key": "eventName",
+              "value": "Test Wedding Reception",
+              "type": "text"
+            },
+            {
+              "key": "eventType",
+              "value": "Wedding",
+              "type": "text"
+            },
+            {
+              "key": "eventSubType",
+              "value": "Reception",
+              "type": "text"
+            },
+            {
+              "key": "RSO",
+              "value": "Rajesh Kumar",
+              "type": "text"
+            },
+            {
+              "key": "date",
+              "value": "2025-12-25",
+              "type": "text"
+            },
+            {
+              "key": "time",
+              "value": "18:00",
+              "type": "text"
+            },
+            {
+              "key": "location",
+              "value": "Grand Hotel, Bangalore",
+              "type": "text"
+            },
+            {
+              "key": "Community",
+              "value": "Hindu",
+              "type": "text"
+            },
+            {
+              "key": "region",
+              "value": "South",
+              "type": "text"
+            },
+            {
+              "key": "customerName",
+              "value": "Priya Kumar",
+              "type": "text"
+            },
+            {
+              "key": "customerContact",
+              "value": "9876543210",
+              "type": "text"
+            },
+            {
+              "key": "singalInvite",
+              "value": "true",
+              "type": "text"
+            },
+            {
+              "key": "sale",
+              "value": "150000",
+              "type": "text"
+            },
+            {
+              "key": "advance",
+              "value": "50000",
+              "type": "text"
+            },
+            {
+              "key": "ghsOrRga",
+              "value": "2",
+              "type": "text"
+            },
+            {
+              "key": "gmb",
+              "value": "1",
+              "type": "text"
+            },
+            {
+              "key": "diamondAwareness",
+              "value": "true",
+              "type": "text"
+            },
+            {
+              "key": "ghsFlag",
+              "value": "false",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/events/upload",
+          "host": ["{{baseUrl}}"],
+          "path": ["events", "upload"]
+        }
+      },
+      "response": []
+

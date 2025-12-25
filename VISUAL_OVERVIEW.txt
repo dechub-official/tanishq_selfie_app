@@ -1,0 +1,235 @@
+# 📊 GREETING FEATURE - VISUAL OVERVIEW
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    GREETING FEATURE ARCHITECTURE                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  AWS S3 BUCKET: celebrations-tanishq-preprod                             │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  ├── events/                    ← EXISTING (Event images)               │
+│  │   ├── EVT001/                                                         │
+│  │   │   ├── event_20251220_100000_*.jpg                                │
+│  │   │   └── event_20251220_100100_*.jpg                                │
+│  │   ├── EVT002/                                                         │
+│  │   │   └── event_20251220_110000_*.jpg                                │
+│  │   └── ...                                                             │
+│  │                                                                        │
+│  └── greetings/                 ← NEW (Greeting videos)                 │
+│      ├── GREETING_1734700000000/                                         │
+│      │   └── greeting_video_20251220_100000_123456.mp4                  │
+│      ├── GREETING_1734700000001/                                         │
+│      │   └── greeting_video_20251220_100100_123457.mp4                  │
+│      └── ...                                                             │
+│                                                                           │
+│  📝 Note: Same bucket, separate folders - clean organization!            │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  MYSQL DATABASE: selfie_preprod                                          │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  ├── stores                     ← Existing tables                        │
+│  ├── users                                                                │
+│  ├── events                                                               │
+│  ├── attendees                                                            │
+│  └── greetings                  ← NEW TABLE (Auto-created)              │
+│      ├── id: 1                                                            │
+│      ├── unique_id: "GREETING_1734700000000"                             │
+│      ├── greeting_text: "John Doe"                                       │
+│      ├── message: "Happy Birthday!"                                      │
+│      ├── drive_file_id: "https://...s3.../greetings/GREETING_.../video" │
+│      ├── uploaded: true                                                   │
+│      └── created_at: "2025-12-20 10:00:00"                               │
+│                                                                           │
+│  📝 Note: Separate table, no mixing with other features!                 │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  COMPLETE USER FLOW                                                       │
+└──────────────────────────────────────────────────────────────────────────┘
+
+STEP 1: GENERATE GREETING
+┌─────────────┐    POST /generate    ┌──────────────┐    INSERT     ┌────────┐
+│   User      │─────────────────────▶│  Controller  │──────────────▶│  MySQL │
+│  (Creator)  │◀─────────────────────│              │◀──────────────│        │
+└─────────────┘   GREETING_123       └──────────────┘  unique_id    └────────┘
+                                                        uploaded=false
+
+STEP 2: GENERATE QR CODE
+┌─────────────┐    GET /qr          ┌──────────────┐               ┌────────┐
+│   User      │─────────────────────▶│  Controller  │──────────────▶│  MySQL │
+│  (Creator)  │◀─────────────────────│              │◀──────────────│        │
+└─────────────┘   QR PNG             └──────────────┘   Get record  └────────┘
+                  (encodes uniqueId)        │
+                                           Save QR
+                                            ▼
+                                      Update qr_code_data
+
+STEP 3: SCAN QR & UPLOAD VIDEO
+┌─────────────┐   Scan QR            ┌──────────────┐
+│  Recipient  │────────────────────▶ │   Frontend   │
+│             │  "GREETING_123"       │              │
+└─────────────┘                       └──────┬───────┘
+      │                                      │
+      │ Record Video                         │ Navigate to /upload
+      │                                      │
+      ▼                                      ▼
+┌─────────────┐   POST /upload       ┌──────────────┐
+│  Recipient  │─────────────────────▶│  Controller  │
+│             │  video + name         │              │
+└─────────────┘  + message            └──────┬───────┘
+                                             │
+                                             ▼
+                                     ┌──────────────┐    Upload    ┌──────────┐
+                                     │   S3Service  │─────────────▶│   AWS    │
+                                     │              │              │   S3     │
+                                     └──────┬───────┘              └──────────┘
+                                            │                    greetings/
+                                            │ Return S3 URL      GREETING_123/
+                                            ▼                    video.mp4
+                                     ┌──────────────┐
+                                     │    MySQL     │
+                                     │   UPDATE     │
+                                     │ uploaded=true│
+                                     │ drive_file_id│
+                                     └──────────────┘
+
+STEP 4: VIEW VIDEO
+┌─────────────┐   GET /view          ┌──────────────┐    SELECT    ┌────────┐
+│   Viewer    │─────────────────────▶│  Controller  │─────────────▶│  MySQL │
+│             │                       │              │◀─────────────│        │
+└─────────────┘                       └──────┬───────┘  drive_file_id└────────┘
+      ▲                                      │
+      │                                      │ Generate
+      │ Play video                           │ Presigned URL
+      │                                      ▼
+      └──────────────────────────────────────┘
+        Presigned S3 URL (valid 1 hour)
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  DATA FLOW SUMMARY                                                        │
+└──────────────────────────────────────────────────────────────────────────┘
+
+Frontend ──▶ Backend ──▶ MySQL     (Store metadata)
+                    └──▶ S3        (Store video)
+
+Frontend ◀── Backend ◀── MySQL     (Get S3 URL)
+                    └──▶ S3        (Generate presigned URL)
+
+Frontend ──▶ S3                    (Stream video directly)
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  PRODUCTION REPLICATION                                                   │
+└──────────────────────────────────────────────────────────────────────────┘
+
+PREPROD                              PRODUCTION
+──────────                           ──────────
+celebrations-tanishq-preprod   →    celebrations-tanishq-prod
+├── events/                          ├── events/
+└── greetings/                       └── greetings/
+
+selfie_preprod                 →    selfie_prod
+└── greetings table                  └── greetings table
+    (same schema)                        (same schema)
+
+application-preprod.properties →    application-prod.properties
+aws.s3.bucket.name=...-preprod      aws.s3.bucket.name=...-prod
+spring.datasource.url=.../preprod   spring.datasource.url=.../prod
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  FILE SIZES & PERFORMANCE                                                 │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┬──────────────┬────────────────┬─────────────────┐
+│ Operation       │ Data Size    │ Storage        │ Time            │
+├─────────────────┼──────────────┼────────────────┼─────────────────┤
+│ Generate        │ 21 KB        │ MySQL          │ ~100ms          │
+│ QR Code         │ 20 KB        │ MySQL          │ ~200ms          │
+│ Upload Video    │ 25 MB (avg)  │ S3 (greetings/)│ 3-10 seconds    │
+│ View Status     │ 1 KB         │ MySQL          │ ~50ms           │
+│ Play Video      │ 25 MB        │ S3 (stream)    │ 1-3 sec start   │
+└─────────────────┴──────────────┴────────────────┴─────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  STORAGE GROWTH ESTIMATE                                                  │
+└──────────────────────────────────────────────────────────────────────────┘
+
+100 Videos/Day:
+├── MySQL: 2.1 MB/day = 63 MB/month
+└── S3: 2.5 GB/day = 75 GB/month
+    Total: ~75 GB/month
+
+1,000 Videos/Day:
+├── MySQL: 21 MB/day = 630 MB/month
+└── S3: 25 GB/day = 750 GB/month
+    Total: ~750 GB/month
+
+Cost (100 videos/day): ~$19/month
+Cost per video: ~$0.006 (less than 1 cent)
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  WHAT YOU NEED TO DO - VISUAL CHECKLIST                                  │
+└──────────────────────────────────────────────────────────────────────────┘
+
+PREPROD (NOW):
+┌────────────────────────────────────────────────────────────────┐
+│ [ ] 1. Add AWS credentials to application-preprod.properties   │
+│         aws.access.key.id=YOUR_KEY                             │
+│         aws.secret.access.key=YOUR_SECRET                      │
+│                                                                 │
+│ [ ] 2. Start application                                       │
+│         mvn spring-boot:run                                    │
+│                                                                 │
+│ [ ] 3. Test greeting generation                                │
+│         curl -X POST http://localhost:3000/greetings/generate  │
+│                                                                 │
+│ [ ] 4. Verify S3 folder created                                │
+│         aws s3 ls s3://celebrations-tanishq-preprod/greetings/ │
+│                                                                 │
+│ [ ] 5. Verify MySQL table exists                               │
+│         mysql> USE selfie_preprod; SHOW TABLES;                │
+└────────────────────────────────────────────────────────────────┘
+
+PRODUCTION (LATER):
+┌────────────────────────────────────────────────────────────────┐
+│ [ ] 1. Create application-prod.properties                      │
+│ [ ] 2. Create S3 bucket: celebrations-tanishq-prod             │
+│ [ ] 3. Create MySQL database: selfie_prod                      │
+│ [ ] 4. Deploy with prod profile                                │
+│ [ ] 5. Test complete flow                                      │
+└────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  KEY TAKEAWAYS                                                            │
+└──────────────────────────────────────────────────────────────────────────┘
+
+✅ Same S3 bucket (celebrations-tanishq-preprod)
+✅ Separate folder (greetings/)
+✅ Separate MySQL table (greetings)
+✅ Auto-creates folder on first upload
+✅ Auto-creates table on first run
+✅ No code changes needed
+✅ Just add AWS credentials and deploy!
+
+Production: Copy setup, change bucket/database names
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  SUMMARY                                                                  │
+└──────────────────────────────────────────────────────────────────────────┘
+
+YOUR REQUIREMENT:
+"Use preprod S3 bucket, create separate folder for greetings,
+ separate table in MySQL, same for production"
+
+STATUS: ✅ ALREADY IMPLEMENTED IN CODE!
+
+ACTION NEEDED: Add AWS credentials → Start application → Test
+
+TOTAL TIME: 5-10 minutes
+
+Ready to deploy! 🚀
+```
+

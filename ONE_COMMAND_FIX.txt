@@ -1,0 +1,28 @@
+# ONE COMMAND FIX
+
+Copy this ENTIRE command and paste it into your SSH terminal on the server:
+
+```bash
+cd /opt/tanishq/applications_preprod && PID=$(ps -ef | grep "tanishq-preprod" | grep -v grep | awk '{print $2}') && [ -n "$PID" ] && kill $PID && sleep 3 && rm -rf temp_fix && mkdir temp_fix && cd temp_fix && jar -xf ../tanishq-preprod-18-12-2025-1-0.0.1-SNAPSHOT.war && ACTUAL_JS=$(ls BOOT-INF/classes/static/assets/index-*.js 2>/dev/null | head -1 | xargs basename 2>/dev/null) && ACTUAL_CSS=$(ls BOOT-INF/classes/static/assets/index-*.css 2>/dev/null | head -1 | xargs basename 2>/dev/null) && echo "Using JS: $ACTUAL_JS" && echo "Using CSS: $ACTUAL_CSS" && sed -i "s|src=\"/static/assets/index-[^\"]*\.js\"|src=\"/static/assets/$ACTUAL_JS\"|g" BOOT-INF/classes/static/events.html && sed -i "s|href=\"/static/assets/index-[^\"]*\.css\"|href=\"/static/assets/$ACTUAL_CSS\"|g" BOOT-INF/classes/static/events.html && cd .. && jar -cf tanishq-preprod-FIXED.war -C temp_fix . && nohup java -jar tanishq-preprod-FIXED.war --spring.datasource.url=jdbc:mysql://localhost:3306/selfie_preprod?useSSL=false\&serverTimezone=UTC --spring.datasource.username=root --spring.datasource.password=Dechub#2025 --server.port=3000 --spring.profiles.active=preprod > application.log 2>&1 & sleep 10 && ps -ef | grep tanishq | grep -v grep && echo "" && echo "✅ FIX COMPLETE! Test now: https://celebrationsite-preprod.tanishq.co.in/events"
+```
+
+That's it! This single command will:
+1. Stop the app
+2. Extract the WAR
+3. Fix events.html
+4. Repackage
+5. Start the fixed version
+6. Show you if it's running
+
+**After pasting, wait 10-15 seconds and you should see "✅ FIX COMPLETE!"**
+
+Then test:
+- https://celebrationsite-preprod.tanishq.co.in/events (should NOT be blank)
+- Create event → Download QR → Scan QR → Form should appear
+
+---
+
+## If That Doesn't Work
+
+Use the multi-line version from: `COMPLETE_FIX_GUIDE_FINAL.md`
+

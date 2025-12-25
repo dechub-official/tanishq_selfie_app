@@ -13,5 +13,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addViewController("/events").setViewName("forward:/events.html");
         registry.addViewController("/contact").setViewName("forward:/contact.html");
         registry.addViewController("/home").setViewName("forward:/home.html");
+        // Note: /events/customer/{eventId} is handled by EventsController, not here
+        // The greeting card QR feature uses a different route
     }
 }

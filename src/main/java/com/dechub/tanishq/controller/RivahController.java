@@ -4,8 +4,6 @@ import com.dechub.tanishq.dto.rivaahDto.BookAppointmentDTO;
 import com.dechub.tanishq.dto.rivaahDto.RivaahAllDetailsDTO;
 import com.dechub.tanishq.dto.rivaahDto.RivaahDTO;
 import com.dechub.tanishq.dto.rivaahDto.RivaahImagesDTO;
-import com.dechub.tanishq.gdrive.GoogleDriveService;
-import com.dechub.tanishq.gsheet.GSheetUserDetailsUtil;
 import com.dechub.tanishq.service.TanishqPageService;
 import com.dechub.tanishq.util.ResponseDataDTO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,61 +20,52 @@ import java.util.List;
 @RequestMapping("/rivaah")
 public class RivahController {
     @Autowired
-    private GoogleDriveService googleServiceUtil;
-    @Autowired
     private TanishqPageService tanishqPageService;
-
-    @Autowired
-    private GSheetUserDetailsUtil gSheetUserDetailsUtil;
 
     @GetMapping("/getImages")
     public ResponseEntity<RivaahImagesDTO> getImages(@RequestParam("categories") List<String> tags) throws Exception {
-        try {
-            RivaahImagesDTO groupedImages = gSheetUserDetailsUtil.getImagesByTags(tags);
-            return ResponseEntity.ok(groupedImages);
-        } catch (IOException e) {
-            return ResponseEntity.status(500).build();
-        }
+        // Rivaah features disabled during Google Sheets to MySQL migration
+        return ResponseEntity.status(503).body(new RivaahImagesDTO()); // Service Unavailable
     }
 
     @GetMapping("/increaseLike/{id}")
     public ResponseEntity<String> increaseLike(@PathVariable Long id , @RequestParam boolean increase) throws Exception {
-
-            return gSheetUserDetailsUtil.incrementLikeCount(id,increase);
-
+        return ResponseEntity.status(503).body("Rivaah like feature temporarily disabled - system upgrade in progress");
     }
 
     @PostMapping("/shareDetails")
     public ResponseEntity<ResponseDataDTO> shareDetails(@RequestBody RivaahDTO rivaahDTO){
-        ResponseDataDTO responseDataDTO = tanishqPageService.getShareCode(rivaahDTO);
-        if(responseDataDTO.isStatus()){
-            return ResponseEntity.ok(responseDataDTO);
-        }
+        // Stub - Rivaah sharing disabled during migration
+        ResponseDataDTO responseDataDTO = new ResponseDataDTO();
+        responseDataDTO.setStatus(false);
+        responseDataDTO.setMessage("Rivaah sharing temporarily disabled");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseDataDTO);
     }
 
     @PostMapping("/userDetails")
     public ResponseEntity<ResponseDataDTO> storeUser(@RequestParam("name") String name,@RequestParam("contact") String contact){
-        ResponseDataDTO responseDataDTO = tanishqPageService.storeRivaahUser(name, contact);
-        if(responseDataDTO.isStatus()){
-            return ResponseEntity.ok(responseDataDTO);
-        }
+        // Stub - Rivaah user storage disabled during migration
+        ResponseDataDTO responseDataDTO = new ResponseDataDTO();
+        responseDataDTO.setStatus(false);
+        responseDataDTO.setMessage("Rivaah user storage temporarily disabled");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseDataDTO);
     }
 
     @GetMapping("/getAllDetails/{code}")
     public ResponseEntity<RivaahAllDetailsDTO> getAllDetails(@PathVariable String code){
-        RivaahAllDetailsDTO responseDataDTO = tanishqPageService.getRivaahDetails(code);
-        if(responseDataDTO.isStatus()){
-            return ResponseEntity.ok(responseDataDTO);
-        }
+        // Stub - Rivaah details disabled during migration
+        RivaahAllDetailsDTO responseDataDTO = new RivaahAllDetailsDTO();
+        responseDataDTO.setStatus(false);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responseDataDTO);
     }
 
     @PostMapping("/bookAnAppointment")
     public ResponseEntity<ResponseDataDTO> bookAnAppointment(@RequestBody BookAppointmentDTO bookAppointmentDTO) {
-        ResponseDataDTO response = tanishqPageService.appointment(bookAppointmentDTO, true);
-        return ResponseEntity.ok(response);
+        // Use QrCodeService - Rivaah appointment disabled during migration
+        ResponseDataDTO dto = new ResponseDataDTO();
+        dto.setStatus(false);
+        dto.setMessage("Rivaah appointment booking temporarily disabled");
+        return ResponseEntity.ok(dto);
     }
 
 

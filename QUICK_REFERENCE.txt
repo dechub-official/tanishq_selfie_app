@@ -1,0 +1,157 @@
+╔══════════════════════════════════════════════════════════════════╗
+║  TANISHQ CELEBRATION APP - MULTI-ENVIRONMENT QUICK REFERENCE     ║
+╚══════════════════════════════════════════════════════════════════╝
+
+📋 ENVIRONMENT COMPARISON
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                    PRE-PRODUCTION              PRODUCTION
+─────────────────────────────────────────────────────────────────
+Database            selfie_preprod              selfie_prod
+Port                3000                        3001
+URL                 celebrationsite-preprod     celebrationsite
+                    .tanishq.co.in              .tanishq.co.in
+Profile             preprod                     prod
+Build Command       BUILD_PREPROD.bat           BUILD_PROD.bat
+Maven Command       mvn package -Ppreprod       mvn package -Pprod
+
+🚀 QUICK START
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. SETUP DATABASES (One-time):
+
+   Pre-Prod (Already done):
+   ✓ Database: selfie_preprod exists
+
+   Production (NEW - Do this first):
+   → Double-click: SETUP_PRODUCTION_DATABASE.bat
+   OR manually:
+   → mysql -u root -p
+   → CREATE DATABASE selfie_prod;
+
+2. BUILD FOR PRE-PRODUCTION:
+   → Double-click: BUILD_PREPROD.bat
+   → Deploys to: celebrationsite-preprod.tanishq.co.in
+
+3. BUILD FOR PRODUCTION:
+   → Double-click: BUILD_PROD.bat
+   → Deploys to: celebrationsite.tanishq.co.in
+
+4. USE ENVIRONMENT SWITCHER:
+   → Double-click: BUILD_ENVIRONMENT_SWITCHER.bat
+   → Interactive menu for everything!
+
+📁 FILES CREATED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ BUILD_PREPROD.bat                    - Build for pre-production
+✓ BUILD_PROD.bat                       - Build for production
+✓ BUILD_ENVIRONMENT_SWITCHER.bat       - Interactive menu
+✓ SETUP_PRODUCTION_DATABASE.bat        - Setup prod database
+✓ setup_production_database.sql        - SQL script for setup
+✓ MULTI_ENVIRONMENT_SETUP_GUIDE.md     - Complete documentation
+✓ QUICK_REFERENCE.txt                  - This file
+
+🗄️ DATABASE CREDENTIALS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Host:           localhost
+Port:           3306
+Username:       root
+Password:       Dechub#2025
+
+Databases:
+  - selfie_preprod (Pre-Production)
+  - selfie_prod (Production)
+
+🔧 TYPICAL WORKFLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Step 1: DEVELOP & TEST
+→ Make code changes
+→ Run: BUILD_PREPROD.bat
+→ Deploy to pre-prod server
+→ Test at: https://celebrationsite-preprod.tanishq.co.in
+
+Step 2: GO LIVE
+→ After testing is successful
+→ Run: BUILD_PROD.bat
+→ Deploy to production server
+→ Live at: https://celebrations.tanishq.co.in
+
+🎯 DEPLOYMENT TO SERVER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Build locally:
+   → BUILD_PREPROD.bat or BUILD_PROD.bat
+
+2. Connect to server:
+   → Use WinSCP or FileZilla
+   → Upload WAR file to /opt/tanishq/
+
+3. Deploy on server:
+   → sudo systemctl stop tomcat
+   → sudo cp [war-file].war /opt/tomcat/webapps/ROOT.war
+   → sudo systemctl start tomcat
+   → tail -f /opt/tomcat/logs/catalina.out
+
+✅ VERIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pre-Production Working:
+✓ URL: https://celebrationsite-preprod.tanishq.co.in
+✓ Database: selfie_preprod has tables
+✓ QR codes use preprod URL
+
+Production Working:
+✓ URL: https://celebrations.tanishq.co.in
+✓ Database: selfie_prod has tables
+✓ QR codes use production URL
+
+⚠️ IMPORTANT NOTES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+• Both environments can run SIMULTANEOUSLY
+• Each has its own database (no conflicts!)
+• Each has its own port (no conflicts!)
+• ALWAYS test in pre-prod BEFORE production
+• The build scripts automatically select the correct profile
+• You DON'T need to manually edit application.properties
+
+🆘 TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Problem: "Database not found"
+Solution: Run SETUP_PRODUCTION_DATABASE.bat
+
+Problem: "Build failed"
+Solution: Check Maven and Java are installed
+         → mvn -version
+         → java -version
+
+Problem: "Port already in use"
+Solution: Pre-prod=3000, Production=3001 (no conflict!)
+
+Problem: "Cannot connect to MySQL"
+Solution: Check MySQL is running
+         → Check password: Dechub#2025
+
+📞 NEED HELP?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Read full documentation:
+→ MULTI_ENVIRONMENT_SETUP_GUIDE.md
+
+Check logs:
+→ Server: tail -f /opt/tomcat/logs/catalina.out
+→ Local: Check console output during build
+
+Test database:
+→ Use BUILD_ENVIRONMENT_SWITCHER.bat
+→ Option 4: Test Pre-Prod Database
+→ Option 5: Test Production Database
+
+═══════════════════════════════════════════════════════════════════
+END OF QUICK REFERENCE - Last Updated: December 18, 2025
+═══════════════════════════════════════════════════════════════════
+

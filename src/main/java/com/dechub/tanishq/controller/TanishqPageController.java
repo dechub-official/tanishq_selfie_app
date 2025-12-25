@@ -39,7 +39,7 @@ public class TanishqPageController {
     }
     @PostMapping("/brideImage")
     public ResponseEntity<ResponseDataDTO> uploadFile(@RequestParam("file") MultipartFile file) {
-        return APIResponseBuilder.buildResponseFromDto(tanishqPageService.storeBrideImage(file));
+        return APIResponseBuilder.buildResponseFromDto(tanishqPageService.saveBrideImage(file));
     }
 
     @PostMapping("/brideDetails")
