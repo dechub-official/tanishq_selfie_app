@@ -53,9 +53,11 @@ public class GreetingController {
      */
     @GetMapping(value = "/{uniqueId}/qr", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> generateQrCode(@PathVariable String uniqueId) {
+        log.info("Received QR code generation request for greeting: {}", uniqueId);
+
         try {
             byte[] qrCode = greetingService.generateQrCode(uniqueId);
-            log.info("Generated QR code for greeting: {}", uniqueId);
+            log.info("Successfully generated QR code for greeting: {} (size: {} bytes)", uniqueId, qrCode.length);
             return ResponseEntity.ok()
                     .contentType(MediaType.IMAGE_PNG)
                     .body(qrCode);
@@ -63,7 +65,7 @@ public class GreetingController {
             log.error("Greeting not found: {}", uniqueId);
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
-            log.error("Failed to generate QR code for greeting: {}", uniqueId, e);
+            log.error("Failed to generate QR code for greeting: {} - Error: {}", uniqueId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

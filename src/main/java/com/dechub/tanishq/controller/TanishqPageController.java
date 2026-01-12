@@ -44,17 +44,16 @@ public class TanishqPageController {
 
     @PostMapping("/brideDetails")
     public ResponseEntity<byte[]> storeBrideDetails(
-            @RequestParam("brideType") String brideType,
-            @RequestParam("brideEvent") String brideEvent,
-            @RequestParam("brideName") String brideName,
-                @RequestParam("phone") String phone,
-            @RequestParam("date") String date,
-            @RequestParam("email") String email,
-            @RequestParam("zipCode") String zipCode,
-                @RequestParam("filepath") String filepath
-
+            @RequestParam(value = "brideType", required = false) String brideType,
+            @RequestParam(value = "brideEvent", required = false) String brideEvent,
+            @RequestParam(value = "brideName") String brideName,
+            @RequestParam(value = "phone") String phone,
+            @RequestParam(value = "date") String date,
+            @RequestParam(value = "email") String email,
+            @RequestParam(value = "zipCode", required = false) String zipCode,
+            @RequestParam(value = "filepath", required = false) String filepath
     ) {
-        return tanishqPageService.storeBrideDetails(brideType, brideEvent, brideName, phone, date, email,zipCode,filepath);
+        return tanishqPageService.storeBrideDetails(brideType, brideEvent, brideName, phone, date, email, zipCode, filepath);
     }
     
 }

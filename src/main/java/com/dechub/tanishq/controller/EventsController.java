@@ -4,6 +4,7 @@ import com.dechub.tanishq.config.StoreSummaryCache;
 import com.dechub.tanishq.dto.eventsDto.*;
 import com.dechub.tanishq.service.TanishqPageService;
 import com.dechub.tanishq.service.events.EventQrCodeService;
+import com.dechub.tanishq.service.storage.StorageService;
 import com.dechub.tanishq.util.APIResponseBuilder;
 import com.dechub.tanishq.util.ResponseDataDTO;
 import com.opencsv.CSVWriter;
@@ -49,7 +50,7 @@ public class EventsController {
     private EventQrCodeService eventQrCodeService;
 
     @Autowired
-    private com.dechub.tanishq.service.aws.S3Service s3Service;
+    private StorageService storageService;
 
     /**
      * Serve the events main page (Create Event)
@@ -258,8 +259,8 @@ public class EventsController {
             for (MultipartFile file : validFiles) {
                 CompletableFuture<String> future = CompletableFuture.supplyAsync(() -> {
                     try {
-                        // Upload to S3 and get URL
-                        return s3Service.uploadEventFile(file, eventId);
+                        // Upload using StorageService and get URL
+                        return storageService.uploadEventFile(file, eventId);
                     } catch (Exception e) {
                         log.error("Failed to upload file: {}", file.getOriginalFilename(), e);
                         return null;
@@ -277,10 +278,10 @@ public class EventsController {
 
             executor.shutdown();
 
-            // Get S3 folder URL for the event
-            String folderUrl = s3Service.getEventFolderUrl(eventId);
+            // Get storage folder URL for the event
+            String folderUrl = storageService.getEventFolderUrl(eventId);
 
-            // Update event with S3 folder link
+            // Update event with folder link
             try {
                 tanishqPageService.updateEventCompletedLink(eventId, folderUrl);
             } catch (Exception e) {

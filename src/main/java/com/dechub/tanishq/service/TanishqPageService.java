@@ -1228,50 +1228,187 @@ public class TanishqPageService {
      * Store bride details in database and generate checklist image
      */
     public ResponseEntity<byte[]> storeBrideDetails(String brideType, String brideEvent, String brideName, String phone, String date, String email, String zipCode, String filepath) {
+        log.info("Received bride details submission - Name: {}, Event: {}, Type: {}, FilePath: {}", brideName, brideEvent, brideType, filepath);
+
         try {
+            // Validate required fields
+            if (brideName == null || brideName.trim().isEmpty()) {
+                log.error("✗ brideName is required but was null or empty");
+                return ResponseEntity.badRequest().body("brideName is required".getBytes());
+            }
+            if (phone == null || phone.trim().isEmpty()) {
+                log.error("✗ phone is required but was null or empty");
+                return ResponseEntity.badRequest().body("phone is required".getBytes());
+            }
+            if (email == null || email.trim().isEmpty()) {
+                log.error("✗ email is required but was null or empty");
+                return ResponseEntity.badRequest().body("email is required".getBytes());
+            }
+            if (date == null || date.trim().isEmpty()) {
+                log.error("✗ date is required but was null or empty");
+                return ResponseEntity.badRequest().body("date is required".getBytes());
+            }
+
             // Save to database
             BrideDetails brideDetails = new BrideDetails();
-            brideDetails.setBrideType(brideType);
-            brideDetails.setBrideEvent(brideEvent);
-            brideDetails.setBrideName(brideName);
-            brideDetails.setPhone(phone);
+
+            // Set required fields with individual try-catch
+            try {
+                brideDetails.setBrideName(brideName.trim());
+                log.debug("✓ Set brideName: {}", brideName.trim());
+            } catch (Exception e) {
+                log.error("✗ Failed to set brideName", e);
+                throw new RuntimeException("Failed to set brideName: " + e.getMessage(), e);
+            }
+
+            try {
+                brideDetails.setPhone(phone.trim());
+                log.debug("✓ Set phone: {}", phone.trim());
+            } catch (Exception e) {
+                log.error("✗ Failed to set phone", e);
+                throw new RuntimeException("Failed to set phone: " + e.getMessage(), e);
+            }
+
+            try {
+                brideDetails.setEmail(email.trim());
+                log.debug("✓ Set email: {}", email.trim());
+            } catch (Exception e) {
+                log.error("✗ Failed to set email", e);
+                throw new RuntimeException("Failed to set email: " + e.getMessage(), e);
+            }
+
+            // Set optional fields with null checks
+            try {
+                if (brideType != null && !brideType.trim().isEmpty()) {
+                    brideDetails.setBrideType(brideType.trim());
+                    log.debug("✓ Set brideType: {}", brideType.trim());
+                } else {
+                    log.debug("⚠ brideType is null or empty, skipping");
+                }
+            } catch (Exception e) {
+                log.error("✗ Failed to set brideType", e);
+                // Don't throw, it's optional
+            }
+
+            try {
+                if (brideEvent != null && !brideEvent.trim().isEmpty()) {
+                    brideDetails.setBrideEvent(brideEvent.trim());
+                    log.debug("✓ Set brideEvent: {}", brideEvent.trim());
+                } else {
+                    log.debug("⚠ brideEvent is null or empty, skipping");
+                }
+            } catch (Exception e) {
+                log.error("✗ Failed to set brideEvent", e);
+                // Don't throw, it's optional
+            }
+
+            try {
+                if (zipCode != null && !zipCode.trim().isEmpty()) {
+                    brideDetails.setZipCode(zipCode.trim());
+                    log.debug("✓ Set zipCode: {}", zipCode.trim());
+                } else {
+                    log.debug("⚠ zipCode is null or empty, skipping");
+                }
+            } catch (Exception e) {
+                log.error("✗ Failed to set zipCode", e);
+                // Don't throw, it's optional
+            }
 
             // Parse date string to LocalDate
-            if (date != null && !date.trim().isEmpty()) {
-                try {
-                    brideDetails.setDate(LocalDate.parse(date));
-                } catch (Exception e) {
-                    log.warn("Could not parse date: {}, setting to null", date);
-                    brideDetails.setDate(null);
+            try {
+                if (date != null && !date.trim().isEmpty()) {
+                    LocalDate parsedDate = null;
+
+                    // Try multiple date formats
+                    DateTimeFormatter[] formatters = {
+                        DateTimeFormatter.ofPattern("dd-MM-yyyy"),  // 11-12-2025
+                        DateTimeFormatter.ofPattern("MM-dd-yyyy"),  // 12-11-2025
+                        DateTimeFormatter.ofPattern("yyyy-MM-dd"),  // 2025-12-11 (ISO)
+                        DateTimeFormatter.ISO_LOCAL_DATE           // ISO standard
+                    };
+
+                    for (DateTimeFormatter formatter : formatters) {
+                        try {
+                            parsedDate = LocalDate.parse(date.trim(), formatter);
+                            log.debug("✓ Parsed date '{}' using format", date);
+                            break;
+                        } catch (DateTimeParseException e) {
+                            // Try next format
+                        }
+                    }
+
+                    if (parsedDate != null) {
+                        brideDetails.setDate(parsedDate);
+                        log.debug("✓ Parsed and set wedding date: {}", parsedDate);
+                    } else {
+                        log.warn("⚠ Could not parse date with any known format: {}", date);
+                        brideDetails.setDate(null);
+                    }
+                } else {
+                    log.warn("⚠ Date is null or empty");
                 }
-            }
-            brideDetails.setEmail(email);
-            if (zipCode != null && !zipCode.trim().isEmpty()) {
-                brideDetails.setZipCode(zipCode);
+            } catch (Exception e) {
+                log.warn("⚠ Could not parse date: {}, setting to null - Error: {}", date, e.getMessage());
+                brideDetails.setDate(null);
             }
 
-            brideDetailsRepository.save(brideDetails);
-            log.info("Bride details saved successfully for: {}", brideName);
+            // Save to database
+            try {
+                log.info("Attempting to save BrideDetails to database...");
+                brideDetailsRepository.save(brideDetails);
+                log.info("✓ Bride details saved successfully to database for: {}", brideName);
+            } catch (Exception dbException) {
+                log.error("✗ DATABASE SAVE FAILED", dbException);
+                log.error("  Error type: {}", dbException.getClass().getName());
+                log.error("  Error message: {}", dbException.getMessage());
+                if (dbException.getCause() != null) {
+                    log.error("  Root cause: {}", dbException.getCause().getMessage());
+                }
+                throw new RuntimeException("Database save failed: " + dbException.getMessage(), dbException);
+            }
 
             // Generate and return the checklist image
             if (filepath != null && !filepath.trim().isEmpty()) {
+                log.info("Attempting to generate checklist image from file: {}", filepath);
+
                 try {
                     File imageFile = new File(filepath);
+
+                    // Check if file exists
                     if (!imageFile.exists()) {
-                        log.warn("Checklist image file not found: {}", filepath);
-                        return ResponseEntity.notFound().build();
+                        log.error("✗ Checklist image file NOT FOUND at path: {}", filepath);
+                        log.error("  File absolute path: {}", imageFile.getAbsolutePath());
+                        log.error("  Parent directory exists: {}", imageFile.getParentFile() != null && imageFile.getParentFile().exists());
+
+                        // Return success status for database save, but no image
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.add("X-Error-Message", "Image file not found");
+                        return ResponseEntity.ok()
+                            .headers(headers)
+                            .body(new byte[0]);
                     }
+
+                    log.info("✓ Image file found, size: {} bytes", imageFile.length());
 
                     // Read the original checklist image
                     BufferedImage originalImage = ImageIO.read(imageFile);
 
+                    if (originalImage == null) {
+                        log.error("✗ Failed to read image - ImageIO.read returned null for: {}", filepath);
+                        return ResponseEntity.ok().body(new byte[0]);
+                    }
+
+                    log.info("✓ Image loaded successfully - Dimensions: {}x{}", originalImage.getWidth(), originalImage.getHeight());
+
                     // Add text overlay with bride details
                     BufferedImage finalImage = addBrideDetailsToImage(originalImage, brideDetails);
+                    log.debug("✓ Text overlay added to image");
 
                     // Convert to byte array
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     ImageIO.write(finalImage, "png", baos);
                     byte[] imageBytes = baos.toByteArray();
+                    log.info("✓ Image converted to bytes - Final size: {} bytes", imageBytes.length);
 
                     // Set response headers for download
                     HttpHeaders headers = new HttpHeaders();
@@ -1282,24 +1419,32 @@ public class TanishqPageService {
                             .build()
                     );
 
-                    log.info("Generated checklist image for: {}", brideName);
+                    log.info("✓ Checklist image generated successfully for: {}", brideName);
                     return ResponseEntity.ok()
                         .headers(headers)
                         .body(imageBytes);
 
+                } catch (IOException ioEx) {
+                    log.error("✗ IO Error generating checklist image: {}", ioEx.getMessage(), ioEx);
+                    log.error("  File path: {}", filepath);
+                    // Return success for DB save, empty image
+                    return ResponseEntity.ok().body(new byte[0]);
                 } catch (Exception e) {
-                    log.error("Error generating checklist image: {}", e.getMessage(), e);
-                    // If image generation fails, return empty response with success status
-                    return ResponseEntity.ok().build();
+                    log.error("✗ Unexpected error generating checklist image: {}", e.getMessage(), e);
+                    // Return success for DB save, empty image
+                    return ResponseEntity.ok().body(new byte[0]);
                 }
             } else {
-                log.warn("No filepath provided for checklist image");
-                return ResponseEntity.ok().build();
+                log.warn("⚠ No filepath provided for checklist image - returning success without image");
+                return ResponseEntity.ok().body(new byte[0]);
             }
 
         } catch (Exception e) {
-            log.error("Error saving bride details", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            log.error("✗ CRITICAL ERROR saving bride details or generating image", e);
+            log.error("  Bride Name: {}, Event: {}, Type: {}", brideName, brideEvent, brideType);
+            log.error("  Stack trace: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(("Error: " + e.getMessage()).getBytes());
         }
     }
 

@@ -4,6 +4,7 @@ com\dechub\tanishq\repository\StoreRepository.class
 com\dechub\tanishq\repository\UserRepository.class
 com\dechub\tanishq\config\ServiceConfig.class
 com\dechub\tanishq\controller\EventsController.class
+com\dechub\tanishq\service\storage\AwsS3StorageService.class
 com\dechub\tanishq\mail\EmailService.class
 com\dechub\tanishq\repository\GreetingRepository.class
 com\dechub\tanishq\entity\User.class
@@ -49,6 +50,7 @@ com\dechub\tanishq\entity\Attendee.class
 com\dechub\tanishq\dto\eventsDto\EventsLoginResponseDTO.class
 com\dechub\tanishq\entity\BrideDetails.class
 com\dechub\tanishq\dto\eventsDto\StoreSummaryWrapperDTO.class
+com\dechub\tanishq\service\storage\StorageService.class
 com\dechub\tanishq\entity\Event.class
 com\dechub\tanishq\repository\PasswordHistoryRepository.class
 com\dechub\tanishq\dto\rivaahDto\RivaahImagesDTO.class
@@ -75,6 +77,7 @@ com\dechub\tanishq\controller\TanishqPageController.class
 com\dechub\tanishq\service\events\EventQrCodeServiceImpl.class
 com\dechub\tanishq\service\events\EventQrCodeService.class
 com\dechub\tanishq\config\WebMvcConfig.class
+com\dechub\tanishq\service\storage\LocalFileStorageService.class
 com\dechub\tanishq\dto\BrideDetailsDTO.class
 com\dechub\tanishq\dto\eventsDto\storeCodeDataDTO.class
 com\dechub\tanishq\dto\eventsDto\ApiResponse.class

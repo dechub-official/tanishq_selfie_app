@@ -15,7 +15,11 @@ public class Greeting {
     private String greetingText; // like "name"
     private String phone;
     private String message;
+
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String qrCodeData;
+
     private String driveFileId;
     private LocalDateTime createdAt;
     private Boolean uploaded;

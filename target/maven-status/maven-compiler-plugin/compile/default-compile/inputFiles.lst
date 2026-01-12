@@ -1,4 +1,5 @@
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\eventsDto\storeCodeDataDTO.java
+C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\service\storage\AwsS3StorageService.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\controller\TanishqPageController.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\entity\PasswordHistory.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\service\aws\S3Service.java
@@ -6,6 +7,7 @@ C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\de
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\config\WebConfig.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\eventsDto\EventsLoginResponseDTO.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\eventsDto\CompletedEventsResponseDTO.java
+C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\service\storage\LocalFileStorageService.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\entity\AbmLogin.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\service\qr\QrCodeService.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\entity\ProductDetail.java
@@ -18,6 +20,7 @@ C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\de
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\eventsDto\AttendeesDetailDTO.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\UserDetailResponseDTO.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\service\events\EventQrCodeServiceImpl.java
+C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\service\storage\StorageService.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\repository\RbmLoginRepository.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\entity\User.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\entity\Greeting.java
