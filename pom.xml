@@ -13,7 +13,7 @@
     </parent>
 
     <groupId>com.dechub</groupId>
-    <artifactId>tanishq-preprod-07-01-2026-2</artifactId>
+    <artifactId>tanishq-preprod-17-01-2026-4</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>tanishq</name>
     <description>project for store tanishq</description>

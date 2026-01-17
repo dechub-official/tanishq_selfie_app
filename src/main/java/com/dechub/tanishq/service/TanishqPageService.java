@@ -210,9 +210,10 @@ public class TanishqPageService {
 
         if (correctPassword == null) {
             // If not in cache, try to find user by username
-            Optional<User> user = userRepository.findByUsername(code.toUpperCase());
-            if (user.isPresent()) {
-                correctPassword = user.get().getPassword();
+            List<User> users = userRepository.findByUsername(code.toUpperCase());
+            if (users != null && !users.isEmpty()) {
+                // Take first user if multiple exist (duplicates case)
+                correctPassword = users.get(0).getPassword();
                 // Update cache
                 passwordCache.put(code.toUpperCase(), correctPassword);
             }
@@ -1000,7 +1001,6 @@ public class TanishqPageService {
         }
     }
 
-    @Transactional
     public ResponseDataDTO changePasswordForEventManager(String storeCode, String oldPassword, String newPassword) {
         ResponseDataDTO dto = new ResponseDataDTO();
         dto.setStatus(false);
@@ -1020,46 +1020,68 @@ public class TanishqPageService {
                 return dto;
             }
             
-            // Find user by username (storeCode)
-            Optional<User> userOptional = userRepository.findByUsername(storeCode);
-            if (!userOptional.isPresent()) {
+            // Find users by username only (not by password - that's unsafe)
+            List<User> users = userRepository.findByUsername(storeCode);
+
+            if (users == null || users.isEmpty()) {
                 dto.setMessage("User not found with store code: " + storeCode);
                 return dto;
             }
-            
-            User user = userOptional.get();
-            
-            // Verify old password
-            if (!user.getPassword().equals(oldPassword)) {
+
+            // Handle multiple users with same username (duplicates case)
+            User matchedUser = null;
+            for (User user : users) {
+                // Validate password in Java (not in DB query)
+                if (user.getPassword() != null && user.getPassword().equals(oldPassword)) {
+                    matchedUser = user;
+                    break;
+                }
+            }
+
+            if (matchedUser == null) {
                 dto.setMessage("Old password is incorrect");
                 return dto;
             }
             
             // Update password in database
-            user.setPassword(newPassword);
-            userRepository.save(user);
-            
+            matchedUser.setPassword(newPassword);
+            userRepository.save(matchedUser);
+
             // Update password cache (use uppercase to match login lookup)
-            passwordCache.put(storeCode.toUpperCase(), newPassword);
-            
-            // Delete existing password history for this store (since btqCode is now primary key)
-            passwordHistoryRepository.deleteById(storeCode);
-            
-            // Save new password change history (overwrites previous)
-            PasswordHistory history = new PasswordHistory(
-                storeCode,
-                oldPassword,
-                newPassword,
-                LocalDateTime.now()
-            );
-            passwordHistoryRepository.save(history);
-            
+            try {
+                passwordCache.put(storeCode.toUpperCase(), newPassword);
+            } catch (Exception e) {
+                System.err.println("Warning: Failed to update password cache: " + e.getMessage());
+            }
+
+            // Delete existing password history for this store using custom method
+            try {
+                passwordHistoryRepository.deleteByBtqCode(storeCode);
+            } catch (Exception e) {
+                System.err.println("Warning: Failed to delete old password history: " + e.getMessage());
+            }
+
+            // Save new password change history
+            try {
+                PasswordHistory history = new PasswordHistory(
+                    storeCode,
+                    oldPassword,
+                    newPassword,
+                    LocalDateTime.now()
+                );
+                passwordHistoryRepository.save(history);
+            } catch (Exception e) {
+                System.err.println("Warning: Failed to save password history: " + e.getMessage());
+                // Don't fail the password change just because history save failed
+            }
+
             dto.setStatus(true);
             dto.setMessage("Password changed successfully");
             
         } catch (Exception e) {
             dto.setStatus(false);
             dto.setMessage("Error changing password: " + e.getMessage());
+            e.printStackTrace(); // Log full stack trace for debugging
         }
         
         return dto;
