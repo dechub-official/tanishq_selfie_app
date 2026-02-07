@@ -522,18 +522,23 @@ public class EventsController {
             @RequestParam(required = false) String endDate,
             HttpServletResponse response
     ) throws Exception {
+        log.info("Downloading events for storeCode: {}, startDate: {}, endDate: {}", storeCode, startDate, endDate);
+
         List<String> storeCodes = new ArrayList<>();
         storeCodes.add(storeCode);
         List<Map<String, Object>> allEvents = tanishqPageService.getOnlyEventsForStores(storeCodes);
+        log.info("Found {} total events for store {}", allEvents.size(), storeCode);
+
         List<Map<String, Object>> filteredEvents;
         if (startDate != null && endDate != null && !startDate.isEmpty() && !endDate.isEmpty()) {
             filteredEvents = tanishqPageService.filterEventsByStartDate(allEvents, startDate, endDate);
+            log.info("After date filtering: {} events remain", filteredEvents.size());
         } else {
             filteredEvents = allEvents;
         }
 
         response.setContentType("text/csv");
-        response.setHeader("Content-Disposition", "attachment; filename=abm_events.csv");
+        response.setHeader("Content-Disposition", "attachment; filename=store_events_" + storeCode + ".csv");
 
         CSVWriter writer = new CSVWriter(new OutputStreamWriter(response.getOutputStream()));
 
@@ -555,13 +560,22 @@ public class EventsController {
 
         writer.writeNext(displayHeaders.toArray(new String[0]));
 
+        log.info("Writing {} rows to CSV for store {}", filteredEvents.size(), storeCode);
+        if (!filteredEvents.isEmpty()) {
+            log.debug("Sample event data (first row keys): {}", filteredEvents.get(0).keySet());
+        }
+
         for (Map<String, Object> row : filteredEvents) {
             List<String> rowData = dbFields.stream()
-                    .map(field -> row.getOrDefault(field, "").toString())
+                    .map(field -> {
+                        Object value = row.get(field);
+                        return value != null ? value.toString() : "";
+                    })
                     .collect(Collectors.toList());
             writer.writeNext(rowData.toArray(new String[0]));
         }
 
+        log.info("CSV export completed successfully for store {}", storeCode);
         writer.flush();
         writer.close();
     }

@@ -141,6 +141,14 @@ public class LocalFileStorageService implements StorageService {
         return Files.exists(baseDir) && Files.isDirectory(baseDir);
     }
 
+    @Override
+    public String generatePresignedUrl(String s3Url, int expirationMinutes) {
+        // Local files are publicly accessible, so just return the URL as-is
+        // No pre-signing needed for local development
+        log.debug("Local storage does not require pre-signed URLs, returning original URL");
+        return s3Url;
+    }
+
     private String getFileExtension(String filename) {
         if (filename == null || filename.isEmpty()) {
             return "";

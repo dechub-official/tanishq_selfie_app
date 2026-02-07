@@ -21,6 +21,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .allowedHeaders("*")
                 .allowedOrigins(allowedOrigins)
                 .allowedMethods("HEAD", "OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE")
+                .allowCredentials(false)  // Set to false when using allowedOrigins("*")
+                .exposedHeaders("Content-Type", "X-Content-Type-Options", "X-Frame-Options")
                 .maxAge(MAX_AGE_SECS);
     }
 

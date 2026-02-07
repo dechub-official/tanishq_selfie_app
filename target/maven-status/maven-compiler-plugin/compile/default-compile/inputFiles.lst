@@ -74,8 +74,10 @@ C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\de
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\entity\RivaahUser.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\service\excel\ExcelExportService.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\repository\UserRepository.java
+C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\service\whatsapp\KaleyraWhatsAppService.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\eventsDto\QrResponseDTO.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\repository\BrideDetailsRepository.java
+C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\util\PasswordHashGenerator.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\repository\InviteeRepository.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\service\GreetingService.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\repository\UserDetailsRepository.java
@@ -86,6 +88,7 @@ C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\de
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\eventsDto\StoreSummaryWrapperDTO.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\eventsDto\CompletedEventsDataDTO.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\entity\RbmLogin.java
+C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\service\whatsapp\MSG91WhatsAppService.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\dto\eventsDto\EventsUser.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\repository\CeeLoginRepository.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app\src\main\java\com\dechub\tanishq\service\TanishqPageService.java

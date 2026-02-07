@@ -3,6 +3,7 @@ package com.dechub.tanishq.service.storage;
 import com.amazonaws.auth.InstanceProfileCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.PutObjectResult;
@@ -16,9 +17,11 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -156,6 +159,75 @@ public class AwsS3StorageService implements StorageService {
         } catch (Exception e) {
             log.error("S3 availability check failed", e);
             return false;
+        }
+    }
+
+    @Override
+    public String generatePresignedUrl(String s3Url, int expirationMinutes) {
+        try {
+            // Extract S3 key from URL
+            String s3Key = extractS3KeyFromUrl(s3Url);
+
+            if (s3Key == null) {
+                log.error("Failed to extract S3 key from URL: {}", s3Url);
+                return s3Url; // Return original URL as fallback
+            }
+
+            // Set expiration time
+            Date expiration = new Date();
+            long expTimeMillis = expiration.getTime();
+            expTimeMillis += (long) expirationMinutes * 60 * 1000;
+            expiration.setTime(expTimeMillis);
+
+            // Generate presigned URL request
+            GeneratePresignedUrlRequest generatePresignedUrlRequest =
+                new GeneratePresignedUrlRequest(bucketName, s3Key)
+                    .withMethod(com.amazonaws.HttpMethod.GET)
+                    .withExpiration(expiration);
+
+            URL url = s3Client.generatePresignedUrl(generatePresignedUrlRequest);
+            String presignedUrl = url.toString();
+
+            log.info("Generated pre-signed URL for {} (expires in {} minutes)", s3Key, expirationMinutes);
+            return presignedUrl;
+
+        } catch (Exception e) {
+            log.error("Failed to generate pre-signed URL for: {}", s3Url, e);
+            return s3Url; // Return original URL as fallback
+        }
+    }
+
+    /**
+     * Extract S3 key from full S3 URL
+     * Example: https://bucket-name.s3.region.amazonaws.com/greetings/ID/video.mp4 -> greetings/ID/video.mp4
+     */
+    private String extractS3KeyFromUrl(String s3Url) {
+        if (s3Url == null || s3Url.isEmpty()) {
+            return null;
+        }
+
+        try {
+            // Handle format: https://bucket-name.s3.region.amazonaws.com/key/path
+            if (s3Url.contains(".amazonaws.com/")) {
+                String[] parts = s3Url.split(".amazonaws.com/", 2);
+                if (parts.length == 2) {
+                    return parts[1];
+                }
+            }
+
+            // Handle format: s3://bucket-name/key/path
+            if (s3Url.startsWith("s3://")) {
+                String withoutProtocol = s3Url.substring(5); // Remove "s3://"
+                int firstSlash = withoutProtocol.indexOf('/');
+                if (firstSlash > 0) {
+                    return withoutProtocol.substring(firstSlash + 1);
+                }
+            }
+
+            return null;
+        } catch (Exception e) {
+            log.error("Error extracting S3 key from URL: {}", s3Url, e);
+            return null;
         }
     }
 

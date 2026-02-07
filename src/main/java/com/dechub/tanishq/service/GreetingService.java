@@ -77,12 +77,14 @@ public class GreetingService {
         Greeting greeting = optGreeting.get();
 
         try {
-            // Generate full URL for QR code so scanners can directly open it
-            // Format: https://celebrationsite-preprod.tanishq.co.in/qr?id=GREETING_XXX
-            // This allows QR scanner apps to automatically navigate to the upload page
-            String qrUrl = greetingBaseUrl.replace("/greetings/", "/qr?id=") + uniqueId;
+            // Generate full URL for QR code that points to the React app
+            // Direct link to create-video page with qrId parameter (NOT id!)
+            // The frontend looks for 'qrId' parameter, NOT 'id'
+            // When scanned directly with phone camera, this ensures the qrId is captured
+            // Format: https://celebrations.tanishq.co.in/qr/create-video?qrId=GREETING_XXX&autoStart=true
+            String qrUrl = "https://celebrations.tanishq.co.in/qr/create-video?qrId=" + uniqueId + "&autoStart=true";
 
-            log.info("Generating QR code for URL: {}", qrUrl);
+            log.info("Generating QR code for greeting URL: {}", qrUrl);
 
             // Generate QR code with full URL
             byte[] qrCodeImage = qrCodeService.generateQrCodeImage(qrUrl, 300, 300);
@@ -118,6 +120,9 @@ public class GreetingService {
      * @return S3 URL of uploaded video
      */
     public String uploadVideo(String uniqueId, MultipartFile videoFile, String name, String message) throws IOException {
+        log.info("uploadVideo called - uniqueId: {}, name: {}, message: {}, videoFile size: {}",
+                 uniqueId, name, message, videoFile != null ? videoFile.getSize() : 0);
+
         // Find greeting
         Optional<Greeting> optGreeting = greetingRepository.findByUniqueId(uniqueId);
         if (!optGreeting.isPresent()) {
@@ -129,38 +134,104 @@ public class GreetingService {
 
         // Validate video file
         if (videoFile == null || videoFile.isEmpty()) {
+            log.error("Video file is null or empty");
             throw new IllegalArgumentException("Video file is required");
         }
 
         if (videoFile.getSize() > MAX_VIDEO_SIZE) {
+            log.error("Video file size {} exceeds limit {}", videoFile.getSize(), MAX_VIDEO_SIZE);
             throw new IllegalArgumentException("Video file too large. Maximum size is 100MB");
         }
 
         // Validate content type
         String contentType = videoFile.getContentType();
         if (contentType == null || !isVideoContentType(contentType)) {
+            log.warn("Invalid content type: {}", contentType);
             throw new IllegalArgumentException("Invalid file type. Only video files are allowed");
         }
+
+        // Sanitize and validate text fields
+        String sanitizedName = sanitizeText(name, "Name");
+        String sanitizedMessage = sanitizeText(message, "Message");
+
+        log.info("Sanitized inputs - name: {}, message: {}", sanitizedName, sanitizedMessage);
 
         try {
             // Upload using StorageService (works with both local and AWS S3)
             String videoUrl = storageService.uploadGreetingVideo(videoFile, uniqueId);
+            log.info("Video uploaded successfully to: {}", videoUrl);
 
             // Update greeting record
-            greeting.setGreetingText(name);
-            greeting.setMessage(message);
+            greeting.setGreetingText(sanitizedName);
+            greeting.setMessage(sanitizedMessage);
             greeting.setDriveFileId(videoUrl); // Store URL in drive_file_id field
             greeting.setUploaded(true);
 
             greetingRepository.save(greeting);
 
-            log.info("Successfully uploaded video for greeting: {} -> {}", uniqueId, videoUrl);
+            log.info("Successfully uploaded video and saved greeting: {} -> {}", uniqueId, videoUrl);
             return videoUrl;
 
         } catch (Exception e) {
             log.error("Failed to upload video for greeting: {}", uniqueId, e);
             throw new IOException("Failed to upload video: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Sanitize text input to handle encoding issues from mobile browsers
+     * @param text Input text
+     * @param fieldName Field name for logging
+     * @return Sanitized text
+     */
+    private String sanitizeText(String text, String fieldName) {
+        if (text == null || text.trim().isEmpty()) {
+            log.warn("{} is null or empty", fieldName);
+            return "";
+        }
+
+        // Trim whitespace
+        text = text.trim();
+
+        // Convert to proper UTF-8 encoding if needed
+        try {
+            // Detect and fix encoding issues
+            byte[] bytes = text.getBytes("ISO-8859-1");
+            text = new String(bytes, "UTF-8");
+        } catch (Exception e) {
+            log.debug("Text encoding conversion not needed for {}", fieldName);
+        }
+
+        // Remove any control characters except newlines and tabs
+        text = text.replaceAll("[\\p{Cntrl}&&[^\n\t\r]]", "");
+
+        // Normalize whitespace (convert multiple spaces to single space)
+        text = text.replaceAll("\\s+", " ");
+
+        // Trim again after sanitization
+        text = text.trim();
+
+        // Validate length
+        if (fieldName.equals("Name")) {
+            if (text.length() < 2) {
+                throw new IllegalArgumentException("Name must be at least 2 characters");
+            }
+            if (text.length() > 100) {
+                text = text.substring(0, 100);
+                log.warn("Name truncated to 100 characters");
+            }
+        } else if (fieldName.equals("Message")) {
+            if (text.length() < 10) {
+                throw new IllegalArgumentException("Message must be at least 10 characters");
+            }
+            if (text.length() > 500) {
+                text = text.substring(0, 500);
+                log.warn("Message truncated to 500 characters");
+            }
+        }
+
+        log.debug("Sanitized {}: {}", fieldName, text);
+        return text;
     }
 
     /**
@@ -238,6 +309,35 @@ public class GreetingService {
     public boolean hasVideoUploaded(String uniqueId) {
         Optional<Greeting> optGreeting = greetingRepository.findByUniqueId(uniqueId);
         return optGreeting.isPresent() && optGreeting.get().getUploaded();
+    }
+
+    /**
+     * Generate a fresh pre-signed URL for video playback
+     * This solves the 403 Forbidden issue when users rescan QR codes
+     *
+     * @param s3Url The S3 URL stored in database
+     * @return Fresh pre-signed URL valid for 10 minutes
+     */
+    public String generateFreshVideoUrl(String s3Url) {
+        if (s3Url == null || s3Url.isEmpty()) {
+            log.warn("Attempted to generate pre-signed URL for null/empty S3 URL");
+            return null;
+        }
+
+        try {
+            // Generate pre-signed URL with 10-minute expiration
+            // This allows users to:
+            // - Watch the full video
+            // - Replay it within the session
+            // But prevents long-term URL sharing
+            String presignedUrl = storageService.generatePresignedUrl(s3Url, 10);
+            log.info("Generated fresh pre-signed URL (expires in 10 minutes)");
+            return presignedUrl;
+        } catch (Exception e) {
+            log.error("Failed to generate pre-signed URL for: {}", s3Url, e);
+            // Fallback to original URL (will fail for private buckets but prevents crashes)
+            return s3Url;
+        }
     }
 }
 

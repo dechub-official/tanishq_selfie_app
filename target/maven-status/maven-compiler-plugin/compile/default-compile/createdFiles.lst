@@ -43,6 +43,7 @@ com\dechub\tanishq\dto\UserDetailsDTO.class
 com\dechub\tanishq\entity\AbmLogin.class
 com\dechub\tanishq\service\qr\QrCodeService.class
 com\dechub\tanishq\dto\eventsDto\LoginResponseDTO.class
+com\dechub\tanishq\controller\GreetingController$VideoUrlResponse.class
 com\dechub\tanishq\dto\eventsDto\CompletedEventsResponseDTO.class
 com\dechub\tanishq\config\SecurityConfig.class
 com\dechub\tanishq\repository\EventRepository.class
@@ -61,6 +62,7 @@ com\dechub\tanishq\TanishqSelfieApplication.class
 com\dechub\tanishq\entity\Store.class
 com\dechub\tanishq\service\excel\ExcelProcessingService.class
 com\dechub\tanishq\controller\GreetingController.class
+com\dechub\tanishq\controller\GreetingController$ErrorResponse.class
 com\dechub\tanishq\dto\BrideDetailsResponseDTO.class
 com\dechub\tanishq\util\ResponseDataDTO.class
 com\dechub\tanishq\config\StoreSummaryCache.class

@@ -389,6 +389,28 @@ public class TanishqPageService {
                 } catch (Exception e) {
                     log.error("Failed to process invitees from Excel for event " + eventId, e);
                 }
+            } else if (eventsDetailDTO.getSingleCustomer() &&
+                       eventsDetailDTO.getName() != null && !eventsDetailDTO.getName().trim().isEmpty() &&
+                       eventsDetailDTO.getContact() != null && !eventsDetailDTO.getContact().trim().isEmpty()) {
+                // Handle single customer invitee
+                try {
+                    log.info("Processing single customer invitee - Name: {}, Contact: {}",
+                             eventsDetailDTO.getName(), eventsDetailDTO.getContact());
+
+                    Invitee invitee = new Invitee();
+                    invitee.setEvent(event);
+                    invitee.setName(eventsDetailDTO.getName().trim());
+                    invitee.setContact(eventsDetailDTO.getContact().trim());
+                    invitee.setCreatedAt(LocalDateTime.now());
+                    inviteeRepository.save(invitee);
+
+                    // Update event invitee count to 1
+                    event.setInvitees(1);
+                    eventRepository.save(event);
+                    log.info("Successfully saved single customer invitee for event {}", eventId);
+                } catch (Exception e) {
+                    log.error("Failed to save single customer invitee for event " + eventId, e);
+                }
             }
 
             // Generate QR code using dedicated Event QR Code Service
@@ -654,15 +676,17 @@ public class TanishqPageService {
      * Get store codes by region using JPA relationships
      */
     /**
-     * Get invitees for an event from database
+     * Get attendees for an event from database
      */
     public List<?> getInvitedMember(String eventId) {
         try {
-            List<Invitee> invitees = inviteeRepository.findByEventId(eventId);
-            return invitees.stream().map(invitee -> {
+            List<Attendee> attendees = attendeeRepository.findByEventId(eventId);
+            return attendees.stream().map(attendee -> {
                 Map<String, Object> map = new HashMap<>();
-                map.put("name", invitee.getName());
-                map.put("contact", invitee.getContact());
+                map.put("name", attendee.getName());
+                map.put("phone", attendee.getPhone());
+//                map.put("like", attendee.getLike());
+                map.put("firstTimeAtTanishq", attendee.getFirstTimeAtTanishq());
                 return map;
             }).collect(Collectors.toList());
         } catch (Exception e) {

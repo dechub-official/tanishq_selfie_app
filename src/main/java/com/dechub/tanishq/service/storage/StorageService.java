@@ -55,5 +55,13 @@ public interface StorageService {
      * @return true if available, false otherwise
      */
     boolean isAvailable();
+
+    /**
+     * Generate a pre-signed URL for accessing a greeting video
+     * @param s3Url The S3 URL of the video
+     * @param expirationMinutes Expiration time in minutes
+     * @return Pre-signed URL for temporary access
+     */
+    String generatePresignedUrl(String s3Url, int expirationMinutes);
 }
 
