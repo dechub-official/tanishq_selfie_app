@@ -333,8 +333,13 @@ public class EventsController {
 
 
     @PostMapping("/changePassword")
-    private ResponseDataDTO changePassword(@RequestParam String storeCode,@RequestParam String oldPassword,@RequestParam String newPassword){
-        return tanishqPageService.changePasswordForEventManager(storeCode,oldPassword,newPassword);
+    public ResponseDataDTO changePassword(@RequestParam String storeCode,@RequestParam String oldPassword,@RequestParam String newPassword,@RequestParam String confirmPassword){
+        return tanishqPageService.changePasswordForEventManager(storeCode,oldPassword,newPassword,confirmPassword);
+    }
+
+    @GetMapping("/getPasswordHint")
+    public ResponseDataDTO getPasswordHint(@RequestParam String storeCode){
+        return tanishqPageService.getPasswordHintForStore(storeCode);
     }
 
     @PostMapping("/abm_login")

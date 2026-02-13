@@ -1025,7 +1025,7 @@ public class TanishqPageService {
         }
     }
 
-    public ResponseDataDTO changePasswordForEventManager(String storeCode, String oldPassword, String newPassword) {
+    public ResponseDataDTO changePasswordForEventManager(String storeCode, String oldPassword, String newPassword, String confirmPassword) {
         ResponseDataDTO dto = new ResponseDataDTO();
         dto.setStatus(false);
         
@@ -1043,7 +1043,15 @@ public class TanishqPageService {
                 dto.setMessage("New password is required");
                 return dto;
             }
-            
+            if (confirmPassword == null || confirmPassword.trim().isEmpty()) {
+                dto.setMessage("Confirm password is required");
+                return dto;
+            }
+            if (!newPassword.equals(confirmPassword)) {
+                dto.setMessage("New password and confirm password do not match");
+                return dto;
+            }
+
             // Find users by username only (not by password - that's unsafe)
             List<User> users = userRepository.findByUsername(storeCode);
 
@@ -1127,7 +1135,7 @@ public class TanishqPageService {
     }
 
     public List<Map<String, Object>> filterEventsByStartDate(List<Map<String, Object>> events, String startDateStr, String endDateStr) {
-        if (startDateStr == null || startDateStr.trim().isEmpty() || 
+        if (startDateStr == null || startDateStr.trim().isEmpty() ||
             endDateStr == null || endDateStr.trim().isEmpty()) {
             return events;
         }
@@ -1144,7 +1152,7 @@ public class TanishqPageService {
                     try {
                         String startDateValue = startDateObj.toString();
                         LocalDate eventDate = LocalDate.parse(startDateValue, formatter);
-                        
+
                         if (!eventDate.isBefore(startDate) && !eventDate.isAfter(endDate)) {
                             filtered.add(event);
                         }
@@ -1560,6 +1568,69 @@ public class TanishqPageService {
         }
     }
 
+
     // Keep existing methods that work (image processing, etc.)
     // ... (keeping existing helper methods)
+    public ResponseDataDTO getPasswordHintForStore(String storeCode) {
+        ResponseDataDTO dto = new ResponseDataDTO();
+        dto.setStatus(false);
+
+        try {
+            if (storeCode == null || storeCode.trim().isEmpty()) {
+                dto.setMessage("Store code is required");
+                return dto;
+            }
+
+            List<User> users = userRepository.findByUsername(storeCode);
+
+            if (users == null || users.isEmpty()) {
+                dto.setMessage("User not found with store code: " + storeCode);
+                return dto;
+            }
+
+            // Get the first user's password
+            User user = users.get(0);
+            String password = user.getPassword();
+
+            // Mask the password - show first 2 and last 2 characters, hide middle with *
+            String maskedPassword = maskPassword(password);
+
+            dto.setStatus(true);
+            dto.setMessage("Password hint retrieved successfully");
+            dto.setResult(maskedPassword); // Returns masked password as hint
+
+        } catch (Exception e) {
+            dto.setMessage("Error fetching password: " + e.getMessage());
+        }
+
+        return dto;
+    }
+
+    /**
+     * Masks a password by showing first 2 and last 2 characters, hiding middle with asterisks.
+     * Example: "Tanishq@123" becomes "Ta*******23"
+     * For passwords with 4 or fewer characters, shows first and last only.
+     */
+    private String maskPassword(String password) {
+        if (password == null || password.isEmpty()) {
+            return "";
+        }
+
+        int length = password.length();
+
+        if (length <= 4) {
+            // For very short passwords, show first and last character only
+            if (length <= 2) {
+                return password.charAt(0) + "*".repeat(Math.max(0, length - 1));
+            }
+            return password.charAt(0) + "*".repeat(length - 2) + password.charAt(length - 1);
+        }
+
+        // Show first 2 and last 2 characters, mask the middle
+        String firstTwo = password.substring(0, 2);
+        String lastTwo = password.substring(length - 2);
+        String masked = "*".repeat(length - 4);
+
+        return firstTwo + masked + lastTwo;
+    }
 }

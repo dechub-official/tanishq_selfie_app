@@ -1,859 +1,1533 @@
 ﻿<!doctype html>
-
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta
-      name="viewport"
-      content="width=device-width, minimum-scale=1.0, initial-scale=1, shrink-to-fit=no"
-    />
-    <link
-      rel="shortcut icon"
-      href="./globalAssets/images/favicon.ico"
-      type="image/x-icon"
-    />
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, shrink-to-fit=no" />
+    <link rel="shortcut icon" href="./globalAssets/images/favicon.ico" type="image/x-icon" />
     <title>Celebrate</title>
-
-    <link rel="stylesheet" href="./globalAssets/css/bootstrap.min.css" type="text/css"/>
-    <link rel="stylesheet" href="./globalAssets/css/swiper.min.css" type="text/css"/>
-    <link rel="stylesheet" href="./globalAssets/css/style.css" type="text/css"/>
+    <link rel="stylesheet" href="./globalAssets/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="./globalAssets/css/swiper.min.css" type="text/css" />
+    <link rel="stylesheet" href="./globalAssets/css/style.css" type="text/css" />
     <style>
-      :root {
-        --brand: #802527;
-      }
-      .gradient__title {
-        background: var(--brand);
-        background-image: -webkit-linear-gradient(to right, #802527, #641618);
-        background-image: linear-gradient(to right, #802527, #641618);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
-      .fs-18 {
-        font-size: 1.125rem;
-      }
-      .scroll__btn {
-        border: 2px solid #832729;
-        background-color: rgba(255, 244, 244, 0.44);
-        bottom: -3.5rem;
-      }
-      .scroll__btn svg {
-        animation: jumpInfinite 1.5s infinite;
-        position: relative;
-      }
-      @keyframes jumpInfinite {
-        0% {
-          top: 0;
+        :root {
+            --brand: #802527;
         }
-        50% {
-          top: 0.5rem;
-        }
-        100% {
-          top: 0;
-        }
-      }
 
-      @media (min-width: 768px) {
-        .position-absolute-md {
-          position: absolute;
+        body {
+            margin: 0;
+            background-color: #EDE7E5;
+            padding-top: 50px;
         }
-        .grid__card .explore__btn {
-          bottom: 5%;
-          left: 50%;
-          transform: translateX(-50%);
-          width: auto;
-          white-space: nowrap;
+
+        main {
+            min-height: auto;
         }
-      }
-      @media (max-width: 991px) {
-      }
-      @media (max-width: 767px) {
-        .hero__banner {
-          min-height: 400px;
+
+        .footer {
+            margin-top: 2rem;
         }
-        .scroll__btn {
-          bottom: -2.5rem;
+
+
+        /* Force header images to be full-bleed across the viewport (avoid tiny side gaps) */
+        header>img.w-100,
+        header .hero__banner,
+        header img.object-fit-cover {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            /* center the full-bleed image regardless of container width */
+            margin-left: calc(50% - 50vw) !important;
+            margin-right: calc(50% - 50vw) !important;
+            display: block;
+            object-fit: cover;
         }
-        .grid__wrapper {
-          margin-top: -4rem;
+
+        .gradient__title {
+            background: var(--brand);
+            background-image: -webkit-linear-gradient(to right, #802527, #641618);
+            background-image: linear-gradient(to right, #802527, #641618);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .grid__card {
-          border: 1px solid #641618;
-          border-radius: 0.75rem;
-          background-color: var(--white);
+
+        /* Hero overlay and title styles to match design */
+        .hero-subtitle {
+            color: #E8D495;
+            letter-spacing: 2px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            text-transform: uppercase;
         }
-        .grid__card .thumbnail {
-          width: 5rem !important;
-          height: 5rem;
-          border-radius: 0.5rem;
-          object-fit: cover;
+
+        /* Background gradient overlay placed over hero image using the provided palette */
+        .hero-image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: linear-gradient(90deg, rgba(107, 17, 17, 0.85) 0%, rgba(153, 27, 27, 0.7) 15%, rgba(122, 31, 47, 0.55) 30%, rgba(59, 18, 4, 0.4) 60%);
+            /* background: linear-gradient(90deg, rgba(107,17,17,0.85) 0%, rgba(153,27,27,0.7) 35%, rgba(122,31,47,0.55) 70%, rgba(59,18,4,0.4) 100%); */
+
+            mix-blend-mode: multiply;
         }
-        .grid__card .explore__btn {
-          backdrop-filter: none;
-          background: transparent;
-          color: var(--brand);
-          width: 100%;
-          justify-content: space-between;
-          padding: 0% !important;
-        }
-        .grid__card .explore__btn .icon {
-          box-shadow: none;
-          background: transparent;
-          border: 1px solid var(--brand);
-        }
-        .grid__card .explore__btn .icon svg path {
-          stroke: var(--brand);
-        }
-      }
-      @media (max-width: 575px) {
+
         .hero__title {
-          font-size: 1.5rem !important;
+            color: #fff !important;
+            font-size: 5.5rem !important;
+            line-height: 0.95;
+            letter-spacing: -1px;
+            margin: 0 0 0.6rem 0;
+            font-weight: 700 !important;
         }
-      }
 
-      .celebrateSwiper img {
-        width: 276px;
-        border: 2px solid var(--white);
-        border-radius: 0.625rem;
-        opacity: 0.6;
-      }
-      .celebrateSwiper .swiper-slide-active img {
-        opacity: 1;
-      }
-      .celebrateSwiper .swiper-slide {
-        width: auto;
-      }
-      .control__btn {
-        width: 4rem;
-        height: 4rem;
-        background: var(--brand);
-      }
-      .control__btn:hover,
-      .control__btn:focus,
-      .control__btn:active {
-        background: #832729;
-      }
-      .control__btn::after {
-        font-size: 0.875rem;
-        color: var(--white);
-      }
-      .celebrateSwiperPrev {
-        left: -10rem;
-      }
-      .celebrateSwiperNext {
-        right: -10rem;
-      }
+        @media (max-width: 991px) {
+            .hero__title {
+                font-size: 3.2rem !important;
+            }
+        }
 
-      .celebrate__nav {
-        display: flex;
-        height: 60px;
-        justify-content: center;
-        margin-top: 10px;
-        z-index: 1;
-        background: linear-gradient(to right, #832729, #631517);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        overflow-x: auto;
-      }
+        @media (max-width: 575px) {
+            .hero-overlay {
+                left: 50%;
+                transform: translate(-50%, -50%);
+                text-align: center;
+            }
 
-      .celebrate__nav .nav-link {
-        height: 50px;
-        white-space: nowrap;
-        border-radius: 3rem;
-        display: flex;
-        color: #efefef;
-        justify-content: center;
-        align-items: center;
-      }
+            .hero__title {
+                font-size: 1.75rem !important;
+            }
 
-      .celebrate__nav .nav-link.active {
-        background: linear-gradient(to right, #f2e7e9, #d9bdbe);
-        box-shadow: 0 4px 8px rgba(11, 11, 11, 0.2);
-        color: #631517;
-        font-weight: 600;
-      }
-      .celebrate__tab__content .tab-pane {
-        display: block;
-        opacity: 0;
-        visibility: hidden;
-        height: 0;
-      }
-      .celebrate__tab__content .tab-pane.show {
-        opacity: 1;
-        visibility: visible;
-        height: auto;
-      }
+            .hero-subtitle {
+                font-size: 0.75rem;
+            }
+        }
+
+        .fs-18 {
+            font-size: 1.125rem;
+        }
+
+        .scroll__btn {
+            border: 2px solid #832729;
+            background-color: rgba(255, 244, 244, 0.44);
+            bottom: -11.5rem;
+        }
+
+        .scroll__btn svg {
+            animation: jumpInfinite 1.5s infinite;
+            position: relative;
+        }
+
+        @keyframes jumpInfinite {
+            0% {
+                top: 0;
+            }
+
+            50% {
+                top: 0.5rem;
+            }
+
+            100% {
+                top: 0;
+            }
+        }
+
+        .grid__card img {
+            transition: transform 0.5s ease;
+            margin-left: 11px;
+        }
+
+        .grid__card:hover img {
+            transform: scale(1.08);
+        }
+
+        @media (min-width: 768px) {
+            .position-absolute-md {
+                position: absolute;
+            }
+
+            .hero__banner {
+                width: 100%;
+                height: 674px;
+                object-fit: cover;
+            }
+
+            .grid__card .explore__btn {
+                bottom: 5%;
+                left: 50%;
+                transform: translateX(-50%);
+                width: auto;
+                white-space: nowrap;
+            }
+        }
+
+        @media (max-width: 991px) {}
+
+        @media (max-width: 767px) {
+            .hero__banner {
+                min-height: 400px;
+            }
+
+            .scroll__btn {
+                bottom: -2.5rem;
+            }
+
+            .grid__wrapper {
+                margin-top: -4rem;
+            }
+
+            .grid__card {
+                border: 1px solid #641618;
+                border-radius: 0.75rem;
+                background-color: var(--white);
+                margin-bottom: 20px;
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+            }
+
+            .grid__card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            }
+
+            .grid__card .thumbnail {
+                width: 86% !important;
+                height: 140px;
+                border-radius: 0.5rem 0.5rem 0 0;
+                object-fit: contain;
+                display: block;
+            }
+
+            .grid__card .position-absolute-md {
+                position: relative !important;
+                top: 0 !important;
+                start: 0 !important;
+                w-100: 100% !important;
+                h-100: 100% !important;
+                p-2: 1rem !important;
+            }
+
+            .grid__card a {
+                display: block;
+                width: 100%;
+                height: 100%;
+            }
+
+            .grid__card img {
+                width: 100%;
+                height: 120px;
+                object-fit: cover;
+                border-radius: 0.5rem 0.5rem 0 0;
+            }
+
+            .grid__card .explore__btn {
+                backdrop-filter: none;
+                background: transparent;
+                color: var(--brand);
+                width: 100%;
+                justify-content: space-between;
+                padding: 0% !important;
+                margin-top: 8px;
+            }
+
+            .grid__card .explore__btn .icon {
+                box-shadow: none;
+                background: transparent;
+                border: 1px solid var(--brand);
+            }
+
+            .grid__card .explore__btn .icon svg path {
+                stroke: var(--brand);
+            }
+
+            /* Fix grid layout for mobile - 4 cards horizontally */
+            .row.g-4.justify-content-center {
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: stretch;
+                gap: 15px;
+            }
+
+            .col-lg-3.col-md-6.col-sm-12 {
+                width: calc(25% - 11.25px) !important;
+                max-width: calc(25% - 11.25px) !important;
+                flex: 0 0 calc(25% - 11.25px);
+                min-width: 140px;
+            }
+
+            /* For very small screens, fallback to 2 cards per row */
+            @media (max-width: 480px) {
+                .col-lg-3.col-md-6.col-sm-12 {
+                    width: calc(50% - 7.5px) !important;
+                    max-width: calc(50% - 7.5px) !important;
+                    flex: 0 0 calc(50% - 7.5px);
+                    min-width: 140px;
+                }
+            }
+
+            /* For extremely small screens, fallback to 1 card per row */
+            @media (max-width: 280px) {
+                .col-lg-3.col-md-6.col-sm-12 {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    flex: 0 0 100%;
+                    min-width: auto;
+                }
+            }
+
+            .container.py-lg-5 {
+                padding-top: 1.5rem !important;
+                padding-bottom: 1.5rem !important;
+            }
+        }
+
+        @media (max-width: 575px) {
+            .hero__title {
+                font-size: 1.5rem !important;
+            }
+        }
+
+        /* Card stack container */
+        .card-stack-container {
+            position: relative;
+            width: 570px;
+            min-height: 400px;
+            margin: 0 auto;
+        }
+
+        /* Mobile-specific responsive fixes for all devices */
+        @media (max-width: 767px) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 340px;
+                min-height: 320px;
+                margin: 0 auto;
+                padding: 0 50px;
+            }
+
+            .polaroid {
+                padding: 14px 14px 28px 14px;
+            }
+
+            .polaroid img {
+                width: 240px;
+                height: auto;
+            }
+
+            .polaroid-stack::before {
+                left: -12px !important;
+                top: 12px !important;
+                width: 200px !important;
+            }
+
+            /* Show navigation buttons on mobile with proper positioning */
+            .card-nav-btn {
+                display: block;
+                opacity: 1;
+                transition: opacity 0.3s ease, transform 0.2s ease;
+                z-index: 10;
+            }
+
+            .card-nav-btn:active {
+                opacity: 0.7;
+                transform: scale(0.95) translateY(-50%);
+            }
+
+            .card-nav-prev {
+                margin-left: 70px;
+            }
+
+            .card-nav-next {
+                margin-right: 70px;
+            }
+
+            .card-nav-prev img {
+                width: 18px;
+                height: 28px;
+            }
+
+            .card-nav-next img {
+                width: 22px;
+                height: 38px;
+            }
+
+            .card-pagination {
+                bottom: -50px;
+                gap: 8px;
+            }
+
+            .pagination-dot {
+                width: 10px;
+                height: 10px;
+                margin-top: -96px;
+            }
+
+            .pagination-dot.active {
+                width: 12px;
+                height: 12px;
+            }
+        }
+
+        /* JioPhone 2 specific (240x320) */
+        @media (max-width: 320px) and (max-height: 480px) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 280px;
+                min-height: 260px;
+            }
+
+            .polaroid {
+                padding: 10px 10px 22px 10px;
+            }
+
+            .polaroid img {
+                width: 220px;
+                height: auto;
+            }
+
+            .polaroid-stack::before {
+                left: -10px;
+                top: 10px;
+                width: 220px;
+            }
+
+            .card-pagination {
+                bottom: -50px;
+                gap: 6px;
+            }
+
+            .pagination-dot {
+                width: 8px;
+                height: 8px;
+            }
+        }
+
+        /* iPhone SE specific (375x667) */
+        @media (max-width: 375px) and (max-height: 667px) and (-webkit-device-pixel-ratio: 2) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 320px;
+                min-height: 340px;
+            }
+
+            .polaroid img {
+                width: 260px;
+                height: auto;
+            }
+        }
+
+        /* iPhone XR specific (414x896) */
+        @media (max-width: 414px) and (max-height: 896px) and (-webkit-device-pixel-ratio: 2) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 360px;
+                min-height: 380px;
+            }
+
+            .polaroid img {
+                width: 300px;
+                height: auto;
+            }
+        }
+
+        /* iPhone 12 Pro specific (390x844) */
+        @media (max-width: 390px) and (max-height: 844px) and (-webkit-device-pixel-ratio: 3) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 340px;
+                min-height: 360px;
+            }
+
+            .polaroid img {
+                width: 280px;
+                height: auto;
+            }
+        }
+
+        /* iPhone 14 Pro Max specific (430x932) */
+        @media (max-width: 430px) and (max-height: 932px) and (-webkit-device-pixel-ratio: 3) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 380px;
+                min-height: 400px;
+            }
+
+            .polaroid img {
+                width: 320px;
+                height: auto;
+            }
+        }
+
+        /* Pixel 7 specific (393x851) */
+        @media (max-width: 393px) and (max-height: 851px) and (-webkit-device-pixel-ratio: 2.75) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 340px;
+                min-height: 360px;
+            }
+
+            .polaroid img {
+                width: 280px;
+                height: auto;
+            }
+        }
+
+        /* Samsung Galaxy S8+ specific (360x740) */
+        @media (max-width: 360px) and (max-height: 740px) and (-webkit-device-pixel-ratio: 3) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 300px;
+                min-height: 320px;
+            }
+
+            .polaroid img {
+                width: 240px;
+                height: auto;
+            }
+        }
+
+        /* Samsung Galaxy S20 Ultra specific (384x854) */
+        @media (max-width: 384px) and (max-height: 854px) and (-webkit-device-pixel-ratio: 3.5) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 330px;
+                min-height: 360px;
+            }
+
+            .polaroid img {
+                width: 270px;
+                height: auto;
+            }
+        }
+
+        /* iPad Mini specific (768x1024) */
+        @media (min-width: 768px) and (max-width: 834px) and (max-height: 1112px) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 420px;
+                min-height: 460px;
+            }
+
+            .polaroid img {
+                width: 360px;
+                height: auto;
+            }
+        }
+
+        /* iPad Air specific (820x1180) */
+        @media (min-width: 820px) and (max-width: 834px) and (max-height: 1194px) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 440px;
+                min-height: 480px;
+            }
+
+            .polaroid img {
+                width: 380px;
+                height: auto;
+            }
+        }
+
+        /* iPad Pro specific (1024x1366) */
+        @media (min-width: 1024px) and (max-width: 1366px) and (max-height: 1024px) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 500px;
+                min-height: 540px;
+            }
+
+            .polaroid img {
+                width: 440px;
+                height: auto;
+            }
+        }
+
+        /* Surface Pro 7 specific (912x1368) */
+        @media (min-width: 912px) and (max-width: 1368px) and (max-height: 912px) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 480px;
+                min-height: 520px;
+            }
+
+            .polaroid img {
+                width: 420px;
+                height: auto;
+            }
+        }
+
+        /* Surface Duo specific (540x720) */
+        @media (max-width: 540px) and (max-height: 720px) and (-webkit-device-pixel-ratio: 2.25) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 400px;
+                min-height: 420px;
+            }
+
+            .polaroid img {
+                width: 340px;
+                height: auto;
+            }
+        }
+
+        /* Galaxy Z Fold 5 specific (600x800) */
+        @media (max-width: 600px) and (max-height: 800px) and (-webkit-device-pixel-ratio: 3) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 420px;
+                min-height: 440px;
+            }
+
+            .polaroid img {
+                width: 360px;
+                height: auto;
+            }
+        }
+
+        /* Asus Zenbook Fold specific (800x1280) */
+        @media (min-width: 800px) and (max-width: 1280px) and (max-height: 800px) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 460px;
+                min-height: 500px;
+            }
+
+            .polaroid img {
+                width: 400px;
+                height: auto;
+            }
+        }
+
+        /* Samsung Galaxy A51/71 specific (360x800) */
+        @media (max-width: 360px) and (max-height: 800px) and (-webkit-device-pixel-ratio: 3) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 300px;
+                min-height: 320px;
+            }
+
+            .polaroid img {
+                width: 240px;
+                height: auto;
+            }
+        }
+
+        /* Nest Hub specific (1024x600) */
+        @media (min-width: 600px) and (max-width: 1024px) and (max-height: 600px) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 440px;
+                min-height: 480px;
+            }
+
+            .polaroid img {
+                width: 380px;
+                height: auto;
+            }
+        }
+
+        /* Nest Hub Max specific (1280x800) */
+        @media (min-width: 800px) and (max-width: 1280px) and (max-height: 800px) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 460px;
+                min-height: 500px;
+            }
+
+            .polaroid img {
+                width: 400px;
+                height: auto;
+            }
+        }
+
+        /* Vivo specific (360x640) */
+        @media (max-width: 360px) and (max-height: 640px) and (-webkit-device-pixel-ratio: 2) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 280px;
+                min-height: 280px;
+            }
+
+            .polaroid img {
+                width: 220px;
+                height: auto;
+            }
+        }
+
+        /* Additional responsive fixes for better mobile experience */
+        @media (max-width: 480px) {
+            .celebrate__nav {
+                height: 50px;
+                padding: 0 10px;
+            }
+
+            .celebrate__nav .nav-link {
+                height: 40px;
+                font-size: 0.9rem;
+                padding: 0.4rem 0.6rem;
+            }
+
+            .gradient__title {
+                font-size: 1.5rem;
+            }
+
+            .hero__title {
+                font-size: 2.5rem !important;
+            }
+
+            .hero-subtitle {
+                font-size: 0.8rem;
+            }
+
+            .fs-18 {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .hero__title {
+                font-size: 2rem !important;
+            }
+
+            .gradient__title {
+                font-size: 1.2rem;
+            }
+
+            .celebrate__nav .nav-link {
+                font-size: 0.8rem;
+                padding: 0.3rem 0.5rem;
+            }
+        }
+
+        /* Tablet and larger mobile device navigation button fixes */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .card-nav-btn {
+                display: block;
+                opacity: 1;
+                transition: opacity 0.3s ease;
+            }
+
+            .card-nav-btn:hover {
+                opacity: 0.8;
+            }
+
+            .card-nav-prev {
+                left: -50px;
+            }
+
+            .card-nav-next {
+                right: -50px;
+            }
+        }
+
+        /* Fix for iPad and tablet devices */
+        @media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 400px;
+                min-height: 440px;
+            }
+
+            .polaroid img {
+                width: 340px;
+                height: auto;
+            }
+        }
+
+        /* Fix for iPad and tablet devices landscape */
+        @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 460px;
+                min-height: 500px;
+            }
+
+            .polaroid img {
+                width: 400px;
+                height: auto;
+            }
+        }
+
+        /* Fix for foldable devices in expanded state */
+        @media (min-width: 800px) and (max-width: 1200px) and (hover: hover) and (pointer: fine) {
+            .card-nav-btn {
+                display: block;
+                opacity: 1;
+            }
+
+            .card-nav-prev {
+                left: -60px;
+            }
+
+            .card-nav-next {
+                right: -60px;
+            }
+        }
+
+        /* Ensure proper spacing for all mobile devices */
+        @media (max-width: 767px) {
+            .py-4[style*="margin-top: 395px"] {
+                margin-top: 20px !important;
+            }
+
+            .container.pt-md-4 {
+                padding-top: 1rem !important;
+            }
+
+            .tab-content.celebrate__tab__content {
+                margin-top: 20px !important;
+            }
+
+            /* Fix tab content layout for mobile */
+            .tab-content.celebrate__tab__content {
+                margin-top: 20px !important;
+                padding: 0 15px;
+            }
+
+            .tab-pane {
+                padding: 15px 0;
+            }
+
+            .row.g-4.align-items-center {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .col-lg-6.order-lg-2,
+            .col-lg-6.order-lg-1 {
+                width: 100% !important;
+                max-width: 100% !important;
+                order: initial !important;
+            }
+
+            .card-stack-container {
+                margin-bottom: 30px;
+            }
+
+            .gradient__title {
+                font-size: 2rem !important;
+                line-height: 1.2;
+            }
+
+            .display-4 {
+                font-size: 1.75rem !important;
+            }
+
+            p[style*="font-size: 24px"] {
+                font-size: 16px !important;
+                line-height: 22px !important;
+                width: 100% !important;
+            }
+
+            .btn.btn-primary.explore__btn {
+                width: 100%;
+                max-width: 280px;
+                margin: 15px auto;
+            }
+
+            .celebrate__nav {
+                margin-top: 10px !important;
+            }
+        }
+
+        /* Fix for very small screens */
+        @media (max-width: 320px) {
+            .card-stack-container {
+                width: 100%;
+                max-width: 260px;
+                min-height: 240px;
+            }
+
+            .polaroid {
+                padding: 8px 8px 18px 8px;
+            }
+
+            .polaroid img {
+                width: 200px;
+                height: auto;
+            }
+
+            .polaroid-stack::before {
+                left: -8px;
+                top: 8px;
+                width: 200px;
+            }
+
+            .card-pagination {
+                bottom: -40px;
+                gap: 4px;
+            }
+
+            .pagination-dot {
+                width: 6px;
+                height: 6px;
+            }
+
+            .pagination-dot.active {
+                width: 8px;
+                height: 8px;
+            }
+        }
+
+        /* Polaroid / framed selfie styling */
+        .polaroid {
+            background: #fff;
+            padding: 18px 18px 34px 18px;
+            border-radius: 10px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+            display: inline-block;
+            transform: rotate(-2deg);
+        }
+
+        .polaroid img {
+            display: block;
+            width: 320px;
+            height: auto;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .polaroid-stack {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            opacity: 0;
+            z-index: 1;
+        }
+
+        .polaroid-stack.active {
+            opacity: 1;
+            z-index: 3;
+            transform: translateX(-50%) translateY(0) rotate(-2deg);
+        }
+
+        .polaroid-stack.slide-left {
+            animation: slideLeft 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        }
+
+        .polaroid-stack.slide-in-right {
+            animation: slideInRight 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        }
+
+        @keyframes slideLeft {
+            0% {
+                transform: translateX(-50%) translateY(0) rotate(-2deg);
+                opacity: 1;
+                z-index: 3;
+            }
+
+            100% {
+                transform: translateX(-150%) translateY(0) rotate(-8deg);
+                opacity: 0;
+                z-index: 1;
+            }
+        }
+
+        @keyframes slideInRight {
+            0% {
+                transform: translateX(50%) translateY(0) rotate(8deg);
+                opacity: 0;
+                z-index: 1;
+            }
+
+            100% {
+                transform: translateX(-50%) translateY(0) rotate(-2deg);
+                opacity: 1;
+                z-index: 3;
+            }
+        }
+
+        .polaroid-stack::before {
+            content: '';
+            position: absolute;
+            left: -14px;
+            top: 14px;
+            width: 320px;
+            height: 100%;
+            background: #fdeef0;
+            border-radius: 8px;
+            transform: rotate(6deg);
+            z-index: -2;
+        }
+
+        .card-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+
+        .card-nav-prev {
+            left: -70px;
+        }
+
+        .card-nav-next {
+            right: -70px;
+        }
+
+        .card-nav-prev img {
+            width: 20px;
+            height: 30px;
+            display: block;
+        }
+
+        .card-nav-next img {
+            width: 26px;
+            height: 46px;
+            display: block;
+        }
+
+        /* Pagination styling */
+        .card-pagination {
+            position: absolute;
+            bottom: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            z-index: 5;
+        }
+
+        .pagination-dot {
+            width: 12px;
+            height: 12px;
+            background: #d9d9d9;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            opacity: 1;
+        }
+
+        .pagination-dot.active {
+            background: var(--brand);
+            border-radius: 0;
+            transform: rotate(45deg);
+            width: 14px;
+            height: 14px;
+        }
+
+        .celebrate__nav {
+            display: flex;
+            height: 60px;
+            justify-content: center;
+            margin-top: -20px;
+            z-index: 1;
+            background: linear-gradient(to right, #832729, #631517);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        .celebrate__nav .nav-link {
+            height: 50px;
+            white-space: nowrap;
+            border-radius: 3rem;
+            display: flex;
+            color: #efefef;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .celebrate__nav .nav-link.active {
+            background: linear-gradient(to right, #f2e7e9, #d9bdbe);
+            box-shadow: 0 4px 8px rgba(11, 11, 11, 0.2);
+            color: #631517;
+            font-weight: 600;
+        }
+
+        .celebrate__tab__content .tab-pane {
+            display: block;
+            opacity: 0;
+            visibility: hidden;
+            height: 0;
+        }
+
+        .celebrate__tab__content .tab-pane.show {
+            opacity: 1;
+            visibility: visible;
+            height: auto;
+        }
+
+
+
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            z-index: 1000;
+            background: #7A1F2F;
+            display: flex;
+            align-items: center;
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .topbar-logo {
+            height: 26px;
+            width: auto;
+        }
+
+        .topbar-nav {
+            gap: 3rem;
+        }
+
+        @media (max-width: 767px) {
+            .topbar {
+                height: 44px;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 1000;
+                background: rgba(122, 31, 47, 0.95);
+                backdrop-filter: saturate(180%) blur(10px);
+                -webkit-backdrop-filter: saturate(180%) blur(10px);
+                box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+                transition: all 0.3s ease;
+            }
+
+            body {
+                padding-top: 44px;
+            }
+
+            .topbar-logo {
+                height: 20px;
+            }
+
+            .topbar-nav {
+                gap: 0.75rem;
+            }
+        }
+
+
+        .topbar nav {
+            pointer-events: auto;
+        }
+
+        .gap-2 {
+            gap: 3.0rem !important;
+        }
+
+        .topbar-link {
+            color: #FEF3C7;
+            padding: 0.5rem 0.9rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.12s ease;
+            font-size: 1.125rem;
+        }
+
+        .topbar-link:hover {
+            background: #F0DB98;
+            transform: translateY(-2px);
+            color: #7A1F2F;
+            border-radius: 15px;
+        }
+
+        @media (max-width: 767px) {
+            .topbar nav {
+                gap: 0.35rem;
+                padding-right: 0.5rem;
+                overflow-x: auto;
+                white-space: nowrap;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .topbar nav::-webkit-scrollbar {
+                display: none;
+            }
+
+            .topbar-link {
+                padding: 5px;
+                font-size: 8px;
+                min-width: 0;
+                text-align: center;
+            }
+        }
     </style>
-  </head>
-  <body>
-    <main>
-      <!-- header wrapper start -->
-      <header class="position-relative">
-        <div class="container-fluid mx-auto px-0" style="max-width: 1920">
-          <img
-            src="./globalAssets/celebrate/hero-banner.webp"
-            alt="Let’s Celebrate with Tanishq"
-            class="img-fluid w-100 hero__banner object-fit-cover d-none d-md-block"
-            width="1920"
-            height="674"
-          />
-          <img
-            src="./globalAssets/celebrate/hero-banner-mobile.png"
-            alt="Let’s Celebrate with Tanishq"
-            class="img-fluid w-100 object-fit-cover d-md-none"
-            width="400"
-            height="350"
-          />
-          <div
-            class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center"
-          >
-            <div class="container text-center">
-              <div
-                class="d-inline-block p-4 position-relative"
-                style="background-color: rgba(255, 207, 208, 0.5)"
-              >
-                <h1
-                  class="display-4 hero__title text-center fw-semibold ff-fraunces gradient__title"
-                >
-                  Let’s Celebrate with Tanishq
-                </h1>
-                <p class="fs-18 text-dark fw-medium">Choose the features</p>
-                <a
-                  href="#explore"
-                  class="scroll__btn p-md-3 p-2 rounded-pill d-inline-flex flex-column gap-3 text-center position-absolute start-50 translate-midddle-x top-auto"
-                >
-                  <span
-                    class="icon rounded-circle d-block mx-auto"
-                    style="width: 10px; height: 10px; background-color: #832729"
-                  ></span>
-                  <svg
-                    width="15"
-                    height="24"
-                    viewBox="0 0 15 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M7.98893 1.06462C7.87349 0.832065 7.7105 0.71579 7.49998 0.71579C7.28946 0.71579 7.12648 0.832065 7.01103 1.06462L7.01103 20.1823C6.14858 18.9988 5.10616 18.0824 3.88379 17.4334C3.09943 17.0169 2.32526 16.7427 1.56128 16.6108C1.52732 16.6108 1.49337 16.6056 1.45941 16.5952C1.42885 16.5882 1.40508 16.5848 1.38811 16.5848C1.20814 16.5848 1.11816 16.7514 1.11816 17.0846C1.11816 17.2824 1.13854 17.4108 1.17928 17.4698C1.22003 17.5288 1.3134 17.5757 1.45941 17.6104C1.78538 17.659 2.11983 17.7492 2.46278 17.8811C3.55612 18.249 4.53063 18.8582 5.38629 19.7086C6.24195 20.5589 6.85654 21.5499 7.23004 22.6814C7.28097 22.8306 7.37095 22.9053 7.49998 22.9053C7.62901 22.9053 7.71899 22.8306 7.76992 22.6814C8.14343 21.5499 8.75801 20.5589 9.61367 19.7086C10.4693 18.8582 11.4438 18.249 12.5372 17.8811C12.8801 17.7666 13.2061 17.6764 13.5151 17.6104C13.6781 17.5757 13.7799 17.5288 13.8207 17.4698C13.8614 17.4108 13.8818 17.2824 13.8818 17.0846C13.8818 16.734 13.7918 16.5587 13.6119 16.5587C13.5643 16.5587 13.3606 16.609 13.0007 16.7097C10.9634 17.2269 9.2928 18.3844 7.98893 20.1823L7.98893 1.06462Z"
-                      fill="url(#paint0_linear_392_167)"
-                      stroke="url(#paint1_linear_392_167)"
-                    />
-                    <defs>
-                      <linearGradient
-                        id="paint0_linear_392_167"
-                        x1="7.49998"
-                        y1="0.71579"
-                        x2="7.49998"
-                        y2="22.9053"
-                        gradientUnits="userSpaceOnUse"
-                      >
-                        <stop stop-color="#802527" />
-                        <stop offset="1" stop-color="#641618" />
-                      </linearGradient>
-                      <linearGradient
-                        id="paint1_linear_392_167"
-                        x1="7.49998"
-                        y1="0.71579"
-                        x2="7.49998"
-                        y2="22.9053"
-                        gradientUnits="userSpaceOnUse"
-                      >
-                        <stop stop-color="#802527" />
-                        <stop offset="1" stop-color="#641618" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!--.container-->
-      </header>
-      <!-- header wrapper end -->
+</head>
 
-      <!-- grid wrapper start -->
-      <div
-        class="pb-5 pt-md-5 position-relative z-3 grid__wrapper"
-        id="explore"
-      >
+<body>
+<main> <!-- header wrapper start -->
+    <header>
+        <div class="container-fluid mx-auto px-0 position-relative" style="max-width: none"> <img
+                src="./globalAssets/celebrate/hero_banner.png" alt="Let’s Celebrate with Tanishq"
+                class="img-fluid w-100 hero__banner object-fit-cover d-none d-md-block" width="1920" height="674" />
+            <img src="./globalAssets/celebrate/hero-banner-mobile.png" alt="Let’s Celebrate with Tanishq"
+                 class="img-fluid w-100 object-fit-cover d-md-none" width="400" height="350" />
+            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center">
+                <div class="topbar d-flex align-items-center justify-content-between px-4 w-100">
+
+                    <!-- LOGO -->
+                    <a href="https://www.tanishq.co.in/" target="_blank">
+                        <img src="./globalAssets/celebrate/logo.png" alt="Tanishq" class="topbar-logo" />
+                    </a>
+
+                    <!-- NAV -->
+                    <nav class="d-flex align-items-center topbar-nav">
+                        <a href="https://celebrations.tanishq.co.in/events" class="topbar-link">Create Event</a>
+                        <a href="https://celebrations.tanishq.co.in/selfie" target="_blank" class="topbar-link">Take
+                            selfie</a>
+                        <a href="https://celebrations.tanishq.co.in/checklist" target="_blank"
+                           class="topbar-link">Wedding checklist</a>
+                        <a href="#" class="topbar-link">Gifting</a>
+                    </nav>
+
+                </div>
+
+                <div class="container" style="margin-top: 200px;">
+                    <div class="hero-image-overlay" aria-hidden="true"></div>
+                    <div class="hero-overlay" style="position: relative; z-index: 2;">
+                        <div class="hero-subtitle">TANISHQ CELEBRATION</div>
+                        <h1 class="hero__title ff-fraunces">Celebrate Every</h1>
+                        <h1 class="hero__title ff-fraunces">Moment with Tanishq</h1>
+                        <!-- <a href="#explore" class="scroll__btn p-md-3 p-2 rounded-pill d-inline-flex flex-column gap-3 text-center mt-4" aria-label="Scroll to explore" > -->
+                        <!-- <span class="icon rounded-circle d-block mx-auto" style="width: 10px; height: 10px; background-color: #832729" ></span> <svg width="15" height="24" viewBox="0 0 15 24" fill="none" xmlns="http://www.w3.org/2000/svg" > -->
+                        <path
+                                d="M7.98893 1.06462C7.87349 0.832065 7.7105 0.71579 7.49998 0.71579C7.28946 0.71579 7.12648 0.832065 7.01103 1.06462L7.01103 20.1823C6.14858 18.9988 5.10616 18.0824 3.88379 17.4334C3.09943 17.0169 2.32526 16.7427 1.56128 16.6108C1.52732 16.6108 1.49337 16.6056 1.45941 16.5952C1.42885 16.5882 1.40508 16.5848 1.38811 16.5848C1.20814 16.5848 1.11816 16.7514 1.11816 17.0846C1.11816 17.2824 1.13854 17.4108 1.17928 17.4698C1.22003 17.5288 1.3134 17.5757 1.45941 17.6104C1.78538 17.659 2.11983 17.7492 2.46278 17.8811C3.55612 18.249 4.53063 18.8582 5.38629 19.7086C6.24195 20.5589 6.85654 21.5499 7.23004 22.6814C7.28097 22.8306 7.37095 22.9053 7.49998 22.9053C7.62901 22.9053 7.71899 22.8306 7.76992 22.6814C8.14343 21.5499 8.75801 20.5589 9.61367 19.7086C10.4693 18.8582 11.4438 18.249 12.5372 17.8811C12.8801 17.7666 13.2061 17.6764 13.5151 17.6104C13.6781 17.5757 13.7799 17.5288 13.8207 17.4698C13.8614 17.4108 13.8818 17.2824 13.8818 17.0846C13.8818 16.734 13.7918 16.5587 13.6119 16.5587C13.5643 16.5587 13.3606 16.609 13.0007 16.7097C10.9634 17.2269 9.2928 18.3844 7.98893 20.1823L7.98893 1.06462Z"
+                                fill="url(#paint0_linear_392_167)" stroke="url(#paint1_linear_392_167)" />
+                        <defs>
+                            <linearGradient id="paint0_linear_392_167" x1="7.49998" y1="0.71579" x2="7.49998"
+                                            y2="22.9053" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#802527" />
+                                <stop offset="1" stop-color="#641618" />
+                            </linearGradient>
+                            <linearGradient id="paint1_linear_392_167" x1="7.49998" y1="0.71579" x2="7.49998"
+                                            y2="22.9053" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#802527" />
+                                <stop offset="1" stop-color="#641618" />
+                            </linearGradient>
+                        </defs> </svg> </a>
+                    </div>
+                </div>
+            </div>
+        </div> <!--.container-->
+    </header> <!-- header wrapper end --> <!-- grid wrapper start -->
+    <div class="pb-5 position-relative z-3 grid__wrapper" id="explore">
         <div class="container py-lg-5">
-          <div class="row g-3 g-md-4 justify-content-center">
-            <div class="col-lg-4 col-md-6">
-              <div class="grid__card position-relative">
-                <img
-                  src="./globalAssets/celebrate/grid-card-frame.svg"
-                  alt="Frame Image"
-                  class="img-fluid w-100 frame d-none d-md-block"
-                />
-                <div
-                  class="position-absolute-md top-0 start-0 w-100 h-100 p-2 d-flex d-md-block gap-4 align-items-center"
-                >
-                  <img
-                    src="./globalAssets/celebrate/Wedding-Checklist.png"
-                    alt="Wedding Checklist"
-                    class="img-fluid w-100 thumbnail"
-                  />
-                  <div class="col">
-                    <a
-                      href="/checklist"
-                      target="_blank"
-                      class="btn btn-primary explore__btn ff-fraunces fs-5 fw-normal rounded-pill gap-3 px-4 py-3 border-0 position-absolute-md"
-                      aria-label="Wedding Checklist"
-                    >
-                      <span>Wedding Checklist</span>
-                      <span
-                        class="icon d-inline-flex rounded-circle justify-content-center align-items-center"
-                      >
-                        <svg
-                          width="21"
-                          height="20"
-                          viewBox="0 0 21 20"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M8 5L13 10L8 15"
-                            stroke="white"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          ></path>
-                        </svg>
-                      </span>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-lg-4 col-md-6">
-              <div class="grid__card position-relative">
-                <img
-                  src="./globalAssets/celebrate/grid-card-frame.svg"
-                  alt="Frame Image"
-                  class="img-fluid w-100 frame d-none d-md-block"
-                />
-                <div
-                  class="position-absolute-md top-0 start-0 w-100 h-100 p-2 d-flex d-md-block gap-4 align-items-center"
-                >
-                  <img
-                    src="./globalAssets/celebrate/Take-Selfi.png"
-                    alt="Take Selfi"
-                    class="img-fluid w-100 thumbnail"
-                  />
-                  <div class="col">
-                    <a
-                      href="/selfie"
-                      target="_blank"
-                      class="btn btn-primary explore__btn ff-fraunces fs-5 fw-normal rounded-pill gap-3 px-4 py-3 border-0 position-absolute-md"
-                      aria-label="Take Selfi"
-                    >
-                      <span>Take Selfi</span>
-                      <span
-                        class="icon d-inline-flex rounded-circle justify-content-center align-items-center"
-                      >
-                        <svg
-                          width="21"
-                          height="20"
-                          viewBox="0 0 21 20"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M8 5L13 10L8 15"
-                            stroke="white"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          ></path>
-                        </svg>
-                      </span>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-lg-4 col-md-6">
-              <div class="grid__card position-relative">
-                <img
-                  src="./globalAssets/celebrate/grid-card-frame.svg"
-                  alt="Frame Image"
-                  class="img-fluid w-100 frame d-none d-md-block"
-                />
-                <div
-                  class="position-absolute-md top-0 start-0 w-100 h-100 p-2 d-flex d-md-block gap-4 align-items-center"
-                >
-                  <img
-                    src="./globalAssets/celebrate/Create-Event.png"
-                    alt="Create Event"
-                    class="img-fluid w-100 thumbnail"
-                  />
-                  <div class="col">
-                    <a
-                      href="/events"
-                      target="_blank"
-                      class="btn btn-primary explore__btn ff-fraunces fs-5 fw-normal rounded-pill gap-3 px-4 py-3 border-0 position-absolute-md"
-                      aria-label="Create Event"
-                    >
-                      <span>Create Event</span>
-                      <span
-                        class="icon d-inline-flex rounded-circle justify-content-center align-items-center"
-                      >
-                        <svg
-                          width="21"
-                          height="20"
-                          viewBox="0 0 21 20"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M8 5L13 10L8 15"
-                            stroke="white"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          ></path>
-                        </svg>
-                      </span>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <!--.row-->
-        </div>
-        <!--.container-->
-      </div>
-      <!-- grid wrapper end -->
-
-      <!-- Tab products wrapper start -->
-      <div class="py-4">
-        <div class="container pt-md-4">
-          <h2 class="ff-fraunces fw-semibold fs-1 gradient__title text-center">
-            Choose My Celebration
-          </h2>
-
-          <div class="d-flex justify-content-center mt-4 mt-xl-5">
-            <ul
-              class="nav nav-pills celebrate__nav d-inline-flex flex-nowrap border gap-lg-3 rounded-pill p-1 mb-4"
-              id="pills-tab"
-              role="tablist"
-            >
-              <li class="nav-item" role="presentation">
-                <a
-                  href="javascript:void(0)"
-                  class="nav-link px-3 px-sm-4 py-3 rounded-pill position-relative"
-                  id="pills-occasionTab-tab"
-                  data-bs-toggle="pill"
-                  data-bs-target="#pills-occasionTab"
-                  type="button"
-                  role="tab"
-                  aria-controls="pills-occasionTab"
-                  aria-selected="true"
-                  >Wedding Checklist</a
-                >
-              </li>
-              <li class="nav-item" role="presentation">
-                <a
-                  href="javascript:void(0)"
-                  class="nav-link px-3 px-sm-4 py-3 rounded-pill position-relative active"
-                  id="pills-budgetTab-tab"
-                  data-bs-toggle="pill"
-                  data-bs-target="#pills-budgetTab"
-                  type="button"
-                  role="tab"
-                  aria-controls="pills-budgetTab"
-                  aria-selected="false"
-                  >Take Selfi</a
-                >
-              </li>
-              <li class="nav-item" role="presentation">
-                <a
-                  href="javascript:void(0)"
-                  class="nav-link px-3 px-sm-4 py-3 rounded-pill position-relative"
-                  id="pills-giftTab-tab"
-                  data-bs-toggle="pill"
-                  data-bs-target="#pills-giftTab"
-                  type="button"
-                  role="tab"
-                  aria-controls="pills-giftTab"
-                  aria-selected="false"
-                  >Create Events</a
-                >
-              </li>
-            </ul>
-          </div>
-          <div
-            class="tab-content celebrate__tab__content position-relative pt-4 pt-md-5"
-            id="pills-tabContent"
-          >
-            <div
-              class="tab-pane fade"
-              id="pills-occasionTab"
-              role="tabpanel"
-              aria-labelledby="pills-occasionTab-tab"
-              tabindex="0"
-            >
-              <div class="row g-4 align-items-center">
-                <div class="col-lg-6 order-lg-2 d-flex justify-content-center">
-                  <div class="d-flex" style="width: 276px">
-                    <div class="swiper celebrateSwiper w-100">
-                      <div class="swiper-wrapper">
-                        <div class="swiper-slide">
-                          <img
-                            src="./globalAssets/celebrate/Wedding-Checklist-02.png"
-                            alt="Wedding Checklist"
-                            class="img-fluid"
-                            width="276"
-                            height="428"
-                          />
+            <div class="pb-5 position-relative z-3 grid__wrapper" id="explore">
+                <div class="container py-lg-5">
+                    <div class="row g-4 justify-content-center"> <!-- Card 1 -->
+                        <div class="col-lg-3 col-md-6 col-sm-12">
+                            <div class="grid__card position-relative">
+                                <div class="position-absolute-md top-0 start-0 w-100 h-100 p-2"> <a
+                                        href="https://celebrations.tanishq.co.in/checklist" target="_blank"> <img
+                                        src="./globalAssets/celebrate/checklist.png"
+                                        class="img-fluid w-100 thumbnail" alt="Wedding Checklist" /> </a> </div>
+                            </div>
+                        </div> <!-- Card 2 -->
+                        <div class="col-lg-3 col-md-6 col-sm-12">
+                            <div class="grid__card position-relative">
+                                <div class="position-absolute-md top-0 start-0 w-100 h-100 p-2"> <a
+                                        href="https://celebrations.tanishq.co.in/selfie" target="_blank"> <img
+                                        src="./globalAssets/celebrate/selfie.png"
+                                        class="img-fluid w-100 thumbnail" alt="Take Selfie" /> </a> </div>
+                            </div>
+                        </div> <!-- Card 3 -->
+                        <div class="col-lg-3 col-md-6 col-sm-12">
+                            <div class="grid__card position-relative">
+                                <div class="position-absolute-md top-0 start-0 w-100 h-100 p-2"> <a
+                                        href="https://celebrations.tanishq.co.in/events" target="_blank"> <img
+                                        src="./globalAssets/celebrate/event.png"
+                                        class="img-fluid w-100 thumbnail" alt="Create Event" /> </a> </div>
+                            </div>
+                        </div> <!-- Card 4 -->
+                        <div class="col-lg-3 col-md-6 col-sm-12">
+                            <div class="grid__card position-relative">
+                                <div class="position-absolute-md top-0 start-0 w-100 h-100 p-2"> <a href="#"
+                                                                                                    target="_blank"> <img src="./globalAssets/celebrate/Gifting.png"
+                                                                                                                          class="img-fluid w-100 thumbnail" alt="Gifting" /> </a> </div>
+                            </div>
                         </div>
-                        <div class="swiper-slide">
-                          <img
-                            src="./globalAssets/celebrate/Wedding-Checklist-01.png"
-                            alt="Wedding Checklist"
-                            class="img-fluid"
-                            width="276"
-                            height="428"
-                          />
-                        </div>
-                        <div class="swiper-slide">
-                          <img
-                            src="./globalAssets/celebrate/Wedding-Checklist-03.png"
-                            alt="Wedding Checklist"
-                            class="img-fluid"
-                            width="276"
-                            height="428"
-                          />
-                        </div>
-                      </div>
-                      <div
-                        class="d-flex justify-content-between position-absolute top-50 translate-midddle-y z-3 w-100"
-                      >
-                        <button
-                          class="swiper-button-prev celebrateSwiperPrev control__btn btn d-flex justify-content-center align-items-center rounded-circle"
-                        ></button>
-                        <button
-                          class="swiper-button-next celebrateSwiperNext control__btn btn d-flex justify-content-center align-items-center rounded-circle"
-                        ></button>
-                      </div>
-                      <!-- Navigation Buttons -->
-                      <div
-                        class="swiper-pagination celebrateSwiperPagination"
-                      ></div>
                     </div>
-                  </div>
                 </div>
-                <div class="col-lg-6 order-lg-1 text-center text-lg-start">
-                  <h3
-                    class="ff-fraunces fw-semibold display-4 gradient__title mb-3"
-                  >
-                    Wedding Checklist
-                  </h3>
-                  <p class="text-dark fw-medium mb-4">
-                    Tanishq's Dream Wedding Checklist simplifies wedding
-                    planning with personalized recommendations for cultural
-                    events like Mehendi, Haldi, and Sangeet. Get inspired by
-                    curated attire and jewelry suggestions to create an elegant,
-                    unforgettable celebration.
-                  </p>
-                  <a
-                    href="/selfie"
-                    class="btn btn-primary explore__btn ff-fraunces small fw-semibold rounded-pill gap-3 px-4 border-0"
-                    aria-label="Match Now"
-                  >
-                    <span>Match Now</span>
-                    <span
-                      class="icon d-inline-flex rounded-circle justify-content-center align-items-center"
-                    >
-                      <svg
-                        width="21"
-                        height="20"
-                        viewBox="0 0 21 20"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M8 5L13 10L8 15"
-                          stroke="white"
-                          stroke-width="1.5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        />
-                      </svg>
-                    </span>
-                  </a>
-                </div>
-              </div>
             </div>
-            <!--trendingNew-->
-
-            <div
-              class="tab-pane fade show active"
-              id="pills-budgetTab"
-              role="tabpanel"
-              aria-labelledby="pills-budgetTab-tab"
-              tabindex="0"
-            >
-              <div class="row g-4 align-items-center">
-                <div
-                  class="col-lg-6 order-lg-2 d-flex justify-content-center align-items-center"
-                >
-                  <div class="" style="width: 276px">
-                    <div class="d-flex">
-                      <div class="swiper celebrateSwiper w-100">
-                        <div class="swiper-wrapper">
-                          <div class="swiper-slide">
-                            <img
-                              src="./globalAssets/celebrate/Take-Selfi-02.png"
-                              alt="Take Selfi"
-                              class="img-fluid"
-                              width="276"
-                              height="428"
-                            />
-                          </div>
-                          <div class="swiper-slide">
-                            <img
-                              src="./globalAssets/celebrate/Take-Selfi-01.png"
-                              alt="Take Selfi"
-                              class="img-fluid"
-                              width="276"
-                              height="428"
-                            />
-                          </div>
-                          <div class="swiper-slide">
-                            <img
-                              src="./globalAssets/celebrate/Take-Selfi-03.png"
-                              alt="Take Selfi"
-                              class="img-fluid"
-                              width="276"
-                              height="428"
-                            />
-                          </div>
-                        </div>
-                        <div
-                          class="d-flex justify-content-between position-absolute top-50 translate-midddle-y z-3 w-100"
-                        >
-                          <button
-                            class="swiper-button-prev celebrateSwiperPrev control__btn btn d-flex justify-content-center align-items-center rounded-circle"
-                          ></button>
-                          <button
-                            class="swiper-button-next celebrateSwiperNext control__btn btn d-flex justify-content-center align-items-center rounded-circle"
-                          ></button>
-                        </div>
-                        <!-- Navigation Buttons -->
-                        <div
-                          class="swiper-pagination celebrateSwiperPagination"
-                        ></div>
-                      </div>
+            <div class="py-4" style="margin-top: 395px;">
+                <div class="container pt-md-4">
+                    <h2 class="ff-fraunces fw-semibold fs-1 gradient__title text-center"> Choose My Celebration
+                    </h2>
+                    <div class="d-flex justify-content-center mt-4 mt-xl-5">
+                        <ul class="nav nav-pills celebrate__nav d-inline-flex flex-nowrap border gap-lg-3 rounded-pill p-1 mb-4"
+                            id="pills-tab" role="tablist">
+                            <li class="nav-item" role="presentation"> <a href="javascript:void(0)"
+                                                                         class="nav-link px-3 px-sm-4 py-3 rounded-pill position-relative"
+                                                                         id="pills-occasionTab-tab" data-bs-toggle="pill"
+                                                                         data-bs-target="#pills-occasionTab" type="button" role="tab"
+                                                                         aria-controls="pills-occasionTab" aria-selected="true">Wedding Checklist</a>
+                            </li>
+                            <li class="nav-item" role="presentation"> <a href="javascript:void(0)"
+                                                                         class="nav-link px-3 px-sm-4 py-3 rounded-pill position-relative active"
+                                                                         id="pills-budgetTab-tab" data-bs-toggle="pill" data-bs-target="#pills-budgetTab"
+                                                                         type="button" role="tab" aria-controls="pills-budgetTab"
+                                                                         aria-selected="false">Take Selfie</a> </li>
+                            <li class="nav-item" role="presentation"> <a href="javascript:void(0)"
+                                                                         class="nav-link px-3 px-sm-4 py-3 rounded-pill position-relative"
+                                                                         id="pills-giftTab-tab" data-bs-toggle="pill" data-bs-target="#pills-giftTab"
+                                                                         type="button" role="tab" aria-controls="pills-giftTab"
+                                                                         aria-selected="false">Create Events</a> </li>
+                        </ul>
                     </div>
-                  </div>
-                </div>
-                <div class="col-lg-6 order-lg-1 text-center text-lg-start">
-                  <h3
-                    class="ff-fraunces fw-semibold display-4 gradient__title mb-3"
-                  >
-                    Take Selfi
-                  </h3>
-                  <p class="text-dark fw-medium mb-4">
-                    Capture a festive selfie with the Tanishq Selfie feature in
-                    just a few steps: Click "Capture Now", take a well-lit
-                    selfie, choose a festival-themed frame, choose the filter If
-                    needed, and share your festive photo on social media or with
-                    others!
-                  </p>
-                  <a
-                    href="/selfie"
-                    class="btn btn-primary explore__btn ff-fraunces small fw-semibold rounded-pill gap-3 px-4 border-0"
-                    aria-label="Capture Now"
-                  >
-                    <span>Capture Now</span>
-                    <span
-                      class="icon d-inline-flex rounded-circle justify-content-center align-items-center"
-                    >
-                      <svg
-                        width="21"
-                        height="20"
-                        viewBox="0 0 21 20"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M8 5L13 10L8 15"
-                          stroke="white"
-                          stroke-width="1.5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        />
-                      </svg>
-                    </span>
-                  </a>
-                </div>
-              </div>
-            </div>
-            <!--budgetTab-->
+                    <div class="tab-content celebrate__tab__content position-relative pt-4 pt-md-5"
+                         style="margin-top: 10px;" id="pills-tabContent">
+                        <div class="tab-pane fade" id="pills-occasionTab" role="tabpanel"
+                             aria-labelledby="pills-occasionTab-tab" tabindex="0">
+                            <div class="row g-4 align-items-center">
+                                <div class="col-lg-6 order-lg-2 d-flex justify-content-center">
+                                    <div class="card-stack-container" data-card-stack="wedding">
+                                        <div class="polaroid-stack active">
+                                            <figure class="polaroid mb-0"> <img
+                                                    src="./globalAssets/celebrate/wed2.png" alt="Wedding Checklist"
+                                                    class="img-fluid" width="320" height="420" /> </figure>
+                                        </div>
+                                        <div class="polaroid-stack">
+                                            <figure class="polaroid mb-0"> <img
+                                                    src="./globalAssets/celebrate/wed1.png" alt="Wedding Checklist"
+                                                    class="img-fluid" width="320" height="420" /> </figure>
+                                        </div>
+                                        <div class="polaroid-stack">
+                                            <figure class="polaroid mb-0"> <img
+                                                    src="./globalAssets/celebrate/wed3.png" alt="Wedding Checklist"
+                                                    class="img-fluid" width="320" height="420" /> </figure>
+                                        </div>
+                                        <button class="card-nav-btn card-nav-prev" aria-label="Prev">
+                                            <img src="./globalAssets/celebrate/left.png" alt="Prev" />
+                                        </button>
+                                        <button class="card-nav-btn card-nav-next" aria-label="Next">
+                                            <img src="./globalAssets/celebrate/right.png" alt="Next" />
+                                        </button>
+                                        <div class="card-pagination"></div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 order-lg-1 text-center text-lg-start">
+                                    <h3 class="ff-fraunces fw-semibold display-4 gradient__title mb-3"> Wedding
+                                        Checklist </h3>
+                                    <p
+                                            style="font-family: 'Montserrat', sans-serif; font-weight: 400; font-size: 24px; line-height: 30px; color: #374151;     text-align: left; width: 83%;">
+                                        Tanishq's Dream Wedding Checklist simplifies wedding planning with
+                                        personalized recommendations for cultural events like Mehendi, Haldi, and
+                                        Sangeet. Get inspired by curated attire and jewelry suggestions to create an
+                                        elegant, unforgettable celebration. </p> <a
+                                        href="https://celebrations.tanishq.co.in/selfie"
+                                        class="btn btn-primary explore__btn ff-fraunces small fw-semibold rounded-pill gap-3 px-4 border-0"
+                                        aria-label="Match Now"> <span>Match Now</span> <span
+                                        class="icon d-inline-flex rounded-circle justify-content-center align-items-center">
+                                                <svg width="21" height="20" viewBox="0 0 21 20" fill="none"
+                                                     xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M8 5L13 10L8 15" stroke="white" stroke-width="1.5"
+                                                          stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg> </span> </a>
+                                    <p class="mt-3" style="color: #802527; font-size: 0.95rem;">Celebrating moments
+                                        since 1996</p>
+                                </div>
+                            </div>
+                        </div> <!--trendingNew-->
+                        <div class="tab-pane fade show active" id="pills-budgetTab" role="tabpanel"
+                             aria-labelledby="pills-budgetTab-tab" tabindex="0">
+                            <div class="row g-4 align-items-center">
+                                <div class="col-lg-6 order-lg-2 d-flex justify-content-center align-items-center">
+                                    <div class="card-stack-container" data-card-stack="selfie">
+                                        <div class="polaroid-stack active">
+                                            <figure class="polaroid mb-0"> <img
+                                                    src="./globalAssets/celebrate/sel1.png" alt="Selfie 1"
+                                                    class="img-fluid" width="320" height="420" /> </figure>
+                                        </div>
+                                        <div class="polaroid-stack">
+                                            <figure class="polaroid mb-0"> <img
+                                                    src="./globalAssets/celebrate/sel2.png" alt="Selfie 2"
+                                                    class="img-fluid" width="320" height="420" /> </figure>
+                                        </div>
+                                        <div class="polaroid-stack">
+                                            <figure class="polaroid mb-0"> <img
+                                                    src="./globalAssets/celebrate/sel3.png" alt="Selfie 3"
+                                                    class="img-fluid" width="320" height="420" /> </figure>
+                                        </div>
+                                        <button class="card-nav-btn card-nav-prev" aria-label="Prev">
+                                            <img src="./globalAssets/celebrate/left.png" alt="Prev" />
+                                        </button>
+                                        <button class="card-nav-btn card-nav-next" aria-label="Next">
+                                            <img src="./globalAssets/celebrate/right.png" alt="Next" />
+                                        </button>
+                                        <div class="card-pagination"></div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 order-lg-1 text-center text-lg-start">
+                                    <h3 class="ff-fraunces fw-semibold display-4 gradient__title mb-3"> Take Selfie
+                                    </h3>
+                                    <p
+                                            style="font-family: 'Montserrat', sans-serif; font-weight: 400; font-size: 24px; line-height: 30px; color: #374151;     text-align: justify; width: 83%;">
+                                        Capture a festive selfie with the Tanishq Selfie feature in just a few
+                                        steps: Click "Capture Now", take a well-lit selfie, choose a festival-themed
+                                        frame, choose the filter If needed, and share your festive photo on social
+                                        media or with others! </p> <a
+                                        href="https://celebrations.tanishq.co.in/selfie"
+                                        class="btn btn-primary explore__btn ff-fraunces small fw-semibold rounded-pill gap-3 px-4 border-0"
+                                        aria-label="Capture Now"> <span>Capture Now</span> <span
+                                        class="icon d-inline-flex rounded-circle justify-content-center align-items-center">
+                                                <svg width="21" height="20" viewBox="0 0 21 20" fill="none"
+                                                     xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M8 5L13 10L8 15" stroke="white" stroke-width="1.5"
+                                                          stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg> </span> </a>
+                                    <p class="mt-3" style="color: #802527; font-size: 0.95rem;">Celebrating moments
+                                        since 1996</p>
+                                </div>
+                            </div>
+                        </div> <!--budgetTab-->
+                        <div class="tab-pane fade" id="pills-giftTab" role="tabpanel"
+                             aria-labelledby="pills-giftTab-tab" tabindex="0">
+                            <div class="row g-4 align-items-center">
+                                <div class="col-lg-6 order-lg-2 d-flex justify-content-center align-items-center">
+                                    <div class="card-stack-container" data-card-stack="events">
+                                        <div class="polaroid-stack active">
+                                            <figure class="polaroid mb-0"> <img
+                                                    src="./globalAssets/celebrate/create2.png" alt="Create Events"
+                                                    class="img-fluid" width="320" height="420" /> </figure>
+                                        </div>
+                                        <div class="polaroid-stack">
+                                            <figure class="polaroid mb-0"> <img
+                                                    src="./globalAssets/celebrate/create1.png" alt="Create Events"
+                                                    class="img-fluid" width="320" height="420" /> </figure>
+                                        </div>
+                                        <div class="polaroid-stack">
+                                            <figure class="polaroid mb-0"> <img
+                                                    src="./globalAssets/celebrate/create3.png" alt="Create Events"
+                                                    class="img-fluid" width="320" height="420" /> </figure>
+                                        </div>
+                                        <button class="card-nav-btn card-nav-prev" aria-label="Prev">
+                                            <img src="./globalAssets/celebrate/left.png" alt="Prev" />
+                                        </button>
+                                        <button class="card-nav-btn card-nav-next" aria-label="Next">
+                                            <img src="./globalAssets/celebrate/right.png" alt="Next" />
+                                        </button>
+                                        <div class="card-pagination"></div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6 order-lg-1 text-center text-lg-start">
+                                    <h3 class="ff-fraunces fw-semibold display-4 gradient__title mb-3"> Create
+                                        Events </h3>
+                                    <p
+                                            style="font-family: 'Montserrat', sans-serif; font-weight: 400; font-size: 24px; line-height: 30px; color: #374151;     text-align: justify;  width: 83%;">
+                                        Tanishq store events are designed to build stronger relationships with
+                                        customers, providing a seamless and memorable shopping experience while
+                                        reflecting the brand's commitment to innovation and customer satisfaction.
+                                    </p> <a href="https://celebrations.tanishq.co.in/events"
+                                            class="btn btn-primary explore__btn ff-fraunces small fw-semibold rounded-pill gap-3 px-4 border-0"
+                                            aria-label="Create Now"> <span>Create Now</span> <span
+                                        class="icon d-inline-flex rounded-circle justify-content-center align-items-center">
+                                                <svg width="21" height="20" viewBox="0 0 21 20" fill="none"
+                                                     xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M8 5L13 10L8 15" stroke="white" stroke-width="1.5"
+                                                          stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg> </span> </a>
+                                    <p class="mt-3" style="color: #802527; font-size: 0.95rem;">Celebrating moments
+                                        since 1996</p>
+                                </div>
+                            </div>
+                        </div> <!--tryIt-->
+                    </div> <!--.tab-content-->
+                </div> <!--.container-->
+            </div> <!-- Tab products wrapper end -->
+</main>
 
-            <div
-              class="tab-pane fade"
-              id="pills-giftTab"
-              role="tabpanel"
-              aria-labelledby="pills-giftTab-tab"
-              tabindex="0"
-            >
-              <div class="row g-4 align-items-center">
-                <div
-                  class="col-lg-6 order-lg-2 d-flex justify-content-center align-items-center"
-                >
-                  <div class="" style="width: 276px">
-                    <div class="d-flex">
-                      <div class="swiper celebrateSwiper w-100">
-                        <div class="swiper-wrapper">
-                          <div class="swiper-slide">
-                            <img
-                              src="./globalAssets/celebrate/Create-Events-02.png"
-                              alt="Create Events"
-                              class="img-fluid"
-                              width="276"
-                              height="428"
-                            />
-                          </div>
-                          <div class="swiper-slide">
-                            <img
-                              src="./globalAssets/celebrate/Create-Events-01.png"
-                              alt="Create Events"
-                              class="img-fluid"
-                              width="276"
-                              height="428"
-                            />
-                          </div>
-                          <div class="swiper-slide">
-                            <img
-                              src="./globalAssets/celebrate/Create-Events-03.png"
-                              alt="Create Events"
-                              class="img-fluid"
-                              width="276"
-                              height="428"
-                            />
-                          </div>
-                        </div>
-                        <div
-                          class="d-flex justify-content-between position-absolute top-50 translate-midddle-y z-3 w-100"
-                        >
-                          <button
-                            class="swiper-button-prev celebrateSwiperPrev control__btn btn d-flex justify-content-center align-items-center rounded-circle"
-                          ></button>
-                          <button
-                            class="swiper-button-next celebrateSwiperNext control__btn btn d-flex justify-content-center align-items-center rounded-circle"
-                          ></button>
-                        </div>
-                        <!-- Navigation Buttons -->
-                        <div
-                          class="swiper-pagination celebrateSwiperPagination"
-                        ></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-6 order-lg-1 text-center text-lg-start">
-                  <h3
-                    class="ff-fraunces fw-semibold display-4 gradient__title mb-3"
-                  >
-                    Create Events
-                  </h3>
-                  <p class="text-dark fw-medium mb-4">
-                    Tanishq store events are designed to build stronger
-                    relationships with customers, providing a seamless and
-                    memorable shopping experience while reflecting the brand's
-                    commitment to innovation and customer satisfaction.
-                  </p>
-                  <a
-                    href="/events"
-                    class="btn btn-primary explore__btn ff-fraunces small fw-semibold rounded-pill gap-3 px-4 border-0"
-                    aria-label="Create Now"
-                  >
-                    <span>Create Now</span>
-                    <span
-                      class="icon d-inline-flex rounded-circle justify-content-center align-items-center"
-                    >
-                      <svg
-                        width="21"
-                        height="20"
-                        viewBox="0 0 21 20"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M8 5L13 10L8 15"
-                          stroke="white"
-                          stroke-width="1.5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        />
-                      </svg>
-                    </span>
-                  </a>
-                </div>
-              </div>
-            </div>
-            <!--tryIt-->
-          </div>
-          <!--.tab-content-->
-        </div>
-        <!--.container-->
-      </div>
-      <!-- Tab products wrapper end -->
-    </main>
+<!-- Footer -->
+<footer class="footer py-3" style="background-color: #EDE7E5;">
+    <div class="container">
+        <hr style="    border-top: 3px solid #802527; width: 180%; margin-left: -120px; margin-top: 314px;">
+        <p class="text-center mb-0" style="font-size: 0.9rem;margin-top: 37px; color: #7A1F2F;">© Tanishq. All
+            rights reserved.</p>
+    </div>
+</footer>
 
-    <!-- JS: All Vendors -->
-    <script src="./globalAssets/js/jQuery.min.js"></script>
-    <script src="./globalAssets/js/bootstrap.bundle.min.js"></script>
-    <script src="./globalAssets/js/swiper.min.js"></script>
+<!-- JS: All Vendors -->
+<script src="./globalAssets/js/jQuery.min.js"></script>
+<script src="./globalAssets/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize all card stacks
+        document.querySelectorAll('.card-stack-container').forEach(function (container) {
+            const cards = container.querySelectorAll('.polaroid-stack');
+            const prevBtn = container.querySelector('.card-nav-prev');
+            const nextBtn = container.querySelector('.card-nav-next');
+            const pagination = container.querySelector('.card-pagination');
+            let currentIndex = 0;
+            let isAnimating = false;
 
-    <script>
-      const celebrateSwiper = new Swiper(".celebrateSwiper", {
-        // Optional parameters
-        // slidesPerView: 1,
-        // loop: true,
-        loop: true,
-        slidesPerView: "auto",
-        effect: "cards",
-        centeredSlides: true,
-        initialSlide: 1,
+            // Create pagination dots
+            cards.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'pagination-dot' + (index === 0 ? ' active' : '');
+                dot.addEventListener('click', () => goToCard(index));
+                pagination.appendChild(dot);
+            });
 
-        breakpoints: {
-          768: {
-            slidesPerView: 1,
-            cardsEffect: {
-              perSlideOffset: 20,
-              slideShadows: false,
-              perSlideRotate: 8, // Rotation of cards in degrees
-            },
-          },
-          0: {
-            slidesPerView: 1.5,
-            centeredSlides: true,
-            spaceBetween: 30,
-            cardsEffect: {
-              perSlideOffset: 10,
-              slideShadows: false,
-              perSlideRotate: 2, // Rotation of cards in degrees
-            },
-          },
-        },
-        spaceBetween: 0,
+            const dots = pagination.querySelectorAll('.pagination-dot');
 
-        // centeredSlidesBounds: true,
-        pagination: {
-          el: ".celebrateSwiperPagination",
-          clickable: true,
-        },
+            function updatePagination() {
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentIndex);
+                });
+            }
 
-        // Navigation arrows
-        navigation: {
-          nextEl: ".celebrateSwiperNext",
-          prevEl: ".celebrateSwiperPrev",
-        },
-      });
-    </script>
-  </body>
+            function goToCard(index) {
+                if (isAnimating || index === currentIndex) return;
+                isAnimating = true;
+
+                const oldCard = cards[currentIndex];
+                const newCard = cards[index];
+                const direction = index > currentIndex ? 'next' : 'prev';
+
+                // Animate old card out (slide left)
+                oldCard.classList.remove('active');
+                oldCard.classList.add('slide-left');
+
+                // Prepare and animate new card in (slide from right)
+                setTimeout(() => {
+                    newCard.classList.add('slide-in-right');
+                    newCard.classList.add('active');
+                }, 50);
+
+                currentIndex = index;
+                updatePagination();
+
+                setTimeout(() => {
+                    oldCard.classList.remove('slide-left', 'slide-in-right');
+                    newCard.classList.remove('slide-left', 'slide-in-right');
+                    isAnimating = false;
+                }, 650);
+            }
+
+            nextBtn.addEventListener('click', () => {
+                const nextIndex = (currentIndex + 1) % cards.length;
+                goToCard(nextIndex);
+            });
+
+            prevBtn.addEventListener('click', () => {
+                const prevIndex = (currentIndex - 1 + cards.length) % cards.length;
+                goToCard(prevIndex);
+            });
+
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') nextBtn.click();
+                if (e.key === 'ArrowLeft') prevBtn.click();
+            });
+        });
+    });
+</script>
+</body>
+
 </html>
