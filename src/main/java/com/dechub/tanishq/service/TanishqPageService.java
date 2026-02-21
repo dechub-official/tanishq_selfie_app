@@ -491,14 +491,18 @@ public class TanishqPageService {
                         log.debug("Saved attendee: {} - {} - {}", name, phone, rsoName);
                     }
 
-                    // Update event attendee count
-                    event.setAttendees(attendeeCount);
+                    // Update event attendee count - ADD to existing count instead of replacing
+                    Integer currentCount = event.getAttendees();
+                    Integer newTotalCount = (currentCount != null ? currentCount : 0) + attendeeCount;
+                    event.setAttendees(newTotalCount);
                     event.setAttendeesUploaded(true);
                     eventRepository.save(event);
+                    log.info("Updated event {} attendee count from {} to {} (added {} new attendees)",
+                            event.getId(), currentCount, newTotalCount, attendeeCount);
 
                     dto.setStatus(true);
-                    dto.setMessage(attendeeCount + " attendees uploaded successfully");
-                    dto.setResult(attendeeCount);
+                    dto.setMessage(attendeeCount + " attendees uploaded successfully. Total attendees: " + newTotalCount);
+                    dto.setResult(newTotalCount);
 
                 } catch (Exception e) {
                     log.error("Failed to process bulk attendees from Excel for event " + attendeesDetailDTO.getId(), e);
@@ -810,7 +814,7 @@ public class TanishqPageService {
         map.put("rso", event.getRso() != null ? event.getRso() : "");
         map.put("sale", event.getSale() != null ? event.getSale() : 0);
         map.put("start_date", event.getStartDate() != null ? event.getStartDate() : "");
-        map.put("store_code", event.getStore() != null ? event.getStore().getStoreCode() : "");
+        map.put("store_code", event.getStoreCode() != null ? event.getStoreCode() : "");
         return map;
     }
 
@@ -1141,29 +1145,60 @@ public class TanishqPageService {
         }
 
         try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            LocalDate startDate = LocalDate.parse(startDateStr.trim(), formatter);
-            LocalDate endDate = LocalDate.parse(endDateStr.trim(), formatter);
+            DateTimeFormatter isoFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            DateTimeFormatter slashFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            DateTimeFormatter dashFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            LocalDate startDate = LocalDate.parse(startDateStr.trim(), isoFormatter);
+            LocalDate endDate = LocalDate.parse(endDateStr.trim(), isoFormatter);
 
             List<Map<String, Object>> filtered = new ArrayList<>();
             for (Map<String, Object> event : events) {
-                Object startDateObj = event.get("StartDate");
+                // Try both key formats: "start_date" (from database) and "StartDate" (from Google Sheet)
+                Object startDateObj = event.get("start_date");
+                if (startDateObj == null) {
+                    startDateObj = event.get("StartDate");
+                }
                 if (startDateObj != null) {
                     try {
-                        String startDateValue = startDateObj.toString();
-                        LocalDate eventDate = LocalDate.parse(startDateValue, formatter);
+                        String startDateValue = startDateObj.toString().trim();
+                        LocalDate eventDate = null;
 
-                        if (!eventDate.isBefore(startDate) && !eventDate.isAfter(endDate)) {
+                        // Try parsing with multiple date formats
+                        // Format 1: yyyy-MM-dd (ISO)
+                        try {
+                            eventDate = LocalDate.parse(startDateValue, isoFormatter);
+                        } catch (Exception e1) {
+                            // Format 2: dd/MM/yyyy
+                            try {
+                                eventDate = LocalDate.parse(startDateValue, slashFormatter);
+                            } catch (Exception e2) {
+                                // Format 3: dd-MM-yyyy
+                                try {
+                                    eventDate = LocalDate.parse(startDateValue, dashFormatter);
+                                } catch (Exception e3) {
+                                    // Skip events with unparseable date format
+                                    log.debug("Could not parse start_date: {} for event: {}", startDateValue, event.get("id"));
+                                    continue;
+                                }
+                            }
+                        }
+
+                        if (eventDate != null && !eventDate.isBefore(startDate) && !eventDate.isAfter(endDate)) {
                             filtered.add(event);
                         }
                     } catch (Exception e) {
                         // Skip events with invalid date format
                     }
+                } else {
+                    // If no start_date, include the event to avoid losing data
+                    log.debug("Event {} has no start_date, including in export", event.get("id"));
+                    filtered.add(event);
                 }
             }
             return filtered;
         } catch (Exception e) {
             // If date parsing fails, return all events
+            log.warn("Date filter parsing failed, returning all events. Error: {}", e.getMessage());
             return events;
         }
     }

@@ -72,6 +72,10 @@ public class Event {
     @Column(name = "ghs_flag")
     private Boolean ghsFlag;
 
+    // Direct store_code field for native query compatibility
+    @Column(name = "store_code", insertable = false, updatable = false)
+    private String storeCode;
+
     @ManyToOne
     @JoinColumn(name = "store_code")
     private Store store;
@@ -258,6 +262,14 @@ public class Event {
 
     public void setStore(Store store) {
         this.store = store;
+    }
+
+    public String getStoreCode() {
+        return storeCode;
+    }
+
+    public void setStoreCode(String storeCode) {
+        this.storeCode = storeCode;
     }
 
     public List<Attendee> getAttendeesEntities() {

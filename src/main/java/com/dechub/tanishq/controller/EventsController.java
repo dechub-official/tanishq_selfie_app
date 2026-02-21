@@ -547,20 +547,20 @@ public class EventsController {
 
         CSVWriter writer = new CSVWriter(new OutputStreamWriter(response.getOutputStream()));
 
-        // Define custom column headers in the desired order
+        // Define custom column headers in the desired order (excluding region, import_version, is_active, is_visible)
         List<String> displayHeaders = Arrays.asList(
-                "createdAt", "Store Code", "Region", "Id", "Event Type", "Event Sub Type", "Event Name", "RSO",
-                "Start Date", "Image", "Invitees", "Attendees", "completed Events", "Community",
-                "location", "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb",
-                "Drive link", "Diamond Awareness", "GHS"
+                "Created At", "Store Code", "Id", "Event Type", "Event Sub Type", "Event Name", "RSO",
+                "Start Date", "Image", "Invitees", "Attendees", "Completed Events Drive Link", "Community",
+                "Location", "Attendees Uploaded", "Sale", "Advance", "GHS/RGA", "GMB",
+                "Diamond Awareness", "GHS Flag"
         );
         
         // Map custom headers to database field names
         List<String> dbFields = Arrays.asList(
-                "created_at", "store_code", "region", "id", "event_type", "event_sub_type", "event_name", "rso",
+                "created_at", "store_code", "id", "event_type", "event_sub_type", "event_name", "rso",
                 "start_date", "image", "invitees", "attendees", "completed_events_drive_link", "community",
                 "location", "attendees_uploaded", "sale", "advance", "ghs_or_rga", "gmb",
-                "completed_events_drive_link", "diamond_awareness", "ghs_flag"
+                "diamond_awareness", "ghs_flag"
         );
 
         writer.writeNext(displayHeaders.toArray(new String[0]));
