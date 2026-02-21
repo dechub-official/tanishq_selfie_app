@@ -1179,10 +1179,10 @@
 
                     <!-- NAV -->
                     <nav class="d-flex align-items-center topbar-nav">
-                        <a href="https://celebrations.tanishq.co.in/events" class="topbar-link">Create Event</a>
-                        <a href="https://celebrations.tanishq.co.in/selfie" target="_blank" class="topbar-link">Take
+                        <a href="/events" class="topbar-link">Create Event</a>
+                        <a href="/selfie" target="_blank" class="topbar-link">Take
                             selfie</a>
-                        <a href="https://celebrations.tanishq.co.in/checklist" target="_blank"
+                        <a href="/checklist" target="_blank"
                            class="topbar-link">Wedding checklist</a>
                         <a href="#" class="topbar-link">Gifting</a>
                     </nav>
@@ -1225,7 +1225,7 @@
                         <div class="col-lg-3 col-md-6 col-sm-12">
                             <div class="grid__card position-relative">
                                 <div class="position-absolute-md top-0 start-0 w-100 h-100 p-2"> <a
-                                        href="https://celebrations.tanishq.co.in/checklist" target="_blank"> <img
+                                        href="/checklist" target="_blank"> <img
                                         src="./globalAssets/celebrate/checklist.png"
                                         class="img-fluid w-100 thumbnail" alt="Wedding Checklist" /> </a> </div>
                             </div>
@@ -1233,7 +1233,7 @@
                         <div class="col-lg-3 col-md-6 col-sm-12">
                             <div class="grid__card position-relative">
                                 <div class="position-absolute-md top-0 start-0 w-100 h-100 p-2"> <a
-                                        href="https://celebrations.tanishq.co.in/selfie" target="_blank"> <img
+                                        href="/selfie" target="_blank"> <img
                                         src="./globalAssets/celebrate/selfie.png"
                                         class="img-fluid w-100 thumbnail" alt="Take Selfie" /> </a> </div>
                             </div>
@@ -1241,7 +1241,7 @@
                         <div class="col-lg-3 col-md-6 col-sm-12">
                             <div class="grid__card position-relative">
                                 <div class="position-absolute-md top-0 start-0 w-100 h-100 p-2"> <a
-                                        href="https://celebrations.tanishq.co.in/events" target="_blank"> <img
+                                        href="/events" target="_blank"> <img
                                         src="./globalAssets/celebrate/event.png"
                                         class="img-fluid w-100 thumbnail" alt="Create Event" /> </a> </div>
                             </div>
@@ -1321,7 +1321,7 @@
                                         personalized recommendations for cultural events like Mehendi, Haldi, and
                                         Sangeet. Get inspired by curated attire and jewelry suggestions to create an
                                         elegant, unforgettable celebration. </p> <a
-                                        href="https://celebrations.tanishq.co.in/selfie"
+                                        href="/selfie"
                                         class="btn btn-primary explore__btn ff-fraunces small fw-semibold rounded-pill gap-3 px-4 border-0"
                                         aria-label="Match Now"> <span>Match Now</span> <span
                                         class="icon d-inline-flex rounded-circle justify-content-center align-items-center">
@@ -1373,7 +1373,7 @@
                                         steps: Click "Capture Now", take a well-lit selfie, choose a festival-themed
                                         frame, choose the filter If needed, and share your festive photo on social
                                         media or with others! </p> <a
-                                        href="https://celebrations.tanishq.co.in/selfie"
+                                        href="/selfie"
                                         class="btn btn-primary explore__btn ff-fraunces small fw-semibold rounded-pill gap-3 px-4 border-0"
                                         aria-label="Capture Now"> <span>Capture Now</span> <span
                                         class="icon d-inline-flex rounded-circle justify-content-center align-items-center">
@@ -1424,7 +1424,7 @@
                                         Tanishq store events are designed to build stronger relationships with
                                         customers, providing a seamless and memorable shopping experience while
                                         reflecting the brand's commitment to innovation and customer satisfaction.
-                                    </p> <a href="https://celebrations.tanishq.co.in/events"
+                                    </p> <a href="/events"
                                             class="btn btn-primary explore__btn ff-fraunces small fw-semibold rounded-pill gap-3 px-4 border-0"
                                             aria-label="Create Now"> <span>Create Now</span> <span
                                         class="icon d-inline-flex rounded-circle justify-content-center align-items-center">
@@ -1455,6 +1455,45 @@
 <!-- JS: All Vendors -->
 <script src="./globalAssets/js/jQuery.min.js"></script>
 <script src="./globalAssets/js/bootstrap.bundle.min.js"></script>
+
+<!-- Environment-aware base path normalization
+     - Use root-relative hrefs for SEO and same-origin navigation by default.
+     - If the app is hosted under a subpath (e.g. '/celebrations'), set window.__CELEBRATIONS_BASE_PATH = '/celebrations' on the page/server.
+     - This script will normalize all root-relative links (href starting with '/') to include the base path and current origin at runtime, ensuring preprod stays on preprod and prod stays on prod.
+-->
+<script>
+    (function () {
+        // Optional: server can inject window.__CELEBRATIONS_BASE_PATH to handle path-mounted deployments
+        var basePath = window.__CELEBRATIONS_BASE_PATH || '';
+        if (basePath && basePath.endsWith('/')) basePath = basePath.slice(0, -1);
+
+        function isLocalAnchor(a) {
+            var href = a.getAttribute('href');
+            return href && href.indexOf('/') === 0 && href.indexOf('//') !== 0; // starts with '/' but not '//'
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var anchors = document.querySelectorAll('a');
+            anchors.forEach(function (a) {
+                try {
+                    if (!isLocalAnchor(a)) return;
+                    var href = a.getAttribute('href');
+                    // Normalize: avoid double-prefixing if basePath is already present
+                    if (basePath && href.indexOf(basePath + '/') === 0) {
+                        // already contains basePath
+                        a.href = window.location.origin + href;
+                    } else {
+                        a.href = window.location.origin + (basePath || '') + href;
+                    }
+                } catch (e) {
+                    // ignore errors - do not break page
+                    console && console.warn && console.warn('link normalization failed', e);
+                }
+            });
+        });
+    })();
+</script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         // Initialize all card stacks
@@ -1531,3 +1570,4 @@
 </body>
 
 </html>
+
