@@ -1,0 +1,53 @@
+╔════════════════════════════════════════════════════════════════╗
+║          VIEW DATA FIX - QUICK REFERENCE                       ║
+╚════════════════════════════════════════════════════════════════╝
+
+✅ PROBLEM FIXED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+The "View Data" modal was not showing Customer Phone and Like columns.
+
+✅ SOLUTION APPLIED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Changed backend field name from "contact" → "phone" to match frontend.
+
+📝 FILE CHANGED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+src/main/java/com/dechub/tanishq/service/TanishqPageService.java (Line 687)
+
+🔧 NEXT STEPS TO DEPLOY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Build the project:
+   Option A: Using IntelliJ IDEA
+      - Right-click pom.xml → Maven → Reload Project
+      - Maven → Clean
+      - Maven → Package (with profile: preprod)
+
+   Option B: Using command line (if Maven is installed)
+      mvn clean package -DskipTests -P preprod
+
+2. Deploy:
+   - Stop the application
+   - Copy: target\tanishq-preprod-30-01-2026-2-0.0.1-SNAPSHOT.war
+   - Restart the application
+
+3. Test:
+   - Login to dashboard
+   - Click "View Data" on any event
+   - Verify Customer Phone and Like columns are visible
+
+📊 EXPECTED API RESPONSE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{
+    "status": true,
+    "result": [
+        {
+            "name": "Sudhir",
+            "phone": "1234567890",      ← NOW SHOWS
+            "like": "",                  ← NOW SHOWS
+            "firstTimeAtTanishq": true
+        }
+    ]
+}
+
+✅ NO DATABASE CHANGES NEEDED - Code-only fix!
+

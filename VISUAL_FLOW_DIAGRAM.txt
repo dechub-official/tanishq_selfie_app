@@ -1,0 +1,306 @@
+# 🎨 Greeting System - Visual Flow Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        GREETING SYSTEM - COMPLETE FLOW                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+STEP 1: GENERATE GREETING
+═══════════════════════════
+┌──────────────┐
+│   Admin/User │
+└──────┬───────┘
+       │ POST /greetings/generate
+       ▼
+┌──────────────────┐
+│  Spring Boot     │
+│  Controller      │
+└──────┬───────────┘
+       │ Creates new record
+       ▼
+┌──────────────────────────────────┐
+│         MySQL Database           │
+├──────────────────────────────────┤
+│ unique_id: GREETING_1234567890   │
+│ uploaded: false                  │
+│ drive_file_id: null              │
+│ qr_code_data: null               │
+│ greeting_text: null              │
+│ message: null                    │
+│ created_at: 2026-01-31T10:30:00 │
+└──────────────────────────────────┘
+       │
+       │ Returns: "GREETING_1234567890"
+       ▼
+┌──────────────┐
+│   Admin/User │ ← Receives greeting ID
+└──────────────┘
+
+
+STEP 2: GENERATE QR CODE
+═══════════════════════════
+┌──────────────┐
+│   Admin/User │
+└──────┬───────┘
+       │ GET /greetings/GREETING_1234567890/qr
+       ▼
+┌──────────────────┐
+│  QR Code Service │
+└──────┬───────────┘
+       │ Generates QR with URL:
+       │ "https://celebrations.tanishq.co.in/qr?id=GREETING_1234567890"
+       ▼
+┌────────────────────────────────┐
+│       QR CODE IMAGE            │
+│   ▄▄▄▄▄▄▄   ▄  ▄▄  ▄▄▄▄▄▄▄    │
+│   █ ███ █ ▄▀▄█▄▀▄ █ ███ █    │
+│   █ ▀▀▀ █ ▄█ ▀ ▄▀ █ ▀▀▀ █    │
+│   ▀▀▀▀▀▀▀ █ ▀ ▀ ▀ ▀▀▀▀▀▀▀    │
+│  QR Contains:                  │
+│  https://celebrations.tanishq  │
+│  .co.in/qr?id=GREETING_1234567890│
+└────────────────────────────────┘
+       │ Saved to MySQL as Base64
+       ▼
+┌──────────────┐
+│   Admin/User │ ← Downloads/Prints QR
+└──────────────┘
+
+
+STEP 3: SCAN QR CODE
+═══════════════════════════
+┌──────────────┐
+│   End User   │
+│  (Phone)     │
+└──────┬───────┘
+       │ Scans QR code with camera
+       ▼
+┌────────────────────────────────────────────────┐
+│           QR Scanner App                       │
+│  Reads: "https://celebrations.tanishq.co.in   │
+│          /qr?id=GREETING_1234567890"           │
+└────────────────┬───────────────────────────────┘
+                 │ Opens URL in browser
+                 ▼
+┌────────────────────────────────────────────────┐
+│           REACT APP (/qr/)                     │
+│                                                │
+│  🐛 BUG IS HERE! 🐛                           │
+│  ─────────────────                            │
+│                                                │
+│  ❌ WRONG (Current):                          │
+│  const qrId = scannedData;                    │
+│  // qrId = "https://celebrations..."          │
+│                                                │
+│  ✅ CORRECT (Fix):                            │
+│  const url = new URL(scannedData);            │
+│  const qrId = url.searchParams.get('id');     │
+│  // qrId = "GREETING_1234567890"              │
+│                                                │
+└────────────────┬───────────────────────────────┘
+                 │ Extracts: GREETING_1234567890
+                 ▼
+┌────────────────────────────────────────────────┐
+│         Recording Page                         │
+│  - Record video                                │
+│  - Enter name, phone, message                  │
+└────────────────────────────────────────────────┘
+
+
+STEP 4: UPLOAD VIDEO
+═══════════════════════════
+┌────────────────────────────────────────────────┐
+│         Form Submission                        │
+├────────────────────────────────────────────────┤
+│  FormData:                                     │
+│  - name: "Nagaraj"                             │
+│  - phone: "8152948407"                         │
+│  - message: "Hi I am Nagaraj ajadar"          │
+│  - video: [Blob]                               │
+└────────────────┬───────────────────────────────┘
+                 │
+                 │ ❌ WRONG: POST /greetings/https://celebrations.../upload
+                 │ ✅ RIGHT: POST /greetings/GREETING_1234567890/upload
+                 ▼
+┌────────────────────────────────────────────────┐
+│      Spring Boot - GreetingController          │
+│  @PostMapping("/{uniqueId}/upload")            │
+└────────────────┬───────────────────────────────┘
+                 │ Receives: GREETING_1234567890
+                 ▼
+┌────────────────────────────────────────────────┐
+│           StorageService                       │
+│  Uploads video to Google Drive                 │
+└────────────────┬───────────────────────────────┘
+                 │ Returns: driveFileId
+                 ▼
+┌──────────────────────────────────┐
+│      MySQL Database UPDATE       │
+├──────────────────────────────────┤
+│ uploaded: true ✓                 │
+│ drive_file_id: "1abc...xyz"      │
+│ greeting_text: "Nagaraj"         │
+│ message: "Hi I am Nagaraj..."    │
+│ updated_at: 2026-01-31T11:00:00 │
+└──────────────────────────────────┘
+
+
+STEP 5: VIEW GREETING
+═══════════════════════════
+┌──────────────┐
+│   End User   │
+└──────┬───────┘
+       │ GET /greetings/GREETING_1234567890/view
+       ▼
+┌────────────────────────────────────────────────┐
+│      Spring Boot - GreetingController          │
+│  @GetMapping("/{uniqueId}/view")               │
+└────────────────┬───────────────────────────────┘
+                 │ Queries MySQL
+                 ▼
+┌──────────────────────────────────┐
+│      MySQL Database QUERY        │
+│  SELECT * WHERE unique_id = ...  │
+└────────────────┬─────────────────┘
+                 │ Returns greeting data
+                 ▼
+┌────────────────────────────────────────────────┐
+│              JSON Response                     │
+├────────────────────────────────────────────────┤
+│ {                                              │
+│   "hasVideo": true,                            │
+│   "status": "completed",                       │
+│   "driveFileId": "1abc...xyz",                 │
+│   "videoPlaybackUrl": "https://drive.google   │
+│      .com/file/d/1abc.../view",                │
+│   "submittedAt": "2026-01-31T11:00:00",        │
+│   "name": "Nagaraj",                           │
+│   "message": "Hi I am Nagaraj ajadar"          │
+│ }                                              │
+└────────────────────────────────────────────────┘
+                 │
+                 ▼
+┌──────────────┐
+│   End User   │ ← Watches video message!
+└──────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+THE FIX - URL PARSING
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         BEFORE (WRONG) ❌                                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+   Scanned QR Data
+         │
+         │ "https://celebrations.tanishq.co.in/qr?id=GREETING_1234567890"
+         ▼
+   setQrId(scannedData)
+         │
+         │ qrId = "https://celebrations.tanishq.co.in/qr?id=GREETING_1234567890"
+         ▼
+   API Call: `${baseUrl}/greetings/${qrId}/upload`
+         │
+         │ URL: /greetings/https://celebrations.tanishq.co.in/qr?id=GREETING_1234567890/upload
+         ▼
+   ❌ 405 METHOD NOT ALLOWED
+
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          AFTER (CORRECT) ✅                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+   Scanned QR Data
+         │
+         │ "https://celebrations.tanishq.co.in/qr?id=GREETING_1234567890"
+         ▼
+   const url = new URL(scannedData)
+   const id = url.searchParams.get('id')
+         │
+         │ id = "GREETING_1234567890"
+         ▼
+   setQrId(id)
+         │
+         │ qrId = "GREETING_1234567890"
+         ▼
+   API Call: `${baseUrl}/greetings/${qrId}/upload`
+         │
+         │ URL: /greetings/GREETING_1234567890/upload
+         ▼
+   ✅ 200 OK - VIDEO UPLOADED!
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+SYSTEM ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│                              FRONTEND                                       │
+│                                                                             │
+│  ┌──────────────────────────────────────────────────────────────────────┐ │
+│  │                         React App (/qr/)                             │ │
+│  ├──────────────────────────────────────────────────────────────────────┤ │
+│  │  Routes:                                                             │ │
+│  │  - /              QR Scanner page                                    │ │
+│  │  - /recording     Video recording page                               │ │
+│  │  - /form          Form submission page                               │ │
+│  │  - /video-message View uploaded greeting                             │ │
+│  └──────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│  Project Path: C:\DECHUB\Tanishq-qr-scanner\tanishq-qr-scanner\           │
+└──────────────────────────────┬──────────────────────────────────────────────┘
+                               │
+                               │ API Calls
+                               ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│                              BACKEND                                        │
+│                                                                             │
+│  ┌──────────────────────────────────────────────────────────────────────┐ │
+│  │              Spring Boot Application                                 │ │
+│  ├──────────────────────────────────────────────────────────────────────┤ │
+│  │  Controllers:                                                        │ │
+│  │  - GreetingController    /greetings/**                               │ │
+│  │  - EventsController      /events/**  (separate)                      │ │
+│  │                                                                       │ │
+│  │  Services:                                                           │ │
+│  │  - GreetingService       Business logic                              │ │
+│  │  - StorageService        Google Drive upload                         │ │
+│  │  - QrCodeService         QR generation                               │ │
+│  └──────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│  Project Path: C:\JAVA\celebration-preprod-latest\celeb\                  │
+│                tanishq_selfie_app\                                         │
+└──────────────────────────────┬──────────────────────────────────────────────┘
+                               │
+                               │ Stores data
+                               ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│                            DATA LAYER                                       │
+│                                                                             │
+│  ┌──────────────────────────────────┐    ┌──────────────────────────────┐ │
+│  │       MySQL Database             │    │      Google Drive            │ │
+│  ├──────────────────────────────────┤    ├──────────────────────────────┤ │
+│  │  Tables:                         │    │  Folders:                    │ │
+│  │  - greeting                      │    │  - greeting_videos/          │ │
+│  │  - events (separate)             │    │  - event_images/ (separate)  │ │
+│  │                                  │    │                              │ │
+│  │  Greeting fields:                │    │  Stores:                     │ │
+│  │  - unique_id (PK)                │    │  - Video files (.mp4)        │ │
+│  │  - uploaded (boolean)            │    │  - Returns: driveFileId      │ │
+│  │  - drive_file_id                 │    │                              │ │
+│  │  - qr_code_data                  │    │                              │ │
+│  │  - greeting_text                 │    │                              │ │
+│  │  - message                       │    │                              │ │
+│  │  - created_at                    │    │                              │ │
+│  │  - updated_at                    │    │                              │ │
+│  └──────────────────────────────────┘    └──────────────────────────────┘ │
+└────────────────────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════
+```
+

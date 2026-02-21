@@ -18,16 +18,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .authorizeRequests()
                 .antMatchers(HttpMethod.TRACE, "/**").denyAll()
+                .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()  // Allow OPTIONS for CORS preflight
                 .antMatchers("/checklist/**").permitAll()
+                .antMatchers("/greetings/**").permitAll()  // Explicitly allow greetings endpoints
                 .anyRequest().permitAll()
                 .and().httpBasic()
                 .and().sessionManagement().sessionFixation().changeSessionId()
                 .and().csrf().disable()
+                .cors()  // Enable CORS support
+                .and()
                 .headers().frameOptions().disable()
-                .addHeaderWriter(new StaticHeadersWriter("Access-Control-Allow-Methods","GET", "POST"))
+                .addHeaderWriter(new StaticHeadersWriter("Access-Control-Allow-Methods","GET, POST, PUT, DELETE, OPTIONS"))
                 .addHeaderWriter(new StaticHeadersWriter("Access-Control-Max-Age", "3600"))
-                .addHeaderWriter(new StaticHeadersWriter("Access-Control-Allow-Credentials", "true"))
-                .addHeaderWriter(new StaticHeadersWriter("Access-Control-Allow-Headers", "X-CSRF-TOKEN,X-Frame-Options"))
+                .addHeaderWriter(new StaticHeadersWriter("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept, Origin"))
                 .addHeaderWriter(new StaticHeadersWriter("X-Frame-Options", "DENY"))
                 .xssProtection()
                 .and()

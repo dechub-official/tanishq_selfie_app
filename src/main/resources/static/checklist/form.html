@@ -83,7 +83,7 @@ background: radial-gradient(circle, rgba(237,218,221,1) 0%, rgba(255,255,255,1) 
         
         <div class="grid gap-4 md:grid-cols-2 md:gap-6">
             <div class="flex items-center me-4">
-                <input id="sample_catalogue" type="checkbox" value="" class="w-4 h-4 bg-gray-100 border-gray-300 rounded" name="sample_catalogue" checked required>
+                <input id="sample_catalogue" type="checkbox" value="" class="w-4 h-4 bg-gray-100 border-gray-300 rounded" name="sample_catalogue" checked>
                 <label for="sample_catalogue" class="ms-2 text-sm font-bold text-gray-900">Add Sample Tanishq Catalogue</label>
             </div>
 
@@ -226,38 +226,79 @@ Information will only be saved in our store’s system for quick review when you
             return;
         }
         const loader=document.getElementById("loader")
-            console.log(loader);
-            loader.classList.remove("hidden")
+        console.log(loader);
+        loader.classList.remove("hidden")
         const form = document.getElementById('brideDetailsForm');
         const formData = new FormData(form);
 
-        fetch('https://celebrations.tanishq.co.in/tanishq/selfie/brideDetails', {
+        console.log('Submitting bride details form...');
+        console.log('FilePath:', formData.get('filepath'));
+
+        fetch('/tanishq/selfie/brideDetails', {
             method: 'POST',
             body: formData,
         })
-        .then(response =>response.blob())
-        .then(blob => {
-            if (blob) {
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
 
-                // document.getElementById('popup').classList.remove('hidden');
-                console.log(blob);
-                const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'output.jpg'; // File name you want to download
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-            window.location.pathname="/thankyou.html"
-            } else {
-             
+            // Check for custom error header
+            const errorMessage = response.headers.get('X-Error-Message');
+            if (errorMessage) {
+                console.warn('Server returned error message:', errorMessage);
             }
-            loader.classList.add("hidden")
+
+            if (!response.ok) {
+                throw new Error('Server error: ' + response.status);
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            loader.classList.add("hidden");
+
+            console.log('Received blob, size:', blob.size);
+
+            if (blob && blob.size > 0) {
+                // Successfully received image - download it
+                console.log('✓ Checklist generated successfully, size:', blob.size);
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'wedding-checklist-' + new Date().getTime() + '.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                // Show success message
+                console.log('✓ Download triggered successfully');
+
+                // Redirect to thank you page after a short delay
+                setTimeout(() => {
+                    window.location.href = '/checklist/thankyou.html';
+                }, 1000);
+
+            } else {
+                // Empty response - data saved but no image
+                console.warn('⚠ Data saved but no image received (size: 0)');
+                console.warn('This usually means the checklist image file was not found on the server');
+
+                // Still show success and redirect - data is saved
+                alert('Your details have been saved successfully! We\'ll send your customized checklist to your email.');
+
+                // Redirect to thank you page
+                window.location.href = '/checklist/thankyou.html';
+            }
         })
         .catch(error => {
-            console.error('Error:', error);
-            loader.classList.add("hidden")
+            loader.classList.add("hidden");
+            console.error('✗ Error submitting form:', error);
+            console.error('Error stack:', error.stack);
+
+            // Show user-friendly error message
+            alert('Sorry, there was an error processing your request.\n\n' +
+                  'Your details may have been saved. Please contact Tanishq support if you don\'t receive your checklist.\n\n' +
+                  'Error: ' + error.message);
         });
     }
   

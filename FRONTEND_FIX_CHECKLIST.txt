@@ -1,0 +1,248 @@
+===============================================
+   FRONTEND FIX CHECKLIST - Mobile Upload
+===============================================
+
+✅ = Fixed  |  ⚠️ = Need to Fix  |  📝 = Action Required
+
+Backend Status: ✅ DONE (Already fixed by me)
+Frontend Status: ⚠️ NEED YOUR ACTION
+
+===============================================
+FRONTEND FIXES YOU NEED TO MAKE
+===============================================
+
+□ FIX 1: CREATE/UPDATE API FILE
+   File: src/lib/api.ts (or wherever your API file is)
+
+   Add this function:
+   ┌────────────────────────────────────────┐
+   │ export async function                  │
+   │   submitVideoMessage(                  │
+   │     params,                            │
+   │     videoBlob                          │
+   │   ) {                                  │
+   │   const formData = new FormData();     │
+   │   formData.append("name", ...);        │
+   │   formData.append("message", ...);     │
+   │   formData.append("video", ...);       │
+   │   return fetch(url, {                  │
+   │     method: "POST",                    │
+   │     body: formData                     │
+   │   });                                  │
+   │ }                                      │
+   └────────────────────────────────────────┘
+
+   ⚠️ CRITICAL: Must use FormData, not JSON!
+
+□ FIX 2: ADD ERROR DISPLAY
+   File: UserForm.tsx (your form component)
+
+   Add:
+   ┌────────────────────────────────────────┐
+   │ const [submitError, setSubmitError] = │
+   │   useState<string>("");                │
+   │                                        │
+   │ // In JSX (before <form>):            │
+   │ {submitError && (                      │
+   │   <div className="red-error-box">     │
+   │     <p>{submitError}</p>              │
+   │   </div>                               │
+   │ )}                                     │
+   └────────────────────────────────────────┘
+
+   ⚠️ USER MUST SEE ERRORS (not just console)
+
+□ FIX 3: ADD VIDEO VALIDATION
+   File: UserForm.tsx
+
+   Update validateForm():
+   ┌────────────────────────────────────────┐
+   │ const validateForm = () => {           │
+   │   // ADD THIS FIRST:                   │
+   │   if (!recordedVideoBlob) {           │
+   │     setSubmitError(                    │
+   │       "Please record video first"     │
+   │     );                                 │
+   │     return false;                      │
+   │   }                                    │
+   │   // ...rest of validation            │
+   │ };                                     │
+   └────────────────────────────────────────┘
+
+   ⚠️ MUST CHECK VIDEO EXISTS!
+
+□ FIX 4: ADD TEXT SANITIZATION
+   File: UserForm.tsx
+
+   Add function:
+   ┌────────────────────────────────────────┐
+   │ const sanitizeText = (text) => {       │
+   │   return text.trim()                   │
+   │     .replace(/[\u0000-\u001F]/g, '')  │
+   │     .replace(/\s+/g, ' ');            │
+   │ };                                     │
+   │                                        │
+   │ // Use in handleSubmit:               │
+   │ const sanitized = {                    │
+   │   name: sanitizeText(formData.name),  │
+   │   message: sanitizeText(...)          │
+   │ };                                     │
+   └────────────────────────────────────────┘
+
+   ⚠️ FIXES MOBILE KEYBOARD ISSUES!
+
+□ FIX 5: UPDATE SUBMIT HANDLER
+   File: UserForm.tsx
+
+   Change:
+   ┌────────────────────────────────────────┐
+   │ const handleSubmit = async (e) => {    │
+   │   e.preventDefault();                  │
+   │   setSubmitError(""); // Clear        │
+   │                                        │
+   │   if (!validateForm()) return;        │
+   │                                        │
+   │   try {                                │
+   │     const sanitized = {               │
+   │       name: sanitizeText(...),        │
+   │       message: sanitizeText(...)      │
+   │     };                                 │
+   │     await mutation.mutateAsync(       │
+   │       sanitized                       │
+   │     );                                 │
+   │     navigate("/video-message");       │
+   │   } catch (error) {                   │
+   │     setSubmitError(                    │
+   │       error.message ||                │
+   │       "Failed to submit"              │
+   │     );                                 │
+   │   }                                    │
+   │ };                                     │
+   └────────────────────────────────────────┘
+
+   ⚠️ SHOWS ERROR TO USER!
+
+===============================================
+TESTING CHECKLIST AFTER FIXES
+===============================================
+
+□ Test 1: Desktop (should still work)
+   1. Open on desktop browser
+   2. Record video
+   3. Fill form
+   4. Submit
+   Expected: ✅ Success
+
+□ Test 2: Mobile with clean text
+   1. Open on mobile
+   2. Record video
+   3. Name: "John Doe"
+   4. Message: "Test message here"
+   5. Submit
+   Expected: ✅ Success
+
+□ Test 3: Mobile with garbled text
+   1. Open on mobile
+   2. Record video
+   3. Type garbled text in message
+   4. Submit
+   Expected: ✅ Success (text sanitized)
+
+□ Test 4: No video
+   1. Open on mobile
+   2. Don't record video
+   3. Fill form
+   4. Submit
+   Expected: ⚠️ Error: "Please record video"
+
+□ Test 5: Empty name
+   1. Record video
+   2. Leave name empty
+   3. Submit
+   Expected: ⚠️ Error: "Name is required"
+
+===============================================
+QUICK REFERENCE
+===============================================
+
+📍 WHAT'S WRONG:
+   Mobile form shows: "Failed to submit"
+   Desktop works fine ✅
+
+🔍 ROOT CAUSE:
+   1. API doesn't send FormData correctly
+   2. Errors hidden in console
+   3. No video validation
+   4. Mobile text encoding issues
+
+🛠️ WHAT TO FIX:
+   1. API file - FormData structure
+   2. UserForm - Error display
+   3. UserForm - Video validation
+   4. UserForm - Text sanitization
+   5. UserForm - Submit handler
+
+📁 FILES TO EDIT:
+   - src/lib/api.ts (or your API file)
+   - UserForm.tsx (or your form component)
+
+⏱️ TIME ESTIMATE:
+   15-30 minutes for all fixes
+
+===============================================
+HELP & DOCUMENTATION
+===============================================
+
+📖 Detailed Guide:
+   → FRONTEND_ACTION_PLAN.md (THIS FILE)
+
+📖 Full Code Examples:
+   → FRONTEND_FIXES_MOBILE_UPLOAD.md
+
+📖 Backend Details:
+   → MOBILE_GREETING_UPLOAD_COMPLETE_FIX.md
+
+📖 Quick Summary:
+   → COMPLETE_FIX_SUMMARY.md
+
+===============================================
+DEPLOYMENT
+===============================================
+
+After making changes:
+
+□ 1. Build frontend:
+      npm run build
+      (or)
+      mvn clean package -P preprod
+
+□ 2. Deploy to server
+
+□ 3. Test on mobile device
+
+□ 4. Check browser console for errors
+
+□ 5. Check server logs
+
+===============================================
+SUCCESS CRITERIA
+===============================================
+
+✅ Desktop works
+✅ Mobile works
+✅ Clear error messages
+✅ Video validation works
+✅ Text sanitization works
+✅ No console-only errors
+
+===============================================
+
+REMEMBER:
+- Backend is ALREADY FIXED ✅
+- You only need to fix FRONTEND ⚠️
+- All fixes are in your React code
+- Follow the checklist above
+- Test thoroughly before production
+
+===============================================
+

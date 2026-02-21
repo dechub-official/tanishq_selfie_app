@@ -79,8 +79,11 @@ public class ReactResourceResolver implements ResourceResolver {
 
         if (requestPath.startsWith("events")) {
             return eventsIndex;
-        }else if (rootStaticFiles.contains(requestPath)
-                || requestPath.startsWith(REACT_STATIC_DIR)) {
+        }else if (rootStaticFiles.contains(requestPath)) {
+            return new ClassPathResource(REACT_DIR + requestPath);
+        }else if (requestPath.startsWith(REACT_STATIC_DIR + "/")) {
+            // Handle static/assets requests - the path already contains "static/"
+            // so we need to prepend only "/static/" to get "/static/static/assets/..."
             return new ClassPathResource(REACT_DIR + requestPath);
         }else if (requestPath.startsWith(CHECKLIST_ASSESTS_DIR)) {
             return new ClassPathResource(REACT_DIR +CHECKLIST_DIR +requestPath);
@@ -91,6 +94,22 @@ public class ReactResourceResolver implements ResourceResolver {
             System.out.println("qr-assets" +REACT_DIR  + requestPath);
             return new ClassPathResource(REACT_DIR + requestPath);
 
+        }
+        else if (requestPath.startsWith("checklist/assets")) {
+            return new ClassPathResource(REACT_DIR + requestPath);
+        }
+        else if (requestPath.startsWith("checklist/create")) {
+            return createIndex;
+        } else if (requestPath.startsWith("checklist/form")) {
+            return formIndex;
+        } else if (requestPath.startsWith("checklist/loader")) {
+            return loaderIndex;
+        } else if (requestPath.startsWith("checklist/check")) {
+            return checkIndex;
+        } else if (requestPath.startsWith("checklist/thankyou")) {
+            return thankyouIndex;
+        } else if (requestPath.startsWith("checklist/verify")) {
+            return verifyIndex;
         }
         else if (requestPath.startsWith("checklist")) {
             return checklistIndex;

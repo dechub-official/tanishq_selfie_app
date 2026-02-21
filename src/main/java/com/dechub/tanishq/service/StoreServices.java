@@ -36,8 +36,14 @@ public class StoreServices implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        transformToData();
-        //createDirectoryForDivision();
+        try {
+            transformToData();
+            //createDirectoryForDivision();
+        } catch (Exception e) {
+            System.err.println("WARNING: Could not load store details from Excel file: " + e.getMessage());
+            System.err.println("Application will continue without Excel data. Store data can be loaded from database/Google Sheets.");
+            // Don't throw exception - allow app to start without Excel file
+        }
     }
 
 
