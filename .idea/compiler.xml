@@ -11,6 +11,7 @@
         <module name="selfie-01-05-2024-1" />
         <module name="selfie-26-08-2025-1" />
         <module name="tanishq-preprod-18-12-2025-7" />
+        <module name="tanishq-preprod-16-02-2026-1" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -23,6 +24,7 @@
       <module name="selfie-15-04-2025-1" options="-parameters" />
       <module name="selfie-26-08-2025-1" options="-parameters" />
       <module name="selfie-29-10-2025-1" options="-parameters" />
+      <module name="tanishq-preprod-16-02-2026-1" options="-parameters" />
       <module name="tanishq-preprod-18-12-2025-7" options="-parameters" />
       <module name="tanishq_selfie_app" options="-parameters" />
     </option>
