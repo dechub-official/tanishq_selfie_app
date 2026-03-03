@@ -45,6 +45,15 @@ public interface StorageService {
     String uploadGreetingVideo(MultipartFile file, String greetingId) throws IOException;
 
     /**
+     * Upload a greeting video from a File (for watermarked videos)
+     * @param file Video file
+     * @param greetingId Greeting unique ID
+     * @return The URL/path of the uploaded file
+     * @throws IOException If upload fails
+     */
+    String uploadGreetingVideoFromFile(java.io.File file, String greetingId) throws IOException;
+
+    /**
      * Delete all files for an event
      * @param eventId The event ID
      */

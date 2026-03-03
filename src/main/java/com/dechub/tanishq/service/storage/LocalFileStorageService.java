@@ -115,6 +115,27 @@ public class LocalFileStorageService implements StorageService {
     }
 
     @Override
+    public String uploadGreetingVideoFromFile(java.io.File file, String greetingId) throws IOException {
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String originalFilename = file.getName();
+        String extension = getFileExtension(originalFilename);
+        String fileName = "greeting_video_" + timestamp + "_" + System.currentTimeMillis() + extension;
+
+        // Create folder structure: {basePath}/greetings/{greetingId}/
+        Path greetingDir = Paths.get(basePath, "greetings", greetingId);
+        Files.createDirectories(greetingDir);
+
+        // Save file
+        Path filePath = greetingDir.resolve(fileName);
+        Files.copy(file.toPath(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+        // Generate local URL
+        String fileUrl = baseUrl + "/greetings/" + greetingId + "/" + fileName;
+        log.info("Successfully saved greeting video from file locally: {} -> {}", fileName, filePath.toAbsolutePath());
+        return fileUrl;
+    }
+
+    @Override
     public void deleteEventFiles(String eventId) {
         try {
             Path eventDir = Paths.get(basePath, "events", eventId);

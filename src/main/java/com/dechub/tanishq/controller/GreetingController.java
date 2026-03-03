@@ -1,8 +1,10 @@
 package com.dechub.tanishq.controller;
 
 import com.dechub.tanishq.dto.qrcode.GreetingInfo;
+import com.dechub.tanishq.dto.qrcode.ShareInfo;
 import com.dechub.tanishq.entity.Greeting;
 import com.dechub.tanishq.service.GreetingService;
+import com.dechub.tanishq.service.ShareService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,83 @@ public class GreetingController {
 
     @Autowired
     private GreetingService greetingService;
+
+    @Autowired
+    private ShareService shareService;
+
+    /**
+     * Smart QR redirect endpoint - redirects to video playback if video exists, otherwise to recording page
+     * GET /greetings/{uniqueId}/redirect
+     *
+     * This endpoint should be used in QR codes instead of direct links to create-video page
+     *
+     * @param uniqueId Greeting unique ID
+     * @return Redirect to appropriate page
+     */
+    @GetMapping("/{uniqueId}/redirect")
+    public ResponseEntity<?> smartRedirect(@PathVariable String uniqueId) {
+        log.info("Smart redirect request for greeting: {}", uniqueId);
+
+        try {
+            // Validate uniqueId
+            if (uniqueId == null || uniqueId.trim().isEmpty() ||
+                "null".equalsIgnoreCase(uniqueId.trim()) ||
+                "undefined".equalsIgnoreCase(uniqueId.trim())) {
+                log.error("Invalid uniqueId for redirect: '{}'", uniqueId);
+                // Redirect to home page
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .header("Location", "/qr/")
+                        .build();
+            }
+
+            // Validate greeting ID format
+            if (!uniqueId.startsWith("GREETING_")) {
+                log.error("Invalid greeting ID format for redirect: {}", uniqueId);
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .header("Location", "/qr/")
+                        .build();
+            }
+
+            // Get or create greeting
+            Optional<Greeting> optGreeting = greetingService.getGreeting(uniqueId);
+            if (!optGreeting.isPresent()) {
+                log.warn("Greeting {} not found for redirect, auto-creating it", uniqueId);
+                greetingService.createGreetingWithId(uniqueId);
+                optGreeting = greetingService.getGreeting(uniqueId);
+            }
+
+            if (!optGreeting.isPresent()) {
+                log.error("Failed to create greeting for redirect: {}", uniqueId);
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .header("Location", "/qr/")
+                        .build();
+            }
+
+            Greeting greeting = optGreeting.get();
+            Boolean isUploaded = greeting.getUploaded();
+            boolean hasVideo = Boolean.TRUE.equals(isUploaded);
+
+            if (hasVideo) {
+                // Video exists - redirect to video playback page
+                log.info("Redirecting to video playback for greeting: {}", uniqueId);
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .header("Location", "/qr/video-message?greetingId=" + uniqueId)
+                        .build();
+            } else {
+                // No video - redirect to recording page
+                log.info("Redirecting to recording page for greeting: {}", uniqueId);
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .header("Location", "/qr/create-video?qrId=" + uniqueId + "&autoStart=true")
+                        .build();
+            }
+
+        } catch (Exception e) {
+            log.error("Error in smart redirect for greeting: {}", uniqueId, e);
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .header("Location", "/qr/")
+                    .build();
+        }
+    }
 
     /**
      * Generate a new greeting link with unique ID
@@ -104,6 +183,22 @@ public class GreetingController {
                     .body("Invalid greeting ID. Please scan the QR code again or refresh the page.");
             }
 
+            // Validate uniqueId doesn't contain URL or path characters
+            if (uniqueId.contains("/") || uniqueId.contains("http://") || uniqueId.contains("https://") || uniqueId.contains(".")) {
+                log.error("❌ FRONTEND ERROR: uniqueId contains URL/path instead of greeting ID: '{}'", uniqueId);
+                log.error("   Expected format: GREETING_XXXXX");
+                log.error("   Received format: {}", uniqueId);
+                return ResponseEntity.badRequest()
+                    .body("Invalid greeting ID format. Expected format: GREETING_XXXXX, but received: " + uniqueId + ". Please scan the QR code again.");
+            }
+
+            // Validate uniqueId follows expected pattern (GREETING_XXXXX)
+            if (!uniqueId.startsWith("GREETING_")) {
+                log.error("❌ FRONTEND ERROR: uniqueId does not start with GREETING_ prefix: '{}'", uniqueId);
+                return ResponseEntity.badRequest()
+                    .body("Invalid greeting ID format. Expected format: GREETING_XXXXX");
+            }
+
             // Validate video file
             if (videoFile == null || videoFile.isEmpty()) {
                 log.error("Video file is null or empty for greeting: {}", uniqueId);
@@ -180,22 +275,107 @@ public class GreetingController {
     }
 
     /**
-     * Get greeting information and check if video uploaded
+     * View greeting page - redirects to frontend video player
      * GET /greetings/{uniqueId}/view
      *
+     * This endpoint is used for share links. It redirects to the frontend video page
+     * instead of returning JSON, so shared links directly show the video player.
+     *
      * @param uniqueId Greeting unique ID
-     * @return Greeting info with video URL if uploaded
+     * @return HTTP redirect to video-message page
      */
     @GetMapping("/{uniqueId}/view")
     public ResponseEntity<?> getGreetingInfo(@PathVariable String uniqueId) {
         log.info("Received view request for greeting: {}", uniqueId);
 
         try {
-            // Validate uniqueId is not null or "null" string
-            if (uniqueId == null || uniqueId.trim().isEmpty() || "null".equalsIgnoreCase(uniqueId.trim()) || "undefined".equalsIgnoreCase(uniqueId.trim())) {
-                log.error("Invalid uniqueId received for view: '{}' - This indicates a frontend issue where qrId is not being set properly", uniqueId);
+            // Validate uniqueId
+            if (uniqueId == null || uniqueId.trim().isEmpty() ||
+                "null".equalsIgnoreCase(uniqueId.trim()) ||
+                "undefined".equalsIgnoreCase(uniqueId.trim())) {
+                log.error("Invalid uniqueId received: '{}'", uniqueId);
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .header("Location", "/qr/?error=invalid_id")
+                        .build();
+            }
+
+            // Validate greeting ID format
+            if (!uniqueId.startsWith("GREETING_")) {
+                log.error("Invalid greeting ID format: {}", uniqueId);
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .header("Location", "/qr/?error=invalid_format")
+                        .build();
+            }
+
+            Optional<Greeting> optGreeting = greetingService.getGreeting(uniqueId);
+
+            if (!optGreeting.isPresent()) {
+                log.error("Greeting not found: {}", uniqueId);
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .header("Location", "/qr/?error=not_found")
+                        .build();
+            }
+
+            Greeting greeting = optGreeting.get();
+
+            // Check if video uploaded
+            Boolean isUploaded = greeting.getUploaded();
+            boolean hasVideo = Boolean.TRUE.equals(isUploaded);
+
+            log.info("Greeting {} - hasVideo: {}, driveFileId: {}",
+                     uniqueId, hasVideo, greeting.getDriveFileId());
+
+            if (!hasVideo || greeting.getDriveFileId() == null || greeting.getDriveFileId().isEmpty()) {
+                log.warn("Greeting {} has no video, redirecting to upload page", uniqueId);
+                // Redirect to create-video page (upload form)
+                return ResponseEntity.status(HttpStatus.FOUND)
+                        .header("Location", "/qr/create-video?qrId=" + uniqueId)
+                        .build();
+            }
+
+            // Video exists - redirect to video-message page
+            log.info("✅ Redirecting to video player for greeting: {}", uniqueId);
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .header("Location", "/qr/video-message?greetingId=" + uniqueId)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Failed to process view request: {}", uniqueId, e);
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .header("Location", "/qr/?error=server_error")
+                    .build();
+        }
+    }
+
+    /**
+     * Get greeting data as JSON (for frontend API calls)
+     * GET /greetings/{uniqueId}/data
+     *
+     * This endpoint returns greeting information as JSON for frontend use.
+     * Use this instead of /view which redirects to the video page.
+     *
+     * @param uniqueId Greeting unique ID
+     * @return Greeting info with video URL if uploaded
+     */
+    @GetMapping("/{uniqueId}/data")
+    public ResponseEntity<?> getGreetingData(@PathVariable String uniqueId) {
+        log.info("Received data request for greeting: {}", uniqueId);
+
+        try {
+            // Validate uniqueId
+            if (uniqueId == null || uniqueId.trim().isEmpty() ||
+                "null".equalsIgnoreCase(uniqueId.trim()) ||
+                "undefined".equalsIgnoreCase(uniqueId.trim())) {
+                log.error("Invalid uniqueId received: '{}'", uniqueId);
                 return ResponseEntity.badRequest()
-                    .body("Invalid greeting ID. Please scan the QR code again or refresh the page.");
+                    .body("Invalid greeting ID");
+            }
+
+            // Validate greeting ID format
+            if (!uniqueId.startsWith("GREETING_")) {
+                log.error("Invalid greeting ID format: {}", uniqueId);
+                return ResponseEntity.badRequest()
+                    .body("Invalid greeting ID format");
             }
 
             Optional<Greeting> optGreeting = greetingService.getGreeting(uniqueId);
@@ -209,8 +389,13 @@ public class GreetingController {
             Greeting greeting = optGreeting.get();
 
             // Check if video uploaded
-            if (!greeting.getUploaded()) {
-                log.debug("No video uploaded yet for greeting: {}", uniqueId);
+            Boolean isUploaded = greeting.getUploaded();
+            boolean hasVideo = Boolean.TRUE.equals(isUploaded);
+
+            log.info("Greeting {} - hasVideo: {}", uniqueId, hasVideo);
+
+            if (!hasVideo) {
+                log.warn("No video uploaded yet for greeting: {}", uniqueId);
                 GreetingInfo info = new GreetingInfo(
                         false,
                         "pending",
@@ -224,7 +409,7 @@ public class GreetingController {
             }
 
             // Video uploaded - return full info
-            String s3Url = greeting.getDriveFileId(); // This field stores S3 URL now
+            String s3Url = greeting.getDriveFileId();
             String videoUrl = greetingService.getVideoPlaybackUrl(s3Url);
             String timestamp = greeting.getCreatedAt() != null ?
                     greeting.getCreatedAt().toString() : null;
@@ -232,18 +417,18 @@ public class GreetingController {
             GreetingInfo info = new GreetingInfo(
                     true,
                     "completed",
-                    null,  // driveFileId should be null (we use S3 now)
-                    videoUrl,  // videoPlaybackUrl contains the S3 URL
+                    null,
+                    videoUrl,
                     timestamp,
                     greeting.getGreetingText(),
                     greeting.getMessage()
             );
 
-            log.info("Retrieved greeting info: {}", uniqueId);
+            log.info("✅ Retrieved greeting data: {} - hasVideo=true, videoUrl={}", uniqueId, videoUrl);
             return ResponseEntity.ok(info);
 
         } catch (Exception e) {
-            log.error("Failed to get greeting info: {}", uniqueId, e);
+            log.error("Failed to get greeting data: {}", uniqueId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error: " + e.getMessage());
         }
@@ -278,13 +463,39 @@ public class GreetingController {
      */
     @GetMapping("/{uniqueId}/status")
     public ResponseEntity<?> checkUploadStatus(@PathVariable String uniqueId) {
+        log.info("=== CHECK UPLOAD STATUS ===");
+        log.info("uniqueId: {}", uniqueId);
+
         try {
+            // Validate uniqueId
+            if (uniqueId == null || uniqueId.trim().isEmpty() ||
+                "null".equalsIgnoreCase(uniqueId.trim()) ||
+                "undefined".equalsIgnoreCase(uniqueId.trim())) {
+                log.error("Invalid uniqueId received: '{}'", uniqueId);
+                return ResponseEntity.badRequest()
+                        .body(new ErrorResponse("Invalid greeting ID"));
+            }
+
+            // Check if greeting exists first
+            Optional<Greeting> optGreeting = greetingService.getGreeting(uniqueId);
+            if (!optGreeting.isPresent()) {
+                log.warn("Greeting not found: {}", uniqueId);
+                return ResponseEntity.ok(new StatusResponse(false));
+            }
+
+            Greeting greeting = optGreeting.get();
+            log.info("Greeting found - uploaded field: {}, driveFileId: {}",
+                     greeting.getUploaded(), greeting.getDriveFileId());
+
             boolean hasVideo = greetingService.hasVideoUploaded(uniqueId);
+            log.info("hasVideo result: {}", hasVideo);
+            log.info("===========================");
+
             return ResponseEntity.ok(new StatusResponse(hasVideo));
         } catch (Exception e) {
             log.error("Failed to check upload status: {}", uniqueId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error checking status");
+                    .body(new ErrorResponse("Error checking status: " + e.getMessage()));
         }
     }
 
@@ -333,13 +544,115 @@ public class GreetingController {
     }
 
     /**
+     * Get share information for a greeting
+     * GET /greetings/{uniqueId}/share
+     *
+     * Generates platform-specific share URLs for WhatsApp, Facebook, Twitter, LinkedIn, Email, SMS
+     *
+     * @param uniqueId Greeting unique ID
+     * @return JSON with share URLs and metadata
+     */
+    @GetMapping("/{uniqueId}/share")
+    public ResponseEntity<?> getShareInfo(@PathVariable String uniqueId) {
+        log.info("Received share info request for greeting: {}", uniqueId);
+
+        try {
+            // Validate uniqueId
+            if (uniqueId == null || uniqueId.trim().isEmpty() ||
+                "null".equalsIgnoreCase(uniqueId.trim()) ||
+                "undefined".equalsIgnoreCase(uniqueId.trim())) {
+                log.error("Invalid uniqueId received for share: '{}'", uniqueId);
+                return ResponseEntity.badRequest()
+                    .body(new ErrorResponse("Invalid greeting ID"));
+            }
+
+            // Check if share feature is enabled
+            if (!shareService.isShareEnabled()) {
+                log.warn("Share feature is disabled for greeting: {}", uniqueId);
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(new ErrorResponse("Share feature is currently disabled"));
+            }
+
+            // Get greeting from database
+            Optional<Greeting> optGreeting = greetingService.getGreeting(uniqueId);
+
+            if (!optGreeting.isPresent()) {
+                log.error("Greeting not found for share: {}", uniqueId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorResponse("Greeting not found"));
+            }
+
+            Greeting greeting = optGreeting.get();
+
+            // Generate share information
+            ShareInfo shareInfo = shareService.generateShareInfo(greeting);
+
+            log.info("Successfully generated share info for greeting: {}", uniqueId);
+            return ResponseEntity.ok(shareInfo);
+
+        } catch (IllegalStateException e) {
+            log.error("Share feature error for greeting: {} - {}", uniqueId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(new ErrorResponse(e.getMessage()));
+        } catch (Exception e) {
+            log.error("Failed to get share info for greeting: {}", uniqueId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("Error generating share info: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Debug endpoint to check greeting data in database
+     * GET /greetings/{uniqueId}/debug
+     *
+     * @param uniqueId Greeting unique ID
+     * @return JSON with greeting details for debugging
+     */
+    @GetMapping("/{uniqueId}/debug")
+    public ResponseEntity<?> debugGreeting(@PathVariable String uniqueId) {
+        log.info("Debug request for greeting: {}", uniqueId);
+
+        try {
+            Optional<Greeting> optGreeting = greetingService.getGreeting(uniqueId);
+
+            if (!optGreeting.isPresent()) {
+                java.util.Map<String, Object> response = new java.util.HashMap<>();
+                response.put("found", false);
+                response.put("uniqueId", uniqueId);
+                response.put("message", "Greeting not found in database");
+                return ResponseEntity.ok(response);
+            }
+
+            Greeting g = optGreeting.get();
+            java.util.Map<String, Object> response = new java.util.HashMap<>();
+            response.put("found", true);
+            response.put("uniqueId", g.getUniqueId());
+            response.put("uploaded", g.getUploaded());
+            response.put("uploadedFlag", g.getUploaded() != null ? g.getUploaded().toString() : "NULL");
+            response.put("driveFileId", g.getDriveFileId());
+            response.put("hasDriveFileId", g.getDriveFileId() != null && !g.getDriveFileId().isEmpty());
+            response.put("name", g.getGreetingText());
+            response.put("message", g.getMessage());
+            response.put("createdAt", g.getCreatedAt() != null ? g.getCreatedAt().toString() : null);
+            response.put("qrCodeData", g.getQrCodeData() != null ? "EXISTS" : "NULL");
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Failed to debug greeting: {}", uniqueId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorResponse("Error: " + e.getMessage()));
+        }
+    }
+
+    /**
      * Simple status response DTO
      */
     private static class StatusResponse {
-        public boolean uploaded;
+        public boolean hasVideo;
 
-        public StatusResponse(boolean uploaded) {
-            this.uploaded = uploaded;
+        public StatusResponse(boolean hasVideo) {
+            this.hasVideo = hasVideo;
         }
     }
 

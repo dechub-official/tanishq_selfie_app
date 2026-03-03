@@ -46,6 +46,7 @@ public class Store {
     private String abmUsername;
     private String rbmUsername;
     private String ceeUsername;
+    private String corporateUsername;  // Top-level corporate access
 
     @OneToMany(mappedBy = "store", cascade = CascadeType.ALL)
     private List<Event> events;
@@ -162,5 +163,13 @@ public class Store {
 
     public String setCeeUsername(String ceeUsername) {
         return this.ceeUsername = ceeUsername;
+    }
+
+    public String getCorporateUsername() {
+        return corporateUsername;
+    }
+
+    public String setCorporateUsername(String corporateUsername) {
+        return this.corporateUsername = corporateUsername;
     }
 }

@@ -140,6 +140,37 @@ public class AwsS3StorageService implements StorageService {
     }
 
     @Override
+    public String uploadGreetingVideoFromFile(java.io.File file, String greetingId) throws IOException {
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        String originalFilename = file.getName();
+        String extension = getFileExtension(originalFilename);
+        String fileName = "greeting_video_" + timestamp + "_" + System.currentTimeMillis() + extension;
+        String s3Key = "greetings/" + greetingId + "/" + fileName;
+
+        try {
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentType("video/mp4"); // Default to mp4
+            metadata.setContentLength(file.length());
+
+            PutObjectRequest putRequest = new PutObjectRequest(
+                bucketName,
+                s3Key,
+                file
+            );
+            putRequest.setMetadata(metadata);
+            s3Client.putObject(putRequest);
+
+            String s3Url = String.format("https://%s.s3.%s.amazonaws.com/%s", bucketName, region, s3Key);
+            log.info("Successfully uploaded greeting video from file to S3: {}", s3Url);
+            return s3Url;
+
+        } catch (Exception e) {
+            log.error("Failed to upload greeting video file to S3: {}", fileName, e);
+            throw new IOException("Failed to upload file to S3: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
     public void deleteEventFiles(String eventId) {
         try {
             String folderKey = "events/" + eventId + "/";

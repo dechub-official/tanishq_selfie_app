@@ -12,6 +12,7 @@ public interface StoreRepository extends JpaRepository<Store, String> {
     List<Store> findByAbmUsername(String abmUsername);
     List<Store> findByRbmUsername(String rbmUsername);
     List<Store> findByCeeUsername(String ceeUsername);
+    List<Store> findByCorporateUsername(String corporateUsername);
 
     // Group stores by AB username, RB username, CE username for regional analysis
     @Query("SELECT s FROM Store s WHERE s.abmUsername = ?1")
@@ -22,4 +23,7 @@ public interface StoreRepository extends JpaRepository<Store, String> {
 
     @Query("SELECT s FROM Store s WHERE s.ceeUsername = ?1")
     List<Store> findStoresByCee(String ceeUsername);
+
+    @Query("SELECT s FROM Store s WHERE s.corporateUsername = ?1")
+    List<Store> findStoresByCorporate(String corporateUsername);
 }

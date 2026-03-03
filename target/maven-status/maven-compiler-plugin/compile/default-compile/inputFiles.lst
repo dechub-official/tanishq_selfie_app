@@ -58,7 +58,6 @@ C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\repository\RbmLoginRepository.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\service\storage\AwsS3StorageService.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\dto\rivaahDto\RivaahImagesDTO.java
-C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\dto\crm\CrmInviteePayload.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\repository\PasswordHistoryRepository.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\repository\StoreRepository.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\config\DataSourceConfigService.java
@@ -66,12 +65,15 @@ C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\dto\eventsDto\CompletedEventsDataDTO.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\config\SecurityHeadersConfig.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\dto\eventsDto\StoreSummaryWrapperDTO.java
+C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\dto\qrcode\ShareInfo.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\util\ResponseDataDTO.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\service\aws\S3Service.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\service\storage\StorageService.java
+C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\service\ShareService.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\entity\ProductDetail.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\service\excel\ExcelProcessingService.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\config\WebMvcConfig.java
+C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\service\VideoWatermarkService.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\entity\Greeting.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\dto\eventsDto\EventsLoginResponseDTO.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\service\StoreServices.java
@@ -80,6 +82,7 @@ C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\service\storage\LocalFileStorageService.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\dto\eventsDto\AttendeesDetailDTO.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\repository\UserRepository.java
+C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\repository\CorporateLoginRepository.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\repository\ProductDetailRepository.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\dto\UserDetailResponseDTO.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\dto\rivaahDto\RivaahAllDetailsDTO.java
@@ -94,4 +97,5 @@ C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\service\excel\ExcelProcessingServiceImpl.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\repository\CeeLoginRepository.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\mail\EmailService.java
+C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\entity\CorporateLogin.java
 C:\JAVA\celebration-preprod-latest\celeb\tanishq_selfie_app_clean\src\main\java\com\dechub\tanishq\dto\eventsDto\LoginResponseDTO.java

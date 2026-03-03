@@ -10,6 +10,7 @@ import com.dechub.tanishq.entity.AbmLogin;
 import com.dechub.tanishq.entity.Attendee;
 import com.dechub.tanishq.entity.BrideDetails;
 import com.dechub.tanishq.entity.CeeLogin;
+import com.dechub.tanishq.entity.CorporateLogin;
 import com.dechub.tanishq.entity.Event;
 import com.dechub.tanishq.entity.Greeting;
 import com.dechub.tanishq.entity.Invitee;
@@ -105,6 +106,9 @@ public class TanishqPageService {
     private AbmLoginRepository abmLoginRepository;
 
     @Autowired
+    private CorporateLoginRepository corporateLoginRepository;
+
+    @Autowired
     private com.dechub.tanishq.service.excel.ExcelProcessingService excelProcessingService;
 
     @Autowired
@@ -188,6 +192,12 @@ public class TanishqPageService {
         for (AbmLogin abm : abmLogins) {
             passwordCache.put(abm.getAbmUserId().toUpperCase(), abm.getPassword());
         }
+
+        // Load Corporate logins
+        List<CorporateLogin> corporateLogins = corporateLoginRepository.findAll();
+        for (CorporateLogin corporate : corporateLogins) {
+            passwordCache.put(corporate.getCorporateUserId().toUpperCase(), corporate.getPassword());
+        }
     }
 
     /**
@@ -209,12 +219,48 @@ public class TanishqPageService {
         String correctPassword = passwordCache.get(code.toUpperCase());
 
         if (correctPassword == null) {
-            // If not in cache, try to find user by username
+            // If not in cache, try to find user by username (store users)
             List<User> users = userRepository.findByUsername(code.toUpperCase());
             if (users != null && !users.isEmpty()) {
                 // Take first user if multiple exist (duplicates case)
                 correctPassword = users.get(0).getPassword();
                 // Update cache
+                passwordCache.put(code.toUpperCase(), correctPassword);
+            }
+        }
+
+        // Fall back to ABM login table if still not found
+        if (correctPassword == null) {
+            Optional<AbmLogin> abmLogin = abmLoginRepository.findByAbmUserId(code.toUpperCase());
+            if (abmLogin.isPresent()) {
+                correctPassword = abmLogin.get().getPassword();
+                passwordCache.put(code.toUpperCase(), correctPassword);
+            }
+        }
+
+        // Fall back to RBM login table if still not found
+        if (correctPassword == null) {
+            Optional<RbmLogin> rbmLogin = rbmLoginRepository.findByRbmUserId(code.toUpperCase());
+            if (rbmLogin.isPresent()) {
+                correctPassword = rbmLogin.get().getPassword();
+                passwordCache.put(code.toUpperCase(), correctPassword);
+            }
+        }
+
+        // Fall back to CEE login table if still not found
+        if (correctPassword == null) {
+            Optional<CeeLogin> ceeLogin = ceeLoginRepository.findByCeeUserId(code.toUpperCase());
+            if (ceeLogin.isPresent()) {
+                correctPassword = ceeLogin.get().getPassword();
+                passwordCache.put(code.toUpperCase(), correctPassword);
+            }
+        }
+
+        // Fall back to Corporate login table if still not found
+        if (correctPassword == null) {
+            Optional<CorporateLogin> corporateLogin = corporateLoginRepository.findByCorporateUserId(code.toUpperCase());
+            if (corporateLogin.isPresent()) {
+                correctPassword = corporateLogin.get().getPassword();
                 passwordCache.put(code.toUpperCase(), correctPassword);
             }
         }
@@ -353,6 +399,13 @@ public class TanishqPageService {
             event.setDiamondAwareness(eventsDetailDTO.isDiamondAwareness());
             event.setGhsFlag(eventsDetailDTO.isGhsFlag());
             event.setCreatedAt(LocalDateTime.now());
+            // Populate region from the store (authoritative source); fall back to DTO value if store has none
+            String storeRegion = store.getRegion();
+            if (storeRegion != null && !storeRegion.isEmpty()) {
+                event.setRegion(storeRegion);
+            } else {
+                event.setRegion(eventsDetailDTO.getRegion());
+            }
 
             eventRepository.save(event);
 
@@ -570,11 +623,11 @@ public class TanishqPageService {
             List<String> storeCodes;
 
             // Check if it's a manager username (RBM, CEE, or ABM)
-            if (code.contains("-CEE-")) {
-                // CEE username (e.g., "EAST1-CEE-01")
+            if (code.contains("-CEE")) {
+                // CEE username (e.g., "EAST1-CEE-01" or "EAST2-CEE")
                 storeCodes = fetchStoresByCee(code.trim());
-            } else if (code.contains("-ABM-")) {
-                // ABM username (e.g., "EAST1-ABM-01")
+            } else if (code.contains("-ABM")) {
+                // ABM username (e.g., "EAST1-ABM-01" or "EAST2-ABM")
                 storeCodes = fetchStoresByAbm(code.trim());
             } else if (code.matches("^(EAST|WEST|NORTH|SOUTH)\\d+$")) {
                 // RBM username (e.g., "EAST1", "NORTH2", "SOUTH3", "WEST1")
@@ -747,6 +800,25 @@ public class TanishqPageService {
     }
 
     /**
+     * Authenticate Corporate user from database
+     */
+    public Optional<LoginResponseDTO> authenticateCorporate(String username, String password) {
+        try {
+            Optional<CorporateLogin> corporateLogin = corporateLoginRepository.findByCorporateUserIdAndPassword(username, password);
+            if (corporateLogin.isPresent()) {
+                LoginResponseDTO dto = new LoginResponseDTO(
+                    corporateLogin.get().getCorporateUserId(),
+                    corporateLogin.get().getCorporateName()
+                );
+                return Optional.of(dto);
+            }
+        } catch (Exception e) {
+            log.error("Corporate authentication error", e);
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Get stores by RBM username
      */
     public List<String> fetchStoresByRbm(String rbmUsername) throws Exception {
@@ -771,6 +843,16 @@ public class TanishqPageService {
      */
     public List<String> fetchStoresByCee(String ceeUsername) throws Exception {
         return storeRepository.findByCeeUsername(ceeUsername)
+                .stream()
+                .map(Store::getStoreCode)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get stores by Corporate username
+     */
+    public List<String> fetchStoresByCorporate(String corporateUsername) throws Exception {
+        return storeRepository.findByCorporateUsername(corporateUsername)
                 .stream()
                 .map(Store::getStoreCode)
                 .collect(Collectors.toList());
@@ -1138,6 +1220,11 @@ public class TanishqPageService {
         return new StoreSummaryWrapperDTO(new ArrayList<>(), null);
     }
 
+    public StoreSummaryWrapperDTO fetchStoreSummariesByCorporateParallel(String corporateUsername, LocalDate startDate, LocalDate endDate) throws Exception {
+        // Stub - return empty summary
+        return new StoreSummaryWrapperDTO(new ArrayList<>(), null);
+    }
+
     public List<Map<String, Object>> filterEventsByStartDate(List<Map<String, Object>> events, String startDateStr, String endDateStr) {
         if (startDateStr == null || startDateStr.trim().isEmpty() ||
             endDateStr == null || endDateStr.trim().isEmpty()) {
@@ -1271,6 +1358,14 @@ public class TanishqPageService {
     public StoreEventSummaryDTO getCeeSummary(String ceeUsername, LocalDate startDate, LocalDate endDate) throws Exception {
         List<String> storeCodes = fetchStoresByCee(ceeUsername);
         return getAggregatedSummary(storeCodes, ceeUsername, startDate, endDate);
+    }
+
+    /**
+     * Get aggregated summary for Corporate user across all their stores
+     */
+    public StoreEventSummaryDTO getCorporateSummary(String corporateUsername, LocalDate startDate, LocalDate endDate) throws Exception {
+        List<String> storeCodes = fetchStoresByCorporate(corporateUsername);
+        return getAggregatedSummary(storeCodes, corporateUsername, startDate, endDate);
     }
 
     /**

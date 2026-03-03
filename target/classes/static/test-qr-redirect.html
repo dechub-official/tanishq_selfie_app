@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Redirect Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        .loading { background: #f0f0f0; }
+        .success { background: #d4edda; border-color: #28a745; }
+        .error { background: #f8d7da; border-color: #dc3545; }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 QR Code Flow Test</h1>
+
+    <div>
+        <h2>Test Greeting ID:</h2>
+        <input type="text" id="greetingId" value="GREETING_1772450945494" style="width: 300px; padding: 8px; font-size: 14px;">
+        <button onclick="testFlow()">Test Flow</button>
+        <button onclick="clearResults()">Clear</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        async function testFlow() {
+            const greetingId = document.getElementById('greetingId').value.trim();
+            const resultsDiv = document.getElementById('results');
+
+            resultsDiv.innerHTML = '<div class="status loading">⏳ Testing...</div>';
+
+            try {
+                // Step 1: Check if greeting exists and has video
+                resultsDiv.innerHTML += '<h3>Step 1: Check Greeting Status</h3>';
+                const viewResponse = await fetch(`https://celebrations.tanishq.co.in/greetings/${greetingId}/view`);
+                const greetingData = await viewResponse.json();
+
+                resultsDiv.innerHTML += `<pre>${JSON.stringify(greetingData, null, 2)}</pre>`;
+
+                // Step 2: Determine what should happen
+                if (greetingData.hasVideo) {
+                    // Video exists - should redirect to video playback
+                    resultsDiv.innerHTML += `
+                        <div class="status success">
+                            ✅ <strong>Video EXISTS</strong><br>
+                            Should redirect to: <code>/qr/video-message?greetingId=${greetingId}</code><br>
+                            <br>
+                            <strong>Video URL:</strong><br>
+                            <a href="${greetingData.videoPlaybackUrl}" target="_blank">${greetingData.videoPlaybackUrl}</a><br>
+                            <br>
+                            <strong>Name:</strong> ${greetingData.name}<br>
+                            <strong>Message:</strong> ${greetingData.message}<br>
+                            <br>
+                            <button onclick="window.location.href='/qr/video-message?greetingId=${greetingId}'">
+                                ▶️ Go to Video Playback
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    // No video - should stay on recording page
+                    resultsDiv.innerHTML += `
+                        <div class="status error">
+                            ❌ <strong>No Video</strong><br>
+                            Should redirect to: <code>/qr/create-video?qrId=${greetingId}&autoStart=true</code><br>
+                            <br>
+                            <button onclick="window.location.href='/qr/create-video?qrId=${greetingId}&autoStart=true'">
+                                🎥 Go to Recording Page
+                            </button>
+                        </div>
+                    `;
+                }
+
+                // Step 3: Test smart redirect endpoint
+                resultsDiv.innerHTML += '<h3>Step 3: Test Smart Redirect Endpoint</h3>';
+                const redirectUrl = `https://celebrations.tanishq.co.in/greetings/${greetingId}/redirect`;
+                resultsDiv.innerHTML += `
+                    <p>Smart redirect endpoint (will auto-redirect based on video status):</p>
+                    <code>${redirectUrl}</code><br><br>
+                    <button onclick="window.location.href='${redirectUrl}'">
+                        🔄 Test Smart Redirect
+                    </button>
+                `;
+
+            } catch (error) {
+                resultsDiv.innerHTML += `
+                    <div class="status error">
+                        ❌ <strong>Error:</strong> ${error.message}<br>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        // Auto-test on page load if greetingId is in URL
+        window.addEventListener('load', function() {
+            const params = new URLSearchParams(window.location.search);
+            const qrId = params.get('qrId') || params.get('greetingId');
+            if (qrId) {
+                document.getElementById('greetingId').value = qrId;
+                testFlow();
+            }
+        });
+    </script>
+
+    <hr style="margin: 40px 0;">
+
+    <h2>📋 Expected Flow:</h2>
+    <ol>
+        <li><strong>QR Code Scanned</strong> → URL: <code>/qr/create-video?qrId=GREETING_XXX</code></li>
+        <li><strong>Page Loads</strong> → Frontend calls: <code>GET /greetings/GREETING_XXX/view</code></li>
+        <li><strong>Check hasVideo</strong>:
+            <ul>
+                <li>If <code>hasVideo: true</code> → Redirect to <code>/qr/video-message</code></li>
+                <li>If <code>hasVideo: false</code> → Stay on <code>/qr/create-video</code></li>
+            </ul>
+        </li>
+    </ol>
+
+    <h2>🔧 Alternative Solution:</h2>
+    <p>Change QR code URL to use smart redirect endpoint:</p>
+    <code>https://celebrations.tanishq.co.in/greetings/GREETING_XXX/redirect</code>
+    <p>This endpoint will automatically redirect to the correct page based on video status.</p>
+
+    <h2>🐛 Debugging:</h2>
+    <p>If the frontend is not redirecting properly, check:</p>
+    <ul>
+        <li>Browser console for JavaScript errors</li>
+        <li>Network tab to see if API calls are being made</li>
+        <li>Whether the frontend is using the old compiled code (clear cache)</li>
+        <li>Check if <code>hasVideo</code> field is being read correctly</li>
+    </ul>
+</body>
+</html>
+

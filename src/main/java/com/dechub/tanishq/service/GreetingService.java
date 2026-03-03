@@ -8,8 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -31,8 +33,14 @@ public class GreetingService {
     @Autowired
     private StorageService storageService;
 
+    @Autowired
+    private VideoWatermarkService videoWatermarkService;
+
     @Value("${greeting.qr.base.url:https://celebrationsite-preprod.tanishq.co.in/greetings/}")
     private String greetingBaseUrl;
+
+    @Value("${video.watermark.enabled:true}")
+    private boolean watermarkEnabled;
 
 
     // Maximum video file size (100 MB)
@@ -62,6 +70,35 @@ public class GreetingService {
     }
 
     /**
+     * Create a greeting with a specific ID (for QR code pre-generation)
+     * @param uniqueId Specific greeting ID
+     * @return The greeting ID
+     */
+    public String createGreetingWithId(String uniqueId) {
+        try {
+            // Check if already exists
+            Optional<Greeting> existing = greetingRepository.findByUniqueId(uniqueId);
+            if (existing.isPresent()) {
+                log.info("Greeting already exists with ID: {}", uniqueId);
+                return uniqueId;
+            }
+
+            Greeting greeting = new Greeting();
+            greeting.setUniqueId(uniqueId);
+            greeting.setUploaded(false);
+            greeting.setCreatedAt(LocalDateTime.now());
+
+            greetingRepository.save(greeting);
+
+            log.info("Created new greeting with specific ID: {}", uniqueId);
+            return uniqueId;
+        } catch (Exception e) {
+            log.error("Failed to create greeting with ID: {}", uniqueId, e);
+            throw new RuntimeException("Failed to create greeting: " + e.getMessage());
+        }
+    }
+
+    /**
      * Generate QR code for a greeting
      * @param uniqueId Greeting unique ID
      * @return QR code image as byte array (PNG)
@@ -77,12 +114,12 @@ public class GreetingService {
         Greeting greeting = optGreeting.get();
 
         try {
-            // Generate full URL for QR code that points to the React app
-            // Direct link to create-video page with qrId parameter (NOT id!)
-            // The frontend looks for 'qrId' parameter, NOT 'id'
-            // When scanned directly with phone camera, this ensures the qrId is captured
-            // Format: https://celebrations.tanishq.co.in/qr/create-video?qrId=GREETING_XXX&autoStart=true
-            String qrUrl = "https://celebrations.tanishq.co.in/qr/create-video?qrId=" + uniqueId + "&autoStart=true";
+            // Generate full URL for QR code that uses smart redirect
+            // This endpoint automatically redirects to:
+            // - Video playback page if video already exists (hasVideo: true)
+            // - Recording page if no video yet (hasVideo: false)
+            // This solves the issue of rescanning QR codes after video upload
+            String qrUrl = "https://celebrations.tanishq.co.in/greetings/" + uniqueId + "/redirect";
 
             log.info("Generating QR code for greeting URL: {}", qrUrl);
 
@@ -119,15 +156,22 @@ public class GreetingService {
      * @param message Personal message
      * @return S3 URL of uploaded video
      */
+    @Transactional
     public String uploadVideo(String uniqueId, MultipartFile videoFile, String name, String message) throws IOException {
         log.info("uploadVideo called - uniqueId: {}, name: {}, message: {}, videoFile size: {}",
                  uniqueId, name, message, videoFile != null ? videoFile.getSize() : 0);
 
-        // Find greeting
+        // Find greeting, or create it if it doesn't exist (for direct QR scan scenarios)
         Optional<Greeting> optGreeting = greetingRepository.findByUniqueId(uniqueId);
         if (!optGreeting.isPresent()) {
-            log.error("Greeting not found: {}", uniqueId);
-            throw new IllegalArgumentException("Greeting not found: " + uniqueId);
+            log.warn("Greeting {} not found, auto-creating it before upload", uniqueId);
+            createGreetingWithId(uniqueId);
+            optGreeting = greetingRepository.findByUniqueId(uniqueId);
+
+            if (!optGreeting.isPresent()) {
+                log.error("Failed to create greeting: {}", uniqueId);
+                throw new IllegalArgumentException("Failed to create greeting: " + uniqueId);
+            }
         }
 
         Greeting greeting = optGreeting.get();
@@ -156,9 +200,31 @@ public class GreetingService {
 
         log.info("Sanitized inputs - name: {}, message: {}", sanitizedName, sanitizedMessage);
 
+        File watermarkedVideoFile = null;
         try {
-            // Upload using StorageService (works with both local and AWS S3)
-            String videoUrl = storageService.uploadGreetingVideo(videoFile, uniqueId);
+            String videoUrl;
+
+            // Apply watermark if enabled
+            if (watermarkEnabled) {
+                log.info("Watermark enabled - processing video with watermark for greeting: {}", uniqueId);
+                try {
+                    watermarkedVideoFile = videoWatermarkService.processVideoWithWatermark(videoFile, uniqueId);
+                    log.info("Watermark applied successfully, uploading watermarked video");
+
+                    // Upload watermarked video file to S3
+                    videoUrl = storageService.uploadGreetingVideoFromFile(watermarkedVideoFile, uniqueId);
+
+                } catch (Exception watermarkEx) {
+                    log.error("Watermark processing failed, falling back to original video: {}", watermarkEx.getMessage());
+                    // Fallback to original video if watermarking fails
+                    videoUrl = storageService.uploadGreetingVideo(videoFile, uniqueId);
+                }
+            } else {
+                log.info("Watermark disabled - uploading original video");
+                // Upload original video without watermark
+                videoUrl = storageService.uploadGreetingVideo(videoFile, uniqueId);
+            }
+
             log.info("Video uploaded successfully to: {}", videoUrl);
 
             // Update greeting record
@@ -167,14 +233,48 @@ public class GreetingService {
             greeting.setDriveFileId(videoUrl); // Store URL in drive_file_id field
             greeting.setUploaded(true);
 
-            greetingRepository.save(greeting);
+            // Save and flush to database immediately to ensure transaction commits
+            Greeting savedGreeting = greetingRepository.save(greeting);
+            greetingRepository.flush();  // Force immediate database write
 
-            log.info("Successfully uploaded video and saved greeting: {} -> {}", uniqueId, videoUrl);
+            log.info("✅ Successfully uploaded video and saved greeting: {} -> {}", uniqueId, videoUrl);
+            log.info("✅ GREETING SAVED - ID: {}, uploaded: {}, driveFileId: {}, name: {}",
+                     uniqueId, savedGreeting.getUploaded(), savedGreeting.getDriveFileId(), savedGreeting.getGreetingText());
+
+            // Verify it was saved correctly
+            Optional<Greeting> verifyGreeting = greetingRepository.findByUniqueId(uniqueId);
+            if (verifyGreeting.isPresent()) {
+                Greeting verified = verifyGreeting.get();
+                log.info("✅ VERIFICATION - uploaded: {}, driveFileId exists: {}, name exists: {}",
+                         verified.getUploaded(),
+                         verified.getDriveFileId() != null && !verified.getDriveFileId().isEmpty(),
+                         verified.getGreetingText() != null && !verified.getGreetingText().isEmpty());
+
+                if (!verified.getUploaded() || verified.getDriveFileId() == null) {
+                    log.error("❌ DATABASE SAVE ISSUE - uploaded flag or driveFileId not persisted correctly!");
+                    throw new IOException("Database save verification failed - data not persisted");
+                }
+            } else {
+                log.error("❌ VERIFICATION FAILED - Greeting not found in database after save!");
+                throw new IOException("Database save verification failed - greeting not found");
+            }
+
             return videoUrl;
 
         } catch (Exception e) {
             log.error("Failed to upload video for greeting: {}", uniqueId, e);
             throw new IOException("Failed to upload video: " + e.getMessage(), e);
+        } finally {
+            // Cleanup temporary watermarked video file - wrap in try-catch to prevent rollback
+            if (watermarkedVideoFile != null) {
+                try {
+                    videoWatermarkService.cleanupTempFile(watermarkedVideoFile);
+                    log.debug("Cleaned up temporary watermarked video file");
+                } catch (Exception cleanupError) {
+                    log.warn("Failed to cleanup temporary file (non-fatal): {}", cleanupError.getMessage());
+                    // Don't throw - we don't want cleanup failures to rollback the transaction
+                }
+            }
         }
     }
 
@@ -308,7 +408,18 @@ public class GreetingService {
      */
     public boolean hasVideoUploaded(String uniqueId) {
         Optional<Greeting> optGreeting = greetingRepository.findByUniqueId(uniqueId);
-        return optGreeting.isPresent() && optGreeting.get().getUploaded();
+        if (!optGreeting.isPresent()) {
+            return false;
+        }
+
+        Greeting greeting = optGreeting.get();
+        Boolean uploaded = greeting.getUploaded();
+        boolean result = Boolean.TRUE.equals(uploaded); // Safe null check
+
+        log.debug("hasVideoUploaded check - uniqueId: {}, uploaded field: {}, result: {}",
+                  uniqueId, uploaded, result);
+
+        return result;
     }
 
     /**

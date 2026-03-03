@@ -22,6 +22,8 @@ public class Greeting {
 
     private String driveFileId;
     private LocalDateTime createdAt;
+
+    @Column(name = "uploaded", columnDefinition = "TINYINT(1)")
     private Boolean uploaded;
 
     // getters and setters

@@ -400,6 +400,25 @@ public class EventsController {
         }
     }
 
+    @PostMapping("/corporate_login")
+    public ResponseEntity<ApiResponse<LoginResponseDTO>> loginCorporate(@RequestBody Map<String, String> credentials) {
+        String username = credentials.get("username");
+        String password = credentials.get("password");
+
+        if (username == null || password == null) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(400, "Username or password missing", null));
+        }
+
+        Optional<LoginResponseDTO> user = tanishqPageService.authenticateCorporate(username, password);
+
+        if (user.isPresent()) {
+            return ResponseEntity.ok(new ApiResponse<>(200, "Login successful", user.get()));
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse<>(401, "Invalid credentials", null));
+        }
+    }
+
     @GetMapping("/rbmStores")
     public ResponseEntity<?> getStoresByRbm(
             @RequestParam String rbmUsername,
@@ -487,6 +506,30 @@ public class EventsController {
         }
     }
 
+    @GetMapping("/corporateStores")
+    public ResponseEntity<?> getStoresByCorporate(
+            @RequestParam String corporateUsername,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            LocalDate start = (startDate != null) ? LocalDate.parse(startDate, formatter) : null;
+            LocalDate end = (endDate != null) ? LocalDate.parse(endDate, formatter) : null;
+
+            StoreSummaryWrapperDTO result = tanishqPageService.fetchStoreSummariesByCorporateParallel(corporateUsername, start, end);
+            ApiResponse<StoreSummaryWrapperDTO> response = new ApiResponse<>(200, "Store summary fetched successfully", result);
+            return ResponseEntity.ok(response);
+
+        } catch (IOException e) {
+            ApiResponse<String> error = new ApiResponse<>(500, "Error fetching data from sheet", null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        } catch (Exception e) {
+            ApiResponse<String> error = new ApiResponse<>(500, "Unexpected error occurred", null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+    }
+
     @GetMapping("/rbm/events")
     public ResponseEntity<?> getEventsByRbmUsername(@RequestParam String rbmUsername) {
         try {
@@ -520,6 +563,17 @@ public class EventsController {
         }
     }
 
+    @GetMapping("/corporate/events")
+    public ResponseEntity<?> getEventsByCorporateUsername(@RequestParam String corporateUsername) {
+        try {
+            List<String> storeCodes = tanishqPageService.fetchStoresByCorporate(corporateUsername);
+            List<Map<String, Object>> events = tanishqPageService.getOnlyEventsForStores(storeCodes);
+            return ResponseEntity.ok(events);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Failed to fetch events for Corporate user.");
+        }
+    }
+
     @GetMapping("/store/events/download")
     public void downloadStoreEventsAsCsv(
             @RequestParam String storeCode,
@@ -529,8 +583,19 @@ public class EventsController {
     ) throws Exception {
         log.info("Downloading events for storeCode: {}, startDate: {}, endDate: {}", storeCode, startDate, endDate);
 
+        // Route CEE/ABM/RBM/CORP codes to their respective store lists
         List<String> storeCodes = new ArrayList<>();
-        storeCodes.add(storeCode);
+        if (storeCode.contains("-CEE")) {
+            storeCodes = tanishqPageService.fetchStoresByCee(storeCode);
+        } else if (storeCode.contains("-ABM")) {
+            storeCodes = tanishqPageService.fetchStoresByAbm(storeCode);
+        } else if (storeCode.contains("-RBM")) {
+            storeCodes = tanishqPageService.fetchStoresByRbm(storeCode);
+        } else if (storeCode.contains("CORP-") || storeCode.contains("-CORP")) {
+            storeCodes = tanishqPageService.fetchStoresByCorporate(storeCode);
+        } else {
+            storeCodes.add(storeCode);
+        }
         List<Map<String, Object>> allEvents = tanishqPageService.getOnlyEventsForStores(storeCodes);
         log.info("Found {} total events for store {}", allEvents.size(), storeCode);
 
@@ -547,17 +612,17 @@ public class EventsController {
 
         CSVWriter writer = new CSVWriter(new OutputStreamWriter(response.getOutputStream()));
 
-        // Define custom column headers in the desired order (excluding region, import_version, is_active, is_visible)
+        // Define custom column headers in the desired order (including Region)
         List<String> displayHeaders = Arrays.asList(
-                "Created At", "Store Code", "Id", "Event Type", "Event Sub Type", "Event Name", "RSO",
+                "Created At", "Store Code", "Region", "Id", "Event Type", "Event Sub Type", "Event Name", "RSO",
                 "Start Date", "Image", "Invitees", "Attendees", "Completed Events Drive Link", "Community",
                 "Location", "Attendees Uploaded", "Sale", "Advance", "GHS/RGA", "GMB",
                 "Diamond Awareness", "GHS Flag"
         );
-        
+
         // Map custom headers to database field names
         List<String> dbFields = Arrays.asList(
-                "created_at", "store_code", "id", "event_type", "event_sub_type", "event_name", "rso",
+                "created_at", "store_code", "region", "id", "event_type", "event_sub_type", "event_name", "rso",
                 "start_date", "image", "invitees", "attendees", "completed_events_drive_link", "community",
                 "location", "attendees_uploaded", "sale", "advance", "ghs_or_rga", "gmb",
                 "diamond_awareness", "ghs_flag"
@@ -603,24 +668,24 @@ public class EventsController {
         }
 
         response.setContentType("text/csv");
-        response.setHeader("Content-Disposition", "attachment; filename=rbm_events.csv");
+        response.setHeader("Content-Disposition", "attachment; filename=abm_events.csv");
 
         CSVWriter writer = new CSVWriter(new OutputStreamWriter(response.getOutputStream()));
 
         // Define custom column headers in the desired order
         List<String> displayHeaders = Arrays.asList(
-                "createdAt", "Store Code", "Region", "Id", "Event Type", "Event Sub Type", "Event Name", "RSO",
-                "Start Date", "Image", "Invitees", "Attendees", "completed Events", "Community",
-                "location", "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb",
-                "Drive link", "Diamond Awareness", "GHS"
+                "Created At", "Store Code", "Region", "Id", "Event Type", "Event Sub Type", "Event Name", "RSO",
+                "Start Date", "Image", "Invitees", "Attendees", "Completed Events Drive Link", "Community",
+                "Location", "Attendees Uploaded", "Sale", "Advance", "GHS/RGA", "GMB",
+                "Diamond Awareness", "GHS Flag"
         );
-        
+
         // Map custom headers to database field names
         List<String> dbFields = Arrays.asList(
                 "created_at", "store_code", "region", "id", "event_type", "event_sub_type", "event_name", "rso",
                 "start_date", "image", "invitees", "attendees", "completed_events_drive_link", "community",
                 "location", "attendees_uploaded", "sale", "advance", "ghs_or_rga", "gmb",
-                "completed_events_drive_link", "diamond_awareness", "ghs_flag"
+                "diamond_awareness", "ghs_flag"
         );
 
         writer.writeNext(displayHeaders.toArray(new String[0]));
@@ -654,24 +719,24 @@ public class EventsController {
         }
 
         response.setContentType("text/csv");
-        response.setHeader("Content-Disposition", "attachment; filename=abm_events.csv");
+        response.setHeader("Content-Disposition", "attachment; filename=rbm_events.csv");
 
         CSVWriter writer = new CSVWriter(new OutputStreamWriter(response.getOutputStream()));
 
         // Define custom column headers in the desired order
         List<String> displayHeaders = Arrays.asList(
-                "createdAt", "Store Code", "Region", "Id", "Event Type", "Event Sub Type", "Event Name", "RSO",
-                "Start Date", "Image", "Invitees", "Attendees", "completed Events", "Community",
-                "location", "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb",
-                "Drive link", "Diamond Awareness", "GHS"
+                "Created At", "Store Code", "Region", "Id", "Event Type", "Event Sub Type", "Event Name", "RSO",
+                "Start Date", "Image", "Invitees", "Attendees", "Completed Events Drive Link", "Community",
+                "Location", "Attendees Uploaded", "Sale", "Advance", "GHS/RGA", "GMB",
+                "Diamond Awareness", "GHS Flag"
         );
-        
+
         // Map custom headers to database field names
         List<String> dbFields = Arrays.asList(
                 "created_at", "store_code", "region", "id", "event_type", "event_sub_type", "event_name", "rso",
                 "start_date", "image", "invitees", "attendees", "completed_events_drive_link", "community",
                 "location", "attendees_uploaded", "sale", "advance", "ghs_or_rga", "gmb",
-                "completed_events_drive_link", "diamond_awareness", "ghs_flag"
+                "diamond_awareness", "ghs_flag"
         );
 
         writer.writeNext(displayHeaders.toArray(new String[0]));
@@ -712,18 +777,18 @@ public class EventsController {
 
         // Define custom column headers in the desired order
         List<String> displayHeaders = Arrays.asList(
-                "createdAt", "Store Code", "Region", "Id", "Event Type", "Event Sub Type", "Event Name", "RSO",
-                "Start Date", "Image", "Invitees", "Attendees", "completed Events", "Community",
-                "location", "isAttendeesUploaded", "sale", "advance", "ghs/rga", "gmb",
-                "Drive link", "Diamond Awareness", "GHS"
+                "Created At", "Store Code", "Region", "Id", "Event Type", "Event Sub Type", "Event Name", "RSO",
+                "Start Date", "Image", "Invitees", "Attendees", "Completed Events Drive Link", "Community",
+                "Location", "Attendees Uploaded", "Sale", "Advance", "GHS/RGA", "GMB",
+                "Diamond Awareness", "GHS Flag"
         );
-        
+
         // Map custom headers to database field names
         List<String> dbFields = Arrays.asList(
                 "created_at", "store_code", "region", "id", "event_type", "event_sub_type", "event_name", "rso",
                 "start_date", "image", "invitees", "attendees", "completed_events_drive_link", "community",
                 "location", "attendees_uploaded", "sale", "advance", "ghs_or_rga", "gmb",
-                "completed_events_drive_link", "diamond_awareness", "ghs_flag"
+                "diamond_awareness", "ghs_flag"
         );
 
         writer.writeNext(displayHeaders.toArray(new String[0]));
@@ -738,13 +803,77 @@ public class EventsController {
         writer.flush();
         writer.close();
     }
+
+    @GetMapping("/corporate/events/download")
+    public void downloadCorporateEventsAsCsv(
+            @RequestParam String corporateUsername,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            HttpServletResponse response
+    ) throws Exception {
+        List<String> storeCodes = tanishqPageService.fetchStoresByCorporate(corporateUsername);
+        List<Map<String, Object>> allEvents = tanishqPageService.getOnlyEventsForStores(storeCodes);
+
+        List<Map<String, Object>> filteredEvents;
+        if (startDate != null && endDate != null && !startDate.isEmpty() && !endDate.isEmpty()) {
+            filteredEvents = tanishqPageService.filterEventsByStartDate(allEvents, startDate, endDate);
+        } else {
+            filteredEvents = allEvents;
+        }
+
+        response.setContentType("text/csv");
+        response.setHeader("Content-Disposition", "attachment; filename=corporate_events.csv");
+
+        CSVWriter writer = new CSVWriter(new OutputStreamWriter(response.getOutputStream()));
+
+        // Define custom column headers in the desired order
+        List<String> displayHeaders = Arrays.asList(
+                "Created At", "Store Code", "Region", "Id", "Event Type", "Event Sub Type", "Event Name", "RSO",
+                "Start Date", "Image", "Invitees", "Attendees", "Completed Events Drive Link", "Community",
+                "Location", "Attendees Uploaded", "Sale", "Advance", "GHS/RGA", "GMB",
+                "Diamond Awareness", "GHS Flag"
+        );
+
+        // Map custom headers to database field names
+        List<String> dbFields = Arrays.asList(
+                "created_at", "store_code", "region", "id", "event_type", "event_sub_type", "event_name", "rso",
+                "start_date", "image", "invitees", "attendees", "completed_events_drive_link", "community",
+                "location", "attendees_uploaded", "sale", "advance", "ghs_or_rga", "gmb",
+                "diamond_awareness", "ghs_flag"
+        );
+
+        writer.writeNext(displayHeaders.toArray(new String[0]));
+
+        for (Map<String, Object> row : filteredEvents) {
+            List<String> rowData = dbFields.stream()
+                    .map(field -> row.getOrDefault(field, "").toString())
+                    .collect(Collectors.toList());
+            writer.writeNext(rowData.toArray(new String[0]));
+        }
+
+        writer.flush();
+        writer.close();
+    }
+
     @GetMapping("/store-summary")
     public ResponseEntity<ApiResponse<StoreEventSummaryDTO>> getStoreSummary(
             @RequestParam String storeCode,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
         try {
-            StoreEventSummaryDTO summary = tanishqPageService.processSingleStoreCode(storeCode, startDate, endDate);
+            StoreEventSummaryDTO summary;
+            // Route to appropriate service based on the code type
+            if (storeCode.contains("-CEE")) {
+                summary = tanishqPageService.getCeeSummary(storeCode, startDate, endDate);
+            } else if (storeCode.contains("-ABM")) {
+                summary = tanishqPageService.getAbmSummary(storeCode, startDate, endDate);
+            } else if (storeCode.contains("-RBM")) {
+                summary = tanishqPageService.getRbmSummary(storeCode, startDate, endDate);
+            } else if (storeCode.contains("CORP-") || storeCode.contains("-CORP")) {
+                summary = tanishqPageService.getCorporateSummary(storeCode, startDate, endDate);
+            } else {
+                summary = tanishqPageService.processSingleStoreCode(storeCode, startDate, endDate);
+            }
             ApiResponse<StoreEventSummaryDTO> response = new ApiResponse<>(200, "Store summary fetched successfully", summary);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -798,6 +927,21 @@ public class EventsController {
         }
     }
 
+    @GetMapping("/corporate/summary")
+    public ResponseEntity<ApiResponse<StoreEventSummaryDTO>> getCorporateSummary(
+            @RequestParam String corporateUsername,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        try {
+            StoreEventSummaryDTO summary = tanishqPageService.getCorporateSummary(corporateUsername, startDate, endDate);
+            ApiResponse<StoreEventSummaryDTO> response = new ApiResponse<>(200, "Corporate summary fetched successfully", summary);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponse<StoreEventSummaryDTO> response = new ApiResponse<>(500, "Error fetching Corporate summary: " + e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
 
     @GetMapping("/download-event-report")
     public ResponseEntity<InputStreamResource> downloadExcelFile() throws IOException {
@@ -805,6 +949,17 @@ public class EventsController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=EventAttendedRepository.xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentLength(file.contentLength())
+                .body(new InputStreamResource(file.getInputStream()));
+    }
+
+    @GetMapping("/download-invitees-sample")
+    public ResponseEntity<InputStreamResource> downloadInviteesSampleFile() throws IOException {
+        ClassPathResource file = new ClassPathResource("static/contact.xlsx");
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=invitees_sample_format.xlsx")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .contentLength(file.contentLength())
                 .body(new InputStreamResource(file.getInputStream()));
