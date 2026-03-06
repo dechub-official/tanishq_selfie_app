@@ -38,17 +38,27 @@ public class Store {
     private String numberOfRatings;
     private String isCollection;
 
-    // 🔥 IMPORTANT
+    // 🔥 IMPORTANT: Regional management columns
+    @Column(name = "region")
     private String region;    // e.g. "North1", "South2", "East1"
+
+    @Column(name = "level")
     private String level;     // Store level/tier
 
-    // Managers/Regional
+    // Managers/Regional - mapped to user login tables
+    @Column(name = "abm_username")
     private String abmUsername;
+
+    @Column(name = "rbm_username")
     private String rbmUsername;
+
+    @Column(name = "cee_username")
     private String ceeUsername;
+
+    @Column(name = "corporate_username")
     private String corporateUsername;  // Top-level corporate access
 
-    @OneToMany(mappedBy = "store", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "store", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Event> events;
 
     // getters and setters
@@ -158,10 +168,12 @@ public class Store {
     }
 
     public String getCeeUsername() {
+
         return ceeUsername;
     }
 
     public String setCeeUsername(String ceeUsername) {
+
         return this.ceeUsername = ceeUsername;
     }
 

@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,7 @@ public class RivahController {
     }
 
     @PostMapping("/shareDetails")
-    public ResponseEntity<ResponseDataDTO> shareDetails(@RequestBody RivaahDTO rivaahDTO){
+    public ResponseEntity<ResponseDataDTO> shareDetails(@Valid @RequestBody RivaahDTO rivaahDTO){
         // Stub - Rivaah sharing disabled during migration
         ResponseDataDTO responseDataDTO = new ResponseDataDTO();
         responseDataDTO.setStatus(false);

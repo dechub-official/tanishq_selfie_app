@@ -220,6 +220,20 @@ public class GreetingController {
                     .body("Video file appears to be invalid. Please try recording again.");
             }
 
+            // INPUT VALIDATION: Validate name length if provided
+            if (name != null && !name.trim().isEmpty() && name.length() > 100) {
+                log.error("Name too long: {} characters for greeting: {}", name.length(), uniqueId);
+                return ResponseEntity.badRequest()
+                    .body("Name must not exceed 100 characters.");
+            }
+
+            // INPUT VALIDATION: Validate message length if provided
+            if (message != null && !message.trim().isEmpty() && message.length() > 500) {
+                log.error("Message too long: {} characters for greeting: {}", message.length(), uniqueId);
+                return ResponseEntity.badRequest()
+                    .body("Message must not exceed 500 characters.");
+            }
+
             // Validate content type (allow common video formats)
             String contentType = videoFile.getContentType();
             if (contentType == null || !contentType.startsWith("video/")) {

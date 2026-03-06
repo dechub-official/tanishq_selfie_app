@@ -2,6 +2,8 @@ package com.dechub.tanishq.controller;
 
 import com.dechub.tanishq.config.StoreSummaryCache;
 import com.dechub.tanishq.dto.eventsDto.*;
+import com.dechub.tanishq.security.StoreContextValidator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.dechub.tanishq.service.TanishqPageService;
 import com.dechub.tanishq.service.events.EventQrCodeService;
 import com.dechub.tanishq.service.storage.StorageService;
@@ -23,7 +25,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.validation.Valid;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.time.LocalDate;
@@ -52,6 +57,9 @@ public class EventsController {
     @Autowired
     private StorageService storageService;
 
+    @Autowired
+    private StoreContextValidator storeContextValidator;
+
     /**
      * Serve the events main page (Create Event)
      */
@@ -63,8 +71,151 @@ public class EventsController {
     }
 
     @PostMapping("/login")
-    public EventsLoginResponseDTO eventsLogin(@RequestBody LoginDTO loginDTO) throws Exception {
-        return tanishqPageService.eventsLogin(loginDTO.getCode(),loginDTO.getPassword());
+    public ResponseEntity<?> eventsLogin(@Valid @RequestBody LoginDTO loginDTO, HttpSession session) throws Exception {
+        String code = loginDTO.getCode();
+        String password = loginDTO.getPassword();
+
+        // Authenticate user via service
+        EventsLoginResponseDTO response = tanishqPageService.eventsLogin(code, password);
+
+        if (response.isStatus()) {
+            // Determine user type based on login code
+            String userType = determineUserType(code.toUpperCase());
+
+            // Store authentication in session - THIS IS THE SECURITY FIX
+            storeContextValidator.setAuthenticatedUser(session, code.toUpperCase(), userType);
+
+            log.info("Successful login for user: {} with type: {}", code.toUpperCase(), userType);
+
+            // SECURITY FIX: Return ONLY success status, NO user data in response
+            // User data will be fetched via /api/me endpoint
+            Map<String, Object> secureResponse = new HashMap<>();
+            secureResponse.put("success", true);
+            secureResponse.put("message", "Login successful");
+            return ResponseEntity.ok(secureResponse);
+        } else {
+            log.warn("Failed login attempt for code: {}", code);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", response.getMessage() != null ? response.getMessage() : "Invalid credentials");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        }
+    }
+
+    /**
+     * Determine user type based on login code pattern
+     */
+    private String determineUserType(String code) {
+        if (code.contains("-CEE")) {
+            return "CEE";
+        } else if (code.contains("-ABM")) {
+            return "ABM";
+        } else if (code.contains("-RBM") || code.matches("^(EAST|WEST|NORTH|SOUTH)\\d+$")) {
+            return "RBM";
+        } else if (code.contains("CORP-") || code.contains("-CORP")) {
+            return "CORPORATE";
+        } else if (code.matches("^(east|west|north|south)\\d+[ab]?$")) {
+            return "REGIONAL";
+        } else {
+            return "STORE";
+        }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, Object>> logout(HttpSession session) {
+        Map<String, Object> response = new HashMap<>();
+
+        if (session != null) {
+            String user = storeContextValidator.getAuthenticatedUser(session);
+            storeContextValidator.clearAuthentication(session);
+            log.info("User '{}' logged out successfully", user);
+            response.put("status", true);
+            response.put("message", "Logged out successfully");
+        } else {
+            response.put("status", false);
+            response.put("message", "No active session");
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * SECURITY FIX: Get authenticated user context from server-side session
+     * This endpoint returns user data ONLY if the user is authenticated via session
+     * Frontend must call this after login to get user details securely
+     *
+     * @param session HTTP session
+     * @return User context with authorized stores or 401 if not authenticated
+     */
+    @GetMapping("/api/me")
+    public ResponseEntity<?> getCurrentUser(HttpSession session) {
+        // Check if user is authenticated
+        if (!storeContextValidator.isAuthenticated(session)) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("authenticated", false);
+            errorResponse.put("message", "Not authenticated");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        }
+
+        try {
+            String username = storeContextValidator.getAuthenticatedUser(session);
+            String userType = (String) session.getAttribute("userType");
+            Long loginTimestamp = (Long) session.getAttribute("loginTimestamp");
+
+            // Build secure user context response
+            Map<String, Object> userContext = new HashMap<>();
+            userContext.put("authenticated", true);
+            userContext.put("username", username);
+            userContext.put("userType", userType);
+            userContext.put("loginTime", loginTimestamp);
+
+            // Get user-specific details based on type
+            if ("STORE".equals(userType)) {
+                // Get store details for store users
+                Map<String, Object> storeDetails = tanishqPageService.getStoreDetails(username);
+                if (storeDetails != null) {
+                    userContext.put("storeData", storeDetails);
+                }
+                userContext.put("authorizedStores", Collections.singletonList(username));
+            } else if ("ABM".equals(userType) || "RBM".equals(userType) || "CEE".equals(userType) || "CORPORATE".equals(userType)) {
+                // Get list of authorized stores for manager users
+                List<String> authorizedStores = getAuthorizedStoresForUser(username, userType);
+                userContext.put("authorizedStores", authorizedStores);
+                userContext.put("totalStores", authorizedStores.size());
+            } else if ("REGIONAL".equals(userType)) {
+                userContext.put("region", username);
+                List<String> regionalStores = tanishqPageService.getStoresByRegionCode(username);
+                userContext.put("authorizedStores", regionalStores);
+            }
+
+            log.info("User context fetched for: {} (type: {})", username, userType);
+            return ResponseEntity.ok(userContext);
+
+        } catch (Exception e) {
+            log.error("Error fetching user context", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("authenticated", true);
+            errorResponse.put("error", "Failed to load user context");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
+    /**
+     * Helper method to get authorized stores for a user based on their type
+     */
+    private List<String> getAuthorizedStoresForUser(String username, String userType) throws Exception {
+        switch (userType.toUpperCase()) {
+            case "ABM":
+                return tanishqPageService.fetchStoresByAbm(username);
+            case "RBM":
+                return tanishqPageService.fetchStoresByRbm(username);
+            case "CEE":
+                return tanishqPageService.fetchStoresByCee(username);
+            case "CORPORATE":
+                return tanishqPageService.fetchStoresByCorporate(username);
+            default:
+                return Collections.emptyList();
+        }
     }
 
     @GetMapping("/dowload-qr/{id}")
@@ -94,12 +245,18 @@ public class EventsController {
         return modelAndView;
     }
 
+    /**
+     * UNIFIED endpoint that accepts BOTH form-data and JSON
+     * This endpoint intelligently detects the content type and handles accordingly
+     * NO FRONTEND CHANGES REQUIRED - works with both old and new implementations
+     */
     @PostMapping(path = "/upload", produces = "application/json")
     public QrResponseDTO storeEventsDetails(
+            HttpServletRequest httpRequest,
             @RequestParam(value = "code",required = false) String code,
             @RequestParam(value = "file",required = false) MultipartFile file,
             @RequestParam(value ="description",required = false) String description,
-            @RequestParam(value ="singalInvite",required = false) boolean isSingleCustomer,
+            @RequestParam(value ="singalInvite",required = false, defaultValue = "false") String isSingleCustomerStr,
             @RequestParam(value ="eventName",required = false) String eventName,
             @RequestParam(value ="eventType",required = false) String eventType,
             @RequestParam(value ="eventSubType",required = false) String eventSubType,
@@ -116,11 +273,74 @@ public class EventsController {
             @RequestParam(value = "advance", required = false) Integer advance,
             @RequestParam(value = "ghsOrRga", required = false) Integer ghsOrRga,
             @RequestParam(value = "gmb", required = false) Integer gmb,
-            @RequestParam(value = "diamondAwareness", required = false, defaultValue = "false") boolean diamondAwareness,
-            @RequestParam(value = "ghsFlag", required = false, defaultValue = "false") boolean ghsFlag
-
-
+            @RequestParam(value = "diamondAwareness", required = false, defaultValue = "false") String diamondAwarenessStr,
+            @RequestParam(value = "ghsFlag", required = false, defaultValue = "false") String ghsFlagStr,
+            @RequestBody(required = false) String jsonBody,
+            HttpSession session
     ) {
+        // Check if request is JSON by examining content-type or if jsonBody is present
+        String contentType = httpRequest.getContentType();
+        boolean isJsonRequest = (contentType != null && contentType.contains("application/json")) ||
+                                (jsonBody != null && jsonBody.trim().startsWith("{"));
+
+        log.info("Received upload request - Content-Type: {}, isJSON: {}", contentType, isJsonRequest);
+
+        // If JSON request, parse and delegate to JSON handler
+        if (isJsonRequest && jsonBody != null && !jsonBody.trim().isEmpty()) {
+            return handleJsonUpload(jsonBody, session);
+        }
+
+        // Otherwise, handle as form-data (existing logic)
+        boolean isSingleCustomer = "true".equalsIgnoreCase(isSingleCustomerStr);
+        boolean diamondAwareness = "true".equalsIgnoreCase(diamondAwarenessStr);
+        boolean ghsFlag = "true".equalsIgnoreCase(ghsFlagStr);
+        // SECURITY: Validate authentication first
+        if (!storeContextValidator.isAuthenticated(session)) {
+            QrResponseDTO errorResponse = new QrResponseDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setQrData("Authentication required. Please log in.");
+            log.warn("Unauthorized upload attempt - no authentication");
+            return errorResponse;
+        }
+
+        // SECURITY FIX: Use authenticated user's store code from session instead of trusting frontend
+        // This prevents users from tampering with the code parameter
+        String authenticatedUser = storeContextValidator.getAuthenticatedUser(session);
+        String userType = (String) session.getAttribute("userType");
+
+        // If code is null or empty, use the authenticated user as the store code
+        // This fixes the issue where frontend doesn't send the code parameter
+        if (code == null || code.trim().isEmpty()) {
+            code = authenticatedUser;
+            log.info("Using authenticated user '{}' as store code for event creation", code);
+        }
+
+        // For store-level users, always override with their authenticated store code
+        // This prevents privilege escalation where a store tries to create events for another store
+        if ("STORE".equals(userType)) {
+            if (!authenticatedUser.equalsIgnoreCase(code)) {
+                log.warn("SECURITY: Store user '{}' attempted to create event for different store '{}', overriding",
+                         authenticatedUser, code);
+            }
+            code = authenticatedUser; // Always use authenticated store code for store users
+        }
+
+        // Validate that the user has access to this store
+        if (!storeContextValidator.validateStoreAccess(session, code)) {
+            QrResponseDTO errorResponse = new QrResponseDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setQrData("Access denied. You are not authorized to create events for this store.");
+            log.error("SECURITY ALERT: Unauthorized store access attempt for store: {} by user: {} (type: {})",
+                     code, authenticatedUser, userType);
+            return errorResponse;
+        }
+
+        // INPUT VALIDATION: Validate required fields and formats
+        QrResponseDTO validationError = validateUploadInputs(code, eventName, eventType, startDate, startTime, name, contact);
+        if (validationError != null) {
+            return validationError;
+        }
+
         EventsDetailDTO eventsDetailDTO = new EventsDetailDTO();
         if(file==null||file.isEmpty()){
             eventsDetailDTO.setSingleCustomer(true);
@@ -139,6 +359,12 @@ public class EventsController {
         eventsDetailDTO.setRso(rso);
         eventsDetailDTO.setLocation(location);
         eventsDetailDTO.setStartDate(startDate);
+
+        // Handle optional time field - use default if empty
+        if (startTime == null || startTime.trim().isEmpty()) {
+            startTime = "00:00"; // Default time if not provided
+            log.debug("Time not provided for event, using default: {}", startTime);
+        }
         eventsDetailDTO.setStartTime(startTime);
         eventsDetailDTO.setName(name);
         eventsDetailDTO.setContact(contact);
@@ -152,6 +378,243 @@ public class EventsController {
         eventsDetailDTO.setGhsFlag(ghsFlag);
 
         return tanishqPageService.storeEventsDetails(eventsDetailDTO);
+    }
+
+    /**
+     * NEW JSON-based endpoint for event creation
+     * Accepts JSON payload from frontend instead of form data
+     * This is an alternative endpoint - the main /upload endpoint now handles both JSON and form-data
+     */
+    @PostMapping(path = "/upload-json", produces = "application/json", consumes = "application/json")
+    public QrResponseDTO storeEventsDetailsJson(
+            @Valid @RequestBody EventCreationRequest request,
+            HttpSession session
+    ) {
+        log.info("Received JSON event creation request via /upload-json for store: {}, eventName: {}, eventType: {}",
+                request.getStoreCode(), request.getEventName(), request.getEventType());
+
+        // Use common JSON processing logic
+        return processJsonEventCreation(request, session);
+    }
+
+    /**
+     * Handle JSON upload by parsing the JSON string into EventCreationRequest
+     * This is called from the unified /upload endpoint when JSON content is detected
+     */
+    private QrResponseDTO handleJsonUpload(String jsonBody, HttpSession session) {
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            EventCreationRequest request = objectMapper.readValue(jsonBody, EventCreationRequest.class);
+
+            log.info("Parsed JSON request - storeCode: {}, eventName: {}, eventType: {}",
+                    request.getStoreCode(), request.getEventName(), request.getEventType());
+
+            // Use the same logic as /upload-json endpoint
+            return processJsonEventCreation(request, session);
+
+        } catch (Exception e) {
+            log.error("Failed to parse JSON request", e);
+            QrResponseDTO errorResponse = new QrResponseDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setQrData("Invalid JSON format: " + e.getMessage());
+            return errorResponse;
+        }
+    }
+
+    /**
+     * Process JSON event creation request (used by both /upload and /upload-json)
+     */
+    private QrResponseDTO processJsonEventCreation(EventCreationRequest request, HttpSession session) {
+        // SECURITY: Validate authentication first
+        if (!storeContextValidator.isAuthenticated(session)) {
+            QrResponseDTO errorResponse = new QrResponseDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setQrData("Authentication required. Please log in.");
+            log.warn("Unauthorized upload attempt - no authentication");
+            return errorResponse;
+        }
+
+        // SECURITY FIX: Use authenticated user's store code from session
+        String authenticatedUser = storeContextValidator.getAuthenticatedUser(session);
+        String userType = (String) session.getAttribute("userType");
+
+        String storeCode = request.getStoreCode();
+
+        // If storeCode is null or empty, use the authenticated user as the store code
+        if (storeCode == null || storeCode.trim().isEmpty()) {
+            storeCode = authenticatedUser;
+            request.setStoreCode(storeCode);
+            log.info("Using authenticated user '{}' as store code for event creation", storeCode);
+        }
+
+        // For store-level users, always override with their authenticated store code
+        if ("STORE".equals(userType)) {
+            if (!authenticatedUser.equalsIgnoreCase(storeCode)) {
+                log.warn("SECURITY: Store user '{}' attempted to create event for different store '{}', overriding",
+                        authenticatedUser, storeCode);
+            }
+            storeCode = authenticatedUser;
+            request.setStoreCode(storeCode);
+        }
+
+        // Validate that the user has access to this store
+        if (!storeContextValidator.validateStoreAccess(session, storeCode)) {
+            QrResponseDTO errorResponse = new QrResponseDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setQrData("Access denied. You are not authorized to create events for this store.");
+            log.error("SECURITY ALERT: Unauthorized store access attempt for store: {} by user: {} (type: {})",
+                    storeCode, authenticatedUser, userType);
+            return errorResponse;
+        }
+
+        // INPUT VALIDATION: Additional custom validation
+        QrResponseDTO validationError = validateJsonUploadInputs(request);
+        if (validationError != null) {
+            return validationError;
+        }
+
+        // Map JSON request to EventsDetailDTO
+        EventsDetailDTO eventsDetailDTO = mapRequestToDTO(request);
+
+        log.info("Creating event: {} for store: {} on date: {}",
+                eventsDetailDTO.getEventName(), eventsDetailDTO.getStoreCode(), eventsDetailDTO.getStartDate());
+
+        return tanishqPageService.storeEventsDetails(eventsDetailDTO);
+    }
+
+    /**
+     * Map EventCreationRequest (JSON from frontend) to EventsDetailDTO (internal DTO)
+     */
+    private EventsDetailDTO mapRequestToDTO(EventCreationRequest request) {
+        EventsDetailDTO dto = new EventsDetailDTO();
+
+        dto.setStoreCode(request.getStoreCode());
+        dto.setEventType(request.getEventType());
+        dto.setEventSubType(request.getEventSubType());
+        dto.setEventName(request.getEventName()); // This is now properly set from frontend
+        dto.setRso(request.getRSO());
+        dto.setStartDate(request.getDate());
+
+        // Handle optional time field - use default if empty
+        String time = request.getTime();
+        if (time == null || time.trim().isEmpty()) {
+            time = "00:00"; // Default time if not provided
+            log.debug("Time not provided, using default: {}", time);
+        }
+        dto.setStartTime(time);
+
+        dto.setLocation(request.getLocation());
+        dto.setCommunity(request.getCommunity());
+        dto.setImage(request.getImage());
+        dto.setDescription(request.getDescription());
+
+        // Convert string booleans to actual booleans
+        dto.setSingleCustomer(request.isSingleInvite());
+        dto.setDiamondAwareness(request.isDiamondAwareness());
+        dto.setGhsFlag(request.isGhsFlag());
+
+        dto.setName(request.getCustomerName());
+        dto.setContact(request.getCustomerContact());
+
+        dto.setRegion(request.getRegion());
+        dto.setSale(request.getSale());
+        dto.setAdvance(request.getAdvance());
+        dto.setGhsOrRga(request.getGhsOrRga());
+        dto.setGmb(request.getGmb());
+
+        // File is null for JSON requests (file uploads require multipart)
+        dto.setFile(null);
+
+        return dto;
+    }
+
+    /**
+     * Validate JSON upload input parameters
+     */
+    private QrResponseDTO validateJsonUploadInputs(EventCreationRequest request) {
+        QrResponseDTO errorResponse = new QrResponseDTO();
+        errorResponse.setStatus(false);
+
+        // Validate phone number if provided
+        if (request.getCustomerContact() != null && !request.getCustomerContact().trim().isEmpty()) {
+            if (!com.dechub.tanishq.util.InputValidator.isValidPhone(request.getCustomerContact())) {
+                errorResponse.setQrData("Invalid phone number format. Must be 10 digits starting with 6-9");
+                return errorResponse;
+            }
+        }
+
+        // Validate name if provided
+        if (request.getCustomerName() != null && !request.getCustomerName().trim().isEmpty()) {
+            if (!com.dechub.tanishq.util.InputValidator.isValidName(request.getCustomerName())) {
+                errorResponse.setQrData("Invalid name format. Name must be 2-100 characters with only letters and spaces");
+                return errorResponse;
+            }
+        }
+
+        // eventName validation is now handled by @Valid @NotBlank annotation
+        // No need to check for null or empty here
+
+        return null; // No validation errors
+    }
+
+    /**
+     * Validate upload input parameters
+     */
+    private QrResponseDTO validateUploadInputs(String code, String eventName, String eventType,
+                                                String startDate, String startTime, String name, String contact) {
+        QrResponseDTO errorResponse = new QrResponseDTO();
+        errorResponse.setStatus(false);
+
+        // Validate required fields
+        if (code == null || code.trim().isEmpty()) {
+            errorResponse.setQrData("Store code is required");
+            return errorResponse;
+        }
+        if (eventName == null || eventName.trim().isEmpty()) {
+            errorResponse.setQrData("Event name is required");
+            return errorResponse;
+        }
+        if (eventType == null || eventType.trim().isEmpty()) {
+            errorResponse.setQrData("Event type is required");
+            return errorResponse;
+        }
+        if (startDate == null || startDate.trim().isEmpty()) {
+            errorResponse.setQrData("Start date is required");
+            return errorResponse;
+        }
+        // Note: startTime is now optional, a default value will be set if empty
+
+        // Validate lengths
+        if (code.length() > 50) {
+            errorResponse.setQrData("Store code must not exceed 50 characters");
+            return errorResponse;
+        }
+        if (eventName.length() > 200) {
+            errorResponse.setQrData("Event name must not exceed 200 characters");
+            return errorResponse;
+        }
+        if (eventType.length() > 100) {
+            errorResponse.setQrData("Event type must not exceed 100 characters");
+            return errorResponse;
+        }
+
+        // Validate phone number if provided
+        if (contact != null && !contact.trim().isEmpty()) {
+            if (!com.dechub.tanishq.util.InputValidator.isValidPhone(contact)) {
+                errorResponse.setQrData("Invalid phone number format. Must be 10 digits starting with 6-9");
+                return errorResponse;
+            }
+        }
+
+        // Validate name if provided
+        if (name != null && !name.trim().isEmpty()) {
+            if (!com.dechub.tanishq.util.InputValidator.isValidName(name)) {
+                errorResponse.setQrData("Invalid name format. Name must be 2-100 characters with only letters and spaces");
+                return errorResponse;
+            }
+        }
+
+        return null; // No validation errors
     }
 
     @PostMapping("/attendees")
@@ -174,6 +637,43 @@ public class EventsController {
             return errorResponse;
         }
 
+        // INPUT VALIDATION: Validate phone number format
+        if (phone != null && !phone.trim().isEmpty()) {
+            if (!com.dechub.tanishq.util.InputValidator.isValidPhone(phone)) {
+                log.error("Invalid phone number format: {}", phone);
+                errorResponse.setStatus(false);
+                errorResponse.setMessage("Invalid phone number format. Must be 10 digits starting with 6-9");
+                return errorResponse;
+            }
+        }
+
+        // INPUT VALIDATION: Validate name format and length
+        if (name != null && !name.trim().isEmpty()) {
+            if (!com.dechub.tanishq.util.InputValidator.isValidName(name)) {
+                log.error("Invalid name format: {}", name);
+                errorResponse.setStatus(false);
+                errorResponse.setMessage("Invalid name format. Name must be 2-100 characters with only letters and spaces");
+                return errorResponse;
+            }
+        }
+
+        // INPUT VALIDATION: Validate field lengths
+        if (eventId.length() > 50) {
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Event ID must not exceed 50 characters");
+            return errorResponse;
+        }
+        if (like != null && like.length() > 500) {
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Like field must not exceed 500 characters");
+            return errorResponse;
+        }
+        if (rsoName != null && rsoName.length() > 100) {
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("RSO name must not exceed 100 characters");
+            return errorResponse;
+        }
+
         AttendeesDetailDTO attendeesDetailDTO = new AttendeesDetailDTO();
         attendeesDetailDTO.setId(eventId);
         attendeesDetailDTO.setLike(like);
@@ -190,7 +690,25 @@ public class EventsController {
     }
 
     @PostMapping("/getevents")
-    public CompletedEventsResponseDTO getAllCompletedEvents(@RequestBody storeCodeDataDTO storeCodeDataDTO){
+    public CompletedEventsResponseDTO getAllCompletedEvents(@Valid @RequestBody storeCodeDataDTO storeCodeDataDTO, HttpSession session){
+        // SECURITY: Validate authentication and authorization
+        if (!storeContextValidator.isAuthenticated(session)) {
+            CompletedEventsResponseDTO errorResponse = new CompletedEventsResponseDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Authentication required. Please log in.");
+            log.warn("Unauthorized getevents attempt - no authentication");
+            return errorResponse;
+        }
+
+        if (!storeContextValidator.validateStoreAccess(session, storeCodeDataDTO.getStoreCode())) {
+            CompletedEventsResponseDTO errorResponse = new CompletedEventsResponseDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Access denied. You are not authorized to view events for this store.");
+            log.error("SECURITY ALERT: Unauthorized getevents attempt for store: {} by user: {}",
+                     storeCodeDataDTO.getStoreCode(), storeContextValidator.getAuthenticatedUser(session));
+            return errorResponse;
+        }
+
         return tanishqPageService.getAllCompletedEvents(
             storeCodeDataDTO.getStoreCode(), 
             storeCodeDataDTO.getStartDate(), 
@@ -204,24 +722,122 @@ public class EventsController {
     }
 
     @PostMapping("/updateSaleOfAnEvent")
-    public ResponseDataDTO updateSaleOfAnEvent(@RequestParam String eventCode,@RequestParam String sale){
-        return tanishqPageService.updateSaleOfAnEvent(eventCode,sale);
+    public ResponseDataDTO updateSaleOfAnEvent(@RequestParam String eventCode,
+                                               @RequestParam String sale,
+                                               HttpSession session){
+        // SECURITY: Validate authentication and authorization
+        if (!storeContextValidator.isAuthenticated(session)) {
+            ResponseDataDTO errorResponse = new ResponseDataDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Authentication required. Please log in.");
+            return errorResponse;
+        }
+
+        if (!storeContextValidator.validateEventAccess(session, eventCode)) {
+            ResponseDataDTO errorResponse = new ResponseDataDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Access denied. You are not authorized to update this event.");
+            log.error("SECURITY ALERT: Unauthorized updateSale attempt for event: {} by user: {}",
+                     eventCode, storeContextValidator.getAuthenticatedUser(session));
+            return errorResponse;
+        }
+
+        return tanishqPageService.updateSaleOfAnEvent(eventCode, sale);
     }
     @PostMapping("/updateAdvanceOfAnEvent")
-    public ResponseDataDTO updateAdvanceOfAnEvent(@RequestParam String eventCode,@RequestParam String advance){
-        return tanishqPageService.updateAdvanceOfAnEvent(eventCode,advance);
+    public ResponseDataDTO updateAdvanceOfAnEvent(@RequestParam String eventCode,
+                                                  @RequestParam String advance,
+                                                  HttpSession session){
+        // SECURITY: Validate authentication and authorization
+        if (!storeContextValidator.isAuthenticated(session)) {
+            ResponseDataDTO errorResponse = new ResponseDataDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Authentication required. Please log in.");
+            return errorResponse;
+        }
+
+        if (!storeContextValidator.validateEventAccess(session, eventCode)) {
+            ResponseDataDTO errorResponse = new ResponseDataDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Access denied. You are not authorized to update this event.");
+            log.error("SECURITY ALERT: Unauthorized updateAdvance attempt for event: {} by user: {}",
+                     eventCode, storeContextValidator.getAuthenticatedUser(session));
+            return errorResponse;
+        }
+
+        return tanishqPageService.updateAdvanceOfAnEvent(eventCode, advance);
     }
     @PostMapping("/updateGhsRgaOfAnEvent")
-    public ResponseDataDTO updateGhsRgaOfAnEvent(@RequestParam String eventCode,@RequestParam String ghsRga){
-        return tanishqPageService.updateGhsRgaOfAnEvent(eventCode,ghsRga);
+    public ResponseDataDTO updateGhsRgaOfAnEvent(@Valid @RequestBody UpdateEventGhsRgaDTO updateDTO,
+                                                 HttpSession session){
+        String eventCode = updateDTO.getEventCode();
+
+        // SECURITY: Validate authentication and authorization
+        if (!storeContextValidator.isAuthenticated(session)) {
+            ResponseDataDTO errorResponse = new ResponseDataDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Authentication required. Please log in.");
+            return errorResponse;
+        }
+
+        if (!storeContextValidator.validateEventAccess(session, eventCode)) {
+            ResponseDataDTO errorResponse = new ResponseDataDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Access denied. You are not authorized to update this event.");
+            log.error("SECURITY ALERT: Unauthorized updateGhsRga attempt for event: {} by user: {}",
+                     eventCode, storeContextValidator.getAuthenticatedUser(session));
+            return errorResponse;
+        }
+
+        return tanishqPageService.updateGhsRgaOfAnEvent(eventCode, String.valueOf(updateDTO.getGhsRga()));
     }
     @PostMapping("/updateGmbOfAnEvent")
-    public ResponseDataDTO updateGmbOfAnEvent(@RequestParam String eventCode,@RequestParam String gmb){
-        return tanishqPageService.updateGmbOfAnEvent(eventCode,gmb);
+    public ResponseDataDTO updateGmbOfAnEvent(@Valid @RequestBody UpdateEventGmbDTO updateDTO,
+                                              HttpSession session){
+        String eventCode = updateDTO.getEventCode();
+
+        // SECURITY: Validate authentication and authorization
+        if (!storeContextValidator.isAuthenticated(session)) {
+            ResponseDataDTO errorResponse = new ResponseDataDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Authentication required. Please log in.");
+            return errorResponse;
+        }
+
+        if (!storeContextValidator.validateEventAccess(session, eventCode)) {
+            ResponseDataDTO errorResponse = new ResponseDataDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Access denied. You are not authorized to update this event.");
+            log.error("SECURITY ALERT: Unauthorized updateGmb attempt for event: {} by user: {}",
+                     eventCode, storeContextValidator.getAuthenticatedUser(session));
+            return errorResponse;
+        }
+
+        return tanishqPageService.updateGmbOfAnEvent(eventCode, String.valueOf(updateDTO.getGmb()));
     }
 
     @PostMapping("/getinvitedmember")
-    public ResponseEntity<ResponseDataDTO> getInvitedMember(@RequestParam String eventCode) throws Exception {
+    public ResponseEntity<ResponseDataDTO> getInvitedMember(@Valid @RequestBody EventCodeDTO eventCodeDTO,
+                                                            HttpSession session) throws Exception {
+        String eventCode = eventCodeDTO.getEventCode();
+
+        // SECURITY: Validate authentication and authorization
+        if (!storeContextValidator.isAuthenticated(session)) {
+            ResponseDataDTO errorResponse = new ResponseDataDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Authentication required. Please log in.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        }
+
+        if (!storeContextValidator.validateEventAccess(session, eventCode)) {
+            ResponseDataDTO errorResponse = new ResponseDataDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Access denied. You are not authorized to view this event's invitees.");
+            log.error("SECURITY ALERT: Unauthorized getInvitedMember attempt for event: {} by user: {}",
+                     eventCode, storeContextValidator.getAuthenticatedUser(session));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+        }
+
         List<?> list = tanishqPageService.getInvitedMember(eventCode);
         ResponseDataDTO response = new ResponseDataDTO();
         response.setStatus(true);
@@ -333,8 +949,32 @@ public class EventsController {
 
 
     @PostMapping("/changePassword")
-    public ResponseDataDTO changePassword(@RequestParam String storeCode,@RequestParam String oldPassword,@RequestParam String newPassword,@RequestParam String confirmPassword){
-        return tanishqPageService.changePasswordForEventManager(storeCode,oldPassword,newPassword,confirmPassword);
+    public ResponseDataDTO changePassword(@Valid @RequestBody ChangePasswordDTO changePasswordDTO,
+                                          HttpSession session){
+        // SECURITY: Validate authentication and authorization
+        if (!storeContextValidator.isAuthenticated(session)) {
+            ResponseDataDTO errorResponse = new ResponseDataDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Authentication required. Please log in.");
+            log.warn("Unauthorized changePassword attempt - no authentication");
+            return errorResponse;
+        }
+
+        if (!storeContextValidator.validateStoreAccess(session, changePasswordDTO.getStoreCode())) {
+            ResponseDataDTO errorResponse = new ResponseDataDTO();
+            errorResponse.setStatus(false);
+            errorResponse.setMessage("Access denied. You are not authorized to change password for this store.");
+            log.error("SECURITY ALERT: Unauthorized changePassword attempt for store: {} by user: {}",
+                     changePasswordDTO.getStoreCode(), storeContextValidator.getAuthenticatedUser(session));
+            return errorResponse;
+        }
+
+        return tanishqPageService.changePasswordForEventManager(
+            changePasswordDTO.getStoreCode(),
+            changePasswordDTO.getOldPassword(),
+            changePasswordDTO.getNewPassword(),
+            changePasswordDTO.getConfirmPassword()
+        );
     }
 
     @GetMapping("/getPasswordHint")
@@ -343,7 +983,7 @@ public class EventsController {
     }
 
     @PostMapping("/abm_login")
-    public ResponseEntity<ApiResponse<LoginResponseDTO>> loginAbm(@RequestBody Map<String, String> credentials) {
+    public ResponseEntity<ApiResponse<LoginResponseDTO>> loginAbm(@RequestBody Map<String, String> credentials, HttpSession session) {
         String username = credentials.get("username");
         String password = credentials.get("password");
 
@@ -354,27 +994,33 @@ public class EventsController {
         Optional<LoginResponseDTO> user = tanishqPageService.authenticateAbm(username, password);
 
         if (user.isPresent()) {
+            // Store authentication in session
+            storeContextValidator.setAuthenticatedUser(session, username, "ABM");
+            log.info("Successful ABM login for user: {}", username);
+
             return ResponseEntity.ok(new ApiResponse<>(200, "Login successful", user.get()));
         } else {
+            log.warn("Failed ABM login attempt for username: {}", username);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse<>(401, "Invalid credentials", null));
         }
     }
 
     @PostMapping("/rbm_login")
-    public ResponseEntity<ApiResponse<LoginResponseDTO>> loginRbm(@RequestBody Map<String, String> credentials) {
-        String username = credentials.get("username");
-        String password = credentials.get("password");
-
-        if (username == null || password == null) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>(400, "Username or password missing", null));
-        }
+    public ResponseEntity<ApiResponse<LoginResponseDTO>> loginRbm(@Valid @RequestBody CredentialsDTO credentials, HttpSession session) {
+        String username = credentials.getUsername();
+        String password = credentials.getPassword();
 
         Optional<LoginResponseDTO> user = tanishqPageService.authenticateRbm(username, password);
 
         if (user.isPresent()) {
+            // Store authentication in session
+            storeContextValidator.setAuthenticatedUser(session, username, "RBM");
+            log.info("Successful RBM login for user: {}", username);
+
             return ResponseEntity.ok(new ApiResponse<>(200, "Login successful", user.get()));
         } else {
+            log.warn("Failed RBM login attempt for username: {}", username);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse<>(401, "Invalid credentials", null));
         }
@@ -382,40 +1028,48 @@ public class EventsController {
 
 
     @PostMapping("/cee_login")
-    public ResponseEntity<ApiResponse<LoginResponseDTO>> loginCee(@RequestBody Map<String, String> credentials) {
-        String username = credentials.get("username");
-        String password = credentials.get("password");
-
-        if (username == null || password == null) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>(400, "Username or password missing", null));
-        }
+    public ResponseEntity<ApiResponse<LoginResponseDTO>> loginCee(@Valid @RequestBody CredentialsDTO credentials, HttpSession session) {
+        String username = credentials.getUsername();
+        String password = credentials.getPassword();
 
         Optional<LoginResponseDTO> user = tanishqPageService.authenticateCee(username, password);
 
         if (user.isPresent()) {
+            // Store authentication in session
+            storeContextValidator.setAuthenticatedUser(session, username, "CEE");
+            log.info("Successful CEE login for user: {}", username);
+
             return ResponseEntity.ok(new ApiResponse<>(200, "Login successful", user.get()));
         } else {
+            log.warn("Failed CEE login attempt for username: {}", username);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse<>(401, "Invalid credentials", null));
         }
     }
 
     @PostMapping("/corporate_login")
-    public ResponseEntity<ApiResponse<LoginResponseDTO>> loginCorporate(@RequestBody Map<String, String> credentials) {
-        String username = credentials.get("username");
-        String password = credentials.get("password");
-
-        if (username == null || password == null) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>(400, "Username or password missing", null));
-        }
+    public ResponseEntity<?> loginCorporate(@Valid @RequestBody CredentialsDTO credentials, HttpSession session) {
+        String username = credentials.getUsername();
+        String password = credentials.getPassword();
 
         Optional<LoginResponseDTO> user = tanishqPageService.authenticateCorporate(username, password);
 
         if (user.isPresent()) {
-            return ResponseEntity.ok(new ApiResponse<>(200, "Login successful", user.get()));
+            // SECURITY FIX: Store authentication in session
+            storeContextValidator.setAuthenticatedUser(session, username.toUpperCase(), "CORPORATE");
+            log.info("Successful Corporate login for user: {}", username);
+
+            // SECURITY FIX: Return ONLY success status, NO user data in response
+            Map<String, Object> secureResponse = new HashMap<>();
+            secureResponse.put("success", true);
+            secureResponse.put("message", "Login successful");
+            return ResponseEntity.ok(secureResponse);
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse<>(401, "Invalid credentials", null));
+            log.warn("Failed Corporate login attempt for username: {}", username);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "Invalid credentials");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         }
     }
 
@@ -579,8 +1233,25 @@ public class EventsController {
             @RequestParam String storeCode,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
-            HttpServletResponse response
+            HttpServletResponse response,
+            HttpSession session
     ) throws Exception {
+        // SECURITY: Validate authentication and authorization
+        if (!storeContextValidator.isAuthenticated(session)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.getWriter().write("Authentication required. Please log in.");
+            log.warn("Unauthorized CSV download attempt - no authentication");
+            return;
+        }
+
+        if (!storeContextValidator.validateStoreAccess(session, storeCode)) {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.getWriter().write("Access denied. You are not authorized to download data for this store.");
+            log.error("SECURITY ALERT: Unauthorized CSV download attempt for store: {} by user: {}",
+                     storeCode, storeContextValidator.getAuthenticatedUser(session));
+            return;
+        }
+
         log.info("Downloading events for storeCode: {}, startDate: {}, endDate: {}", storeCode, startDate, endDate);
 
         // Route CEE/ABM/RBM/CORP codes to their respective store lists
@@ -855,33 +1526,6 @@ public class EventsController {
         writer.close();
     }
 
-    @GetMapping("/store-summary")
-    public ResponseEntity<ApiResponse<StoreEventSummaryDTO>> getStoreSummary(
-            @RequestParam String storeCode,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
-        try {
-            StoreEventSummaryDTO summary;
-            // Route to appropriate service based on the code type
-            if (storeCode.contains("-CEE")) {
-                summary = tanishqPageService.getCeeSummary(storeCode, startDate, endDate);
-            } else if (storeCode.contains("-ABM")) {
-                summary = tanishqPageService.getAbmSummary(storeCode, startDate, endDate);
-            } else if (storeCode.contains("-RBM")) {
-                summary = tanishqPageService.getRbmSummary(storeCode, startDate, endDate);
-            } else if (storeCode.contains("CORP-") || storeCode.contains("-CORP")) {
-                summary = tanishqPageService.getCorporateSummary(storeCode, startDate, endDate);
-            } else {
-                summary = tanishqPageService.processSingleStoreCode(storeCode, startDate, endDate);
-            }
-            ApiResponse<StoreEventSummaryDTO> response = new ApiResponse<>(200, "Store summary fetched successfully", summary);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            ApiResponse<StoreEventSummaryDTO> response = new ApiResponse<>(500, "Error fetching store summary: " + e.getMessage(), null);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
     @GetMapping("/rbm/summary")
     public ResponseEntity<ApiResponse<StoreEventSummaryDTO>> getRbmSummary(
             @RequestParam String rbmUsername,
@@ -963,5 +1607,32 @@ public class EventsController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .contentLength(file.contentLength())
                 .body(new InputStreamResource(file.getInputStream()));
+    }
+
+    @GetMapping("/store-summary")
+    public ResponseEntity<ApiResponse<StoreEventSummaryDTO>> getStoreSummary(
+            @RequestParam String storeCode,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        try {
+            StoreEventSummaryDTO summary;
+            // Route to appropriate service based on the code type
+            if (storeCode.contains("-CEE")) {
+                summary = tanishqPageService.getCeeSummary(storeCode, startDate, endDate);
+            } else if (storeCode.contains("-ABM")) {
+                summary = tanishqPageService.getAbmSummary(storeCode, startDate, endDate);
+            } else if (storeCode.contains("-RBM")) {
+                summary = tanishqPageService.getRbmSummary(storeCode, startDate, endDate);
+            } else if (storeCode.contains("CORP-") || storeCode.contains("-CORP")) {
+                summary = tanishqPageService.getCorporateSummary(storeCode, startDate, endDate);
+            } else {
+                summary = tanishqPageService.processSingleStoreCode(storeCode, startDate, endDate);
+            }
+            ApiResponse<StoreEventSummaryDTO> response = new ApiResponse<>(200, "Store summary fetched successfully", summary);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponse<StoreEventSummaryDTO> response = new ApiResponse<>(500, "Error fetching store summary: " + e.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 }

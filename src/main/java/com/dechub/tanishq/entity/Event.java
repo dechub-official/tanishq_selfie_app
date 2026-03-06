@@ -76,7 +76,7 @@ public class Event {
     @Column(name = "store_code", insertable = false, updatable = false)
     private String storeCode;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_code")
     private Store store;
 

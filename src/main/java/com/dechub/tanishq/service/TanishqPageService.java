@@ -129,6 +129,10 @@ public class TanishqPageService {
     @Autowired
     private PasswordHistoryRepository passwordHistoryRepository;
 
+    // SECURITY FIX: Password Encoder for BCrypt hashing
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     // In-memory cache for passwords (populated from database)
     private final Map<String, String> passwordCache = new ConcurrentHashMap<>();
 
@@ -271,7 +275,18 @@ public class TanishqPageService {
             return response;
         }
 
-        if (!pwd.equals(correctPassword)) {
+        // SECURITY FIX: Use BCrypt password verification instead of plain text comparison
+        // Supports both legacy plain text (for migration) and new BCrypt hashed passwords
+        boolean passwordMatches;
+        if (correctPassword.startsWith("$2a$") || correctPassword.startsWith("$2b$") || correctPassword.startsWith("$2y$")) {
+            // BCrypt hashed password - use encoder to verify
+            passwordMatches = passwordEncoder.matches(pwd, correctPassword);
+        } else {
+            // Legacy plain text password - direct comparison (for backward compatibility during migration)
+            passwordMatches = pwd.equals(correctPassword);
+        }
+
+        if (!passwordMatches) {
             response.setStatus(false);
             response.setMessage("Invalid credentials.");
             return response;
@@ -753,13 +768,29 @@ public class TanishqPageService {
 
     /**
      * Authenticate ABM user from database
+     * SECURITY FIX: Updated to use BCrypt password verification
      */
     public Optional<LoginResponseDTO> authenticateAbm(String username, String password) {
         try {
-            Optional<AbmLogin> abmLogin = abmLoginRepository.findByAbmUserIdAndPassword(username, password);
+            // Fetch user by username only
+            Optional<AbmLogin> abmLogin = abmLoginRepository.findByAbmUserId(username);
             if (abmLogin.isPresent()) {
-                LoginResponseDTO dto = new LoginResponseDTO(abmLogin.get().getAbmUserId(), abmLogin.get().getAbmName());
-                return Optional.of(dto);
+                String storedPassword = abmLogin.get().getPassword();
+
+                // SECURITY FIX: Use BCrypt password verification
+                boolean passwordMatches;
+                if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$") || storedPassword.startsWith("$2y$")) {
+                    // BCrypt hashed password
+                    passwordMatches = passwordEncoder.matches(password, storedPassword);
+                } else {
+                    // Legacy plain text password (for backward compatibility during migration)
+                    passwordMatches = password.equals(storedPassword);
+                }
+
+                if (passwordMatches) {
+                    LoginResponseDTO dto = new LoginResponseDTO(abmLogin.get().getAbmUserId(), abmLogin.get().getAbmName());
+                    return Optional.of(dto);
+                }
             }
         } catch (Exception e) {
             log.error("ABM authentication error", e);
@@ -769,13 +800,29 @@ public class TanishqPageService {
 
     /**
      * Authenticate RBM user from database
+     * SECURITY FIX: Updated to use BCrypt password verification
      */
     public Optional<LoginResponseDTO> authenticateRbm(String username, String password) {
         try {
-            Optional<RbmLogin> rbmLogin = rbmLoginRepository.findByRbmUserIdAndPassword(username, password);
+            // Fetch user by username only
+            Optional<RbmLogin> rbmLogin = rbmLoginRepository.findByRbmUserId(username);
             if (rbmLogin.isPresent()) {
-                LoginResponseDTO dto = new LoginResponseDTO(rbmLogin.get().getRbmUserId(), rbmLogin.get().getRbmName());
-                return Optional.of(dto);
+                String storedPassword = rbmLogin.get().getPassword();
+
+                // SECURITY FIX: Use BCrypt password verification
+                boolean passwordMatches;
+                if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$") || storedPassword.startsWith("$2y$")) {
+                    // BCrypt hashed password
+                    passwordMatches = passwordEncoder.matches(password, storedPassword);
+                } else {
+                    // Legacy plain text password (for backward compatibility during migration)
+                    passwordMatches = password.equals(storedPassword);
+                }
+
+                if (passwordMatches) {
+                    LoginResponseDTO dto = new LoginResponseDTO(rbmLogin.get().getRbmUserId(), rbmLogin.get().getRbmName());
+                    return Optional.of(dto);
+                }
             }
         } catch (Exception e) {
             log.error("RBM authentication error", e);
@@ -785,13 +832,29 @@ public class TanishqPageService {
 
     /**
      * Authenticate CEE user from database
+     * SECURITY FIX: Updated to use BCrypt password verification
      */
     public Optional<LoginResponseDTO> authenticateCee(String username, String password) {
         try {
-            Optional<CeeLogin> ceeLogin = ceeLoginRepository.findByCeeUserIdAndPassword(username, password);
+            // Fetch user by username only
+            Optional<CeeLogin> ceeLogin = ceeLoginRepository.findByCeeUserId(username);
             if (ceeLogin.isPresent()) {
-                LoginResponseDTO dto = new LoginResponseDTO(ceeLogin.get().getCeeUserId(), ceeLogin.get().getCeeName());
-                return Optional.of(dto);
+                String storedPassword = ceeLogin.get().getPassword();
+
+                // SECURITY FIX: Use BCrypt password verification
+                boolean passwordMatches;
+                if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$") || storedPassword.startsWith("$2y$")) {
+                    // BCrypt hashed password
+                    passwordMatches = passwordEncoder.matches(password, storedPassword);
+                } else {
+                    // Legacy plain text password (for backward compatibility during migration)
+                    passwordMatches = password.equals(storedPassword);
+                }
+
+                if (passwordMatches) {
+                    LoginResponseDTO dto = new LoginResponseDTO(ceeLogin.get().getCeeUserId(), ceeLogin.get().getCeeName());
+                    return Optional.of(dto);
+                }
             }
         } catch (Exception e) {
             log.error("CEE authentication error", e);
@@ -801,16 +864,32 @@ public class TanishqPageService {
 
     /**
      * Authenticate Corporate user from database
+     * SECURITY FIX: Updated to use BCrypt password verification
      */
     public Optional<LoginResponseDTO> authenticateCorporate(String username, String password) {
         try {
-            Optional<CorporateLogin> corporateLogin = corporateLoginRepository.findByCorporateUserIdAndPassword(username, password);
+            // Fetch user by username only
+            Optional<CorporateLogin> corporateLogin = corporateLoginRepository.findByCorporateUserId(username);
             if (corporateLogin.isPresent()) {
-                LoginResponseDTO dto = new LoginResponseDTO(
-                    corporateLogin.get().getCorporateUserId(),
-                    corporateLogin.get().getCorporateName()
-                );
-                return Optional.of(dto);
+                String storedPassword = corporateLogin.get().getPassword();
+
+                // SECURITY FIX: Use BCrypt password verification
+                boolean passwordMatches;
+                if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$") || storedPassword.startsWith("$2y$")) {
+                    // BCrypt hashed password
+                    passwordMatches = passwordEncoder.matches(password, storedPassword);
+                } else {
+                    // Legacy plain text password (for backward compatibility during migration)
+                    passwordMatches = password.equals(storedPassword);
+                }
+
+                if (passwordMatches) {
+                    LoginResponseDTO dto = new LoginResponseDTO(
+                        corporateLogin.get().getCorporateUserId(),
+                        corporateLogin.get().getCorporateName()
+                    );
+                    return Optional.of(dto);
+                }
             }
         } catch (Exception e) {
             log.error("Corporate authentication error", e);
@@ -859,6 +938,47 @@ public class TanishqPageService {
     }
 
     /**
+     * Get store details for a specific store code
+     * Used by /api/me endpoint to return store information
+     */
+    public Map<String, Object> getStoreDetails(String storeCode) {
+        try {
+            Optional<Store> storeOpt = storeRepository.findById(storeCode.toUpperCase());
+            if (storeOpt.isPresent()) {
+                Store store = storeOpt.get();
+                Map<String, Object> details = new HashMap<>();
+                details.put("BtqCode", store.getStoreCode());
+                details.put("BtqName", store.getStoreName());
+                details.put("BtqEmailid", store.getStoreEmailId());
+                details.put("storeAddress", store.getStoreAddress());
+                details.put("storeCity", store.getStoreCity());
+                details.put("storeState", store.getStoreState());
+                return details;
+            }
+        } catch (Exception e) {
+            log.error("Error fetching store details for {}", storeCode, e);
+        }
+        return null;
+    }
+
+    /**
+     * Get stores by region code (for regional managers)
+     * Used by /api/me endpoint
+     */
+    public List<String> getStoresByRegionCode(String regionCode) {
+        try {
+            // Regional manager codes map to regions
+            List<storeCodeDataDTO> stores = getStoresByRegion(regionCode);
+            return stores.stream()
+                    .map(storeCodeDataDTO::getStoreCode)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Error fetching stores for region {}", regionCode, e);
+            return Collections.emptyList();
+        }
+    }
+
+    /**
      * Get all event data for stores (for dashboard)
      */
     public List<Map<String, Object>> getOnlyEventsForStores(List<String> storeCodes) {
@@ -867,6 +987,19 @@ public class TanishqPageService {
             return events.stream().map(this::convertEventToMap).collect(Collectors.toList());
         } catch (Exception e) {
             return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Get store code for a specific event (for authorization checks)
+     */
+    public String getStoreCodeForEvent(String eventId) {
+        try {
+            Optional<Event> event = eventRepository.findById(eventId);
+            return event.map(Event::getStoreCode).orElse(null);
+        } catch (Exception e) {
+            log.error("Error fetching store code for event {}: {}", eventId, e.getMessage());
+            return null;
         }
     }
 
@@ -1149,10 +1282,23 @@ public class TanishqPageService {
             // Handle multiple users with same username (duplicates case)
             User matchedUser = null;
             for (User user : users) {
-                // Validate password in Java (not in DB query)
-                if (user.getPassword() != null && user.getPassword().equals(oldPassword)) {
-                    matchedUser = user;
-                    break;
+                // SECURITY FIX: Validate password using BCrypt or plain text (backward compatible)
+                if (user.getPassword() != null) {
+                    String storedPassword = user.getPassword();
+                    boolean passwordMatches;
+
+                    if (storedPassword.startsWith("$2a$") || storedPassword.startsWith("$2b$") || storedPassword.startsWith("$2y$")) {
+                        // BCrypt hashed password
+                        passwordMatches = passwordEncoder.matches(oldPassword, storedPassword);
+                    } else {
+                        // Legacy plain text password
+                        passwordMatches = oldPassword.equals(storedPassword);
+                    }
+
+                    if (passwordMatches) {
+                        matchedUser = user;
+                        break;
+                    }
                 }
             }
 
@@ -1161,13 +1307,14 @@ public class TanishqPageService {
                 return dto;
             }
             
-            // Update password in database
-            matchedUser.setPassword(newPassword);
+            // SECURITY FIX: Hash the new password with BCrypt before storing
+            String hashedPassword = passwordEncoder.encode(newPassword);
+            matchedUser.setPassword(hashedPassword);
             userRepository.save(matchedUser);
 
-            // Update password cache (use uppercase to match login lookup)
+            // Update password cache with hashed password (use uppercase to match login lookup)
             try {
-                passwordCache.put(storeCode.toUpperCase(), newPassword);
+                passwordCache.put(storeCode.toUpperCase(), hashedPassword);
             } catch (Exception e) {
                 System.err.println("Warning: Failed to update password cache: " + e.getMessage());
             }
@@ -1179,12 +1326,12 @@ public class TanishqPageService {
                 System.err.println("Warning: Failed to delete old password history: " + e.getMessage());
             }
 
-            // Save new password change history
+            // Save new password change history (storing hashed password in history as well)
             try {
                 PasswordHistory history = new PasswordHistory(
                     storeCode,
-                    oldPassword,
-                    newPassword,
+                    matchedUser.getPassword(), // Store old hashed password
+                    hashedPassword, // Store new hashed password
                     LocalDateTime.now()
                 );
                 passwordHistoryRepository.save(history);
